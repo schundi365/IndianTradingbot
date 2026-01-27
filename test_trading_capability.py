@@ -213,7 +213,16 @@ def test_trading_capability():
             print(f"   Please close manually in MT5")
         else:
             print(f"✅ Position closed successfully!")
-            print(f"  Final Profit/Loss: {close_result.profit} {account_info.currency}")
+            print(f"  Deal: {close_result.deal}")
+            
+            # Get final profit from closed position
+            time.sleep(1)  # Wait for position to close
+            deals = mt5.history_deals_get(position=position.ticket)
+            if deals and len(deals) > 0:
+                total_profit = sum(deal.profit for deal in deals)
+                print(f"  Final Profit/Loss: {total_profit:.2f} {account_info.currency}")
+            else:
+                print(f"  Position closed (check MT5 history for P/L)")
     
     print()
     print("-" * 70)
