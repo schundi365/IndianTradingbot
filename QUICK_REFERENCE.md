@@ -30,16 +30,22 @@ python run_bot.py
 ## 🧪 Testing Commands
 
 ```bash
-# Simple connection test (recommended)
+# 1. Simple connection test
 python test_mt5_simple.py
 
-# Full connection test
+# 2. Check trading permissions (safe - no trades)
+python test_trading_permissions.py
+
+# 3. Test actual trading capability (places 1 test trade)
+python test_trading_capability.py
+
+# 4. Full connection test
 python test_connection.py
 
-# Validate setup
+# 5. Validate setup
 python validate_setup.py
 
-# Quick functionality test (no trades)
+# 6. Quick signal test (no trades)
 python examples/quick_test.py
 ```
 
