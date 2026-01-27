@@ -59,10 +59,6 @@ NUM_POSITIONS = 3           # Split into 3 separate positions
 #   - Position 2 exits at 1.8x risk distance (moderate)
 #   - Position 3 exits at 2.5x risk distance (let it run)
 TP_LEVELS = [1.2, 1.8, 2.5]  # More realistic for M5 (was [1.5, 2.5, 4.0] for H1)
-#   - Position 1 exits at 1.5x risk distance
-#   - Position 2 exits at 2.5x risk distance  
-#   - Position 3 exits at 4.0x risk distance
-TP_LEVELS = [1.5, 2.5, 4.0]
 
 # Percentage of total position for each TP level
 # Must sum to 100%. Example: [40, 30, 30] means:
@@ -185,7 +181,6 @@ TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 USE_TREND_FILTER = True     # Only trade in direction of higher timeframe trend
 TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # Use H1 for trend on M5 (was H4 for H1)
 TREND_MA_PERIOD = 50        # MA period for trend (was 200 for H1)
-TREND_MA_PERIOD = 200       # MA period for trend (price above = uptrend)
 
 # Volume filter
 USE_VOLUME_FILTER = False   # Filter trades by volume
