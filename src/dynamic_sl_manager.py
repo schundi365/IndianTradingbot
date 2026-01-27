@@ -379,9 +379,11 @@ class DynamicSLManager:
                 return False
         
         # Don't make tiny adjustments (less than 0.1%)
-        change_pct = abs(new_sl - current_sl) / current_sl * 100
-        if change_pct < 0.1:
-            return False
+        # Handle case where current_sl is 0 (no SL set)
+        if current_sl > 0:
+            change_pct = abs(new_sl - current_sl) / current_sl * 100
+            if change_pct < 0.1:
+                return False
         
         return True
     
@@ -398,7 +400,7 @@ class DynamicSLManager:
         
         if result.retcode == mt5.TRADE_RETCODE_DONE:
             logging.info(f"Dynamic SL updated for {position.symbol} (Ticket: {position.ticket})")
-            logging.info(f"  Old SL: {position.sl:.2f} → New SL: {new_sl:.2f}")
+            logging.info(f"  Old SL: {position.sl:.2f} -> New SL: {new_sl:.2f}")
             logging.info(f"  Reason: {reason}")
             return True
         else:

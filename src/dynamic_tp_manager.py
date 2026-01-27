@@ -463,13 +463,15 @@ class DynamicTPManager:
                 return False
         
         # Don't make tiny extensions (less than 0.5%)
-        change_pct = abs(new_tp - current_tp) / current_tp * 100
-        if change_pct < 0.5:
-            return False
-        
-        # Don't extend too aggressively (max 100% extension at once)
-        if change_pct > 100:
-            return False
+        # Handle case where current_tp is 0 (no TP set)
+        if current_tp > 0:
+            change_pct = abs(new_tp - current_tp) / current_tp * 100
+            if change_pct < 0.5:
+                return False
+            
+            # Don't extend too aggressively (max 100% extension at once)
+            if change_pct > 100:
+                return False
         
         return True
     
@@ -486,7 +488,7 @@ class DynamicTPManager:
         
         if result.retcode == mt5.TRADE_RETCODE_DONE:
             logging.info(f"Dynamic TP extended for {position.symbol} (Ticket: {position.ticket})")
-            logging.info(f"  Old TP: {position.tp:.2f} → New TP: {new_tp:.2f}")
+            logging.info(f"  Old TP: {position.tp:.2f} -> New TP: {new_tp:.2f}")
             logging.info(f"  Extension: {abs(new_tp - position.tp):.2f} points")
             logging.info(f"  Reason: {reason}")
             return True
