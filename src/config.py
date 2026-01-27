@@ -14,11 +14,11 @@ SYMBOLS = ['XAUUSD', 'XAGUSD']  # Gold and Silver
 # ==============================================================================
 # TIMEFRAME SETTINGS
 # ==============================================================================
-TIMEFRAME = mt5.TIMEFRAME_M5  # 5-minute timeframe (CHANGED FROM H1)
+TIMEFRAME = mt5.TIMEFRAME_M1  # 1-minute timeframe (EXTREMELY ACTIVE!)
 
 # Available timeframes:
-# mt5.TIMEFRAME_M1  - 1 minute (NOT RECOMMENDED - too fast)
-# mt5.TIMEFRAME_M5  - 5 minutes (CURRENT - active trading)
+# mt5.TIMEFRAME_M1  - 1 minute (CURRENT - VERY FAST!)
+# mt5.TIMEFRAME_M5  - 5 minutes
 # mt5.TIMEFRAME_M15 - 15 minutes
 # mt5.TIMEFRAME_M30 - 30 minutes
 # mt5.TIMEFRAME_H1  - 1 hour
@@ -26,18 +26,21 @@ TIMEFRAME = mt5.TIMEFRAME_M5  # 5-minute timeframe (CHANGED FROM H1)
 # mt5.TIMEFRAME_D1  - 1 day
 # mt5.TIMEFRAME_W1  - 1 week
 
-# ⚠️ WARNING: M5 timeframe is VERY ACTIVE
-# - Expect 20-50+ trades per day
-# - Requires constant monitoring
-# - Higher spread costs
-# - More false signals
-# - Recommended for experienced traders only
+# ⚠️⚠️⚠️ CRITICAL WARNING: M1 timeframe is EXTREMELY ACTIVE ⚠️⚠️⚠️
+# - Expect 100-200+ trades per day
+# - Requires CONSTANT monitoring (every 5-10 minutes)
+# - VERY HIGH spread costs ($20-40+/day)
+# - MANY false signals (high noise)
+# - NOT recommended for beginners
+# - NOT recommended for automated trading
+# - Requires VERY fast execution
+# - High stress and time commitment
 
 # ==============================================================================
 # RISK MANAGEMENT
 # ==============================================================================
-RISK_PERCENT = 0.5          # Risk 0.5% per trade (REDUCED for M5 - more trades)
-REWARD_RATIO = 1.5          # Risk:Reward ratio (1:1.5 for faster timeframe)
+RISK_PERCENT = 0.3          # Risk 0.3% per trade (VERY LOW for M1 - many trades)
+REWARD_RATIO = 1.2          # Risk:Reward ratio (1:1.2 for ultra-fast timeframe)
 DEFAULT_LOT_SIZE = 0.01     # Fallback lot size if calculation fails
 
 # Position sizing
@@ -53,12 +56,12 @@ USE_SPLIT_ORDERS = True     # Split position into multiple orders with different
 # Number of positions to split into (2-5 recommended)
 NUM_POSITIONS = 3           # Split into 3 separate positions
 
-# Take profit levels (Risk:Reward ratios for each position) - adjusted for M5
-# Example: [1.2, 1.8, 2.5] means:
-#   - Position 1 exits at 1.2x risk distance (quick profit)
-#   - Position 2 exits at 1.8x risk distance (moderate)
-#   - Position 3 exits at 2.5x risk distance (let it run)
-TP_LEVELS = [1.2, 1.8, 2.5]  # More realistic for M5 (was [1.5, 2.5, 4.0] for H1)
+# Take profit levels (Risk:Reward ratios for each position) - adjusted for M1
+# Example: [1.0, 1.3, 1.8] means:
+#   - Position 1 exits at 1.0x risk distance (very quick profit)
+#   - Position 2 exits at 1.3x risk distance (quick)
+#   - Position 3 exits at 1.8x risk distance (moderate)
+TP_LEVELS = [1.0, 1.3, 1.8]  # Very realistic for M1 (was [1.2, 1.8, 2.5] for M5)
 
 # Percentage of total position for each TP level
 # Must sum to 100%. Example: [40, 30, 30] means:
@@ -87,20 +90,20 @@ USE_ADAPTIVE_RISK = True    # Enable intelligent risk adjustment based on market
 # - Increase/decrease position size based on market favorability
 # - Filter trades based on confidence scores
 
-# Trend strength analysis (adjusted for M5)
-TREND_STRENGTH_PERIOD = 30  # Period for analyzing trend consistency (was 50 for H1)
+# Trend strength analysis (adjusted for M1)
+TREND_STRENGTH_PERIOD = 20  # Period for analyzing trend consistency (was 30 for M5)
 
-# Market condition thresholds (adjusted for M5)
-ADX_STRONG_TREND = 20       # ADX above this = trending market (was 25 for H1)
-ADX_RANGING = 15            # ADX below this = ranging market (was 20 for H1)
-TREND_CONSISTENCY_HIGH = 65 # % of bars in same direction = strong trend (was 70)
-VOLATILITY_HIGH = 1.2       # ATR ratio above this = volatile market (was 1.3)
+# Market condition thresholds (adjusted for M1)
+ADX_STRONG_TREND = 18       # ADX above this = trending market (was 20 for M5)
+ADX_RANGING = 12            # ADX below this = ranging market (was 15 for M5)
+TREND_CONSISTENCY_HIGH = 60 # % of bars in same direction = strong trend (was 65)
+VOLATILITY_HIGH = 1.1       # ATR ratio above this = volatile market (was 1.2)
 
 # Trade confidence requirements
-# Trade confidence requirements (adjusted for M5)
-MIN_TRADE_CONFIDENCE = 0.55 # Minimum confidence score to take trade (55% for M5)
-# Lower threshold for M5 due to more noise, but still selective
-# H1 used 60%, M5 uses 55%
+# Trade confidence requirements (adjusted for M1)
+MIN_TRADE_CONFIDENCE = 0.50 # Minimum confidence score to take trade (50% for M1)
+# Even lower threshold for M1 due to extreme noise
+# M5 used 55%, M1 uses 50%
 
 # Risk adjustment limits
 MAX_RISK_MULTIPLIER = 1.5   # Maximum risk increase in favorable conditions
@@ -109,23 +112,35 @@ MIN_RISK_MULTIPLIER = 0.3   # Minimum risk in unfavorable conditions
 # ==============================================================================
 # MOVING AVERAGE STRATEGY
 # ==============================================================================
-# Adjusted for M5 timeframe (shorter periods for faster signals)
-FAST_MA_PERIOD = 10         # Fast moving average period (was 20 for H1)
-SLOW_MA_PERIOD = 20         # Slow moving average period (was 50 for H1)
-MA_TYPE = 'EMA'            # 'SMA' or 'EMA' (EMA better for lower timeframes)
+# Adjusted for M1 timeframe (very short periods for ultra-fast signals)
+FAST_MA_PERIOD = 5          # Fast moving average period (was 10 for M5)
+SLOW_MA_PERIOD = 10         # Slow moving average period (was 20 for M5)
+MA_TYPE = 'EMA'            # 'SMA' or 'EMA' (EMA essential for M1)
 
 # Entry conditions
 WAIT_FOR_CONFIRMATION = True    # Wait for price to confirm above/below MAs
 MIN_MA_SEPARATION = 0.0001      # Minimum distance between MAs for signal (0 = any)
 
 # ==============================================================================
+# MACD INDICATOR (NEW - Added for M1)
+# ==============================================================================
+USE_MACD = True             # Enable MACD indicator for additional confirmation
+MACD_FAST = 8               # Fast EMA period (standard 12, adjusted for M1)
+MACD_SLOW = 17              # Slow EMA period (standard 26, adjusted for M1)
+MACD_SIGNAL = 5             # Signal line period (standard 9, adjusted for M1)
+
+# MACD filters
+MACD_MIN_HISTOGRAM = 0.0    # Minimum histogram value for signal (0 = any)
+REQUIRE_MACD_CONFIRMATION = True  # Require MACD to confirm MA signal
+
+# ==============================================================================
 # ATR-BASED STOP LOSS
 # ==============================================================================
-# Adjusted for M5 timeframe
-ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 70 minutes)
-ATR_MULTIPLIER_SL = 1.5     # Stop Loss multiplier (REDUCED for M5 - tighter stops)
+# Adjusted for M1 timeframe
+ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 14 minutes)
+ATR_MULTIPLIER_SL = 1.2     # Stop Loss multiplier (VERY TIGHT for M1)
 
-# ATR filters (adjusted for M5 volatility)
+# ATR filters (adjusted for M1 volatility)
 MIN_ATR_VALUE = 0.0001      # Minimum ATR to place trade (avoid low volatility)
 MAX_ATR_VALUE = 999999      # Maximum ATR to place trade (avoid high volatility)
 
@@ -134,21 +149,21 @@ MAX_ATR_VALUE = 999999      # Maximum ATR to place trade (avoid high volatility)
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-# Activation threshold (adjusted for M5)
-TRAIL_ACTIVATION_ATR = 1.0  # Activate trailing sooner on M5 (was 1.5 for H1)
-# Example: If ATR=10 and this is 1.0, trailing activates after 10 points profit
+# Activation threshold (adjusted for M1)
+TRAIL_ACTIVATION_ATR = 0.8  # Activate trailing very quickly on M1 (was 1.0 for M5)
+# Example: If ATR=10 and this is 0.8, trailing activates after 8 points profit
 
-# Trailing distance (adjusted for M5)
-TRAIL_DISTANCE_ATR = 0.8    # Trail closer on M5 (was 1.0 for H1)
+# Trailing distance (adjusted for M1)
+TRAIL_DISTANCE_ATR = 0.6    # Trail very close on M1 (was 0.8 for M5)
 TRAIL_TYPE = 'atr'          # 'atr', 'percentage', 'swing', 'chandelier', 'breakeven'
 
 # Percentage trailing (if TRAIL_TYPE = 'percentage')
-TRAIL_PERCENT = 1.5         # Trail 1.5% from current price (was 2.0 for H1)
+TRAIL_PERCENT = 1.0         # Trail 1.0% from current price (was 1.5 for M5)
 
-# Breakeven settings (if TRAIL_TYPE = 'breakeven') - adjusted for M5
-BREAKEVEN_ACTIVATION_PIPS = 50   # Move to BE after this many pips (was 100)
-BREAKEVEN_PLUS_PIPS = 5          # Lock in this many pips at BE (was 10)
-TRAIL_START_PIPS = 75            # Start normal trailing after this profit (was 150)
+# Breakeven settings (if TRAIL_TYPE = 'breakeven') - adjusted for M1
+BREAKEVEN_ACTIVATION_PIPS = 30   # Move to BE after this many pips (was 50)
+BREAKEVEN_PLUS_PIPS = 3          # Lock in this many pips at BE (was 5)
+TRAIL_START_PIPS = 50            # Start normal trailing after this profit (was 75)
 
 # ==============================================================================
 # TRAILING TAKE PROFIT SETTINGS
@@ -161,9 +176,9 @@ TRAILING_TP_RATIO = 0.5     # Give back 50% of unrealized profit before hitting 
 # ==============================================================================
 MAGIC_NUMBER = 234000       # Unique identifier for bot trades (change if running multiple bots)
 
-# Maximum trades (adjusted for M5 - more active)
-MAX_TRADES_TOTAL = 8        # Maximum total open trades (was 5 for H1)
-MAX_TRADES_PER_SYMBOL = 2   # Maximum trades per symbol (was 1 for H1)
+# Maximum trades (adjusted for M1 - VERY active)
+MAX_TRADES_TOTAL = 10       # Maximum total open trades (was 8 for M5)
+MAX_TRADES_PER_SYMBOL = 3   # Maximum trades per symbol (was 2 for M5)
 ALLOW_HEDGING = False       # Allow both buy and sell on same symbol
 
 # Trading hours (UTC time)
@@ -177,10 +192,10 @@ TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 # ==============================================================================
 # ADDITIONAL FILTERS
 # ==============================================================================
-# Trend filter (adjusted for M5)
+# Trend filter (adjusted for M1)
 USE_TREND_FILTER = True     # Only trade in direction of higher timeframe trend
-TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # Use H1 for trend on M5 (was H4 for H1)
-TREND_MA_PERIOD = 50        # MA period for trend (was 200 for H1)
+TREND_TIMEFRAME = mt5.TIMEFRAME_M15  # Use M15 for trend on M1 (was H1 for M5)
+TREND_MA_PERIOD = 20        # MA period for trend (was 50 for M5)
 
 # Volume filter
 USE_VOLUME_FILTER = False   # Filter trades by volume
@@ -193,7 +208,7 @@ NEWS_BUFFER_MINUTES = 30    # Don't trade X minutes before/after news
 # ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
-UPDATE_INTERVAL = 30        # Check for signals every X seconds (30 = 30 seconds for M5)
+UPDATE_INTERVAL = 10        # Check for signals every X seconds (10 = 10 seconds for M1)
 LOG_LEVEL = 'INFO'          # 'DEBUG', 'INFO', 'WARNING', 'ERROR'
 SAVE_TRADE_HISTORY = True   # Save trade history to CSV
 
@@ -209,9 +224,9 @@ EMAIL_PASSWORD = ''         # Your email password
 # ==============================================================================
 # SAFETY LIMITS
 # ==============================================================================
-# Daily limits (ADJUSTED for M5 - more trades expected)
+# Daily limits (ADJUSTED for M1 - MANY trades expected)
 MAX_DAILY_LOSS = 100.0      # Stop trading if daily loss exceeds this (in account currency)
-MAX_DAILY_TRADES = 30       # Maximum trades per day (INCREASED for M5)
+MAX_DAILY_TRADES = 100      # Maximum trades per day (VERY HIGH for M1)
 MAX_DAILY_LOSS_PERCENT = 5.0  # Stop if account loses X% in a day
 
 # Drawdown protection
@@ -268,6 +283,14 @@ def get_config():
         'slow_ma_period': SLOW_MA_PERIOD,
         'ma_type': MA_TYPE,
         'wait_for_confirmation': WAIT_FOR_CONFIRMATION,
+        
+        # MACD parameters
+        'use_macd': USE_MACD,
+        'macd_fast': MACD_FAST,
+        'macd_slow': MACD_SLOW,
+        'macd_signal': MACD_SIGNAL,
+        'macd_min_histogram': MACD_MIN_HISTOGRAM,
+        'require_macd_confirmation': REQUIRE_MACD_CONFIRMATION,
         
         # ATR settings
         'atr_period': ATR_PERIOD,
