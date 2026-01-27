@@ -112,16 +112,25 @@ class MT5TradingBot:
         Returns:
             pd.DataFrame: Historical price data
         """
-        rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
+        # Try up to 3 times with retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
+            rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
+            
+            if rates is not None and len(rates) > 0:
+                df = pd.DataFrame(rates)
+                df['time'] = pd.to_datetime(df['time'], unit='s')
+                return df
+            
+            # If failed, log and retry
+            if attempt < max_retries - 1:
+                logging.warning(f"Failed to get data for {symbol} (attempt {attempt + 1}/{max_retries}), retrying...")
+                time.sleep(1)  # Wait 1 second before retry
+            else:
+                error = mt5.last_error()
+                logging.error(f"Failed to get data for {symbol} after {max_retries} attempts. Error: {error}")
         
-        if rates is None or len(rates) == 0:
-            logging.error(f"Failed to get data for {symbol}")
-            return None
-        
-        df = pd.DataFrame(rates)
-        df['time'] = pd.to_datetime(df['time'], unit='s')
-        
-        return df
+        return None
     
     def calculate_indicators(self, df):
         """
