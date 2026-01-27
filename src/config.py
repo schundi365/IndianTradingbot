@@ -1,15 +1,21 @@
 """
-OPTIMIZED Configuration for MT5 Trading Bot
-Based on trade analysis - designed for better profitability
+M1 TESTING Configuration for MT5 Trading Bot
+EXTREME HIGH-FREQUENCY TRADING MODE
 
-Key Changes from Original:
-1. M5 timeframe instead of M1 (less noise)
-2. Wider stop losses (2.0x ATR instead of 1.2x)
-3. Higher confidence threshold (70% instead of 50%)
-4. Relaxed trailing stops
-5. Stronger trend filter (H1 instead of M15)
-6. Reduced risk during testing (0.2% instead of 0.3%)
-7. Time-of-day filter enabled
+⚠️ WARNING: M1 timeframe generates 100-200+ trades per day!
+⚠️ This is for TESTING ONLY with strict daily loss limits
+
+Key M1 Settings:
+1. M1 (1-minute) timeframe for maximum trade frequency
+2. Tight stop losses (1.2x ATR) for quick exits
+3. Lower confidence threshold (50%) for more signals
+4. Fast indicators (5/10 MA, 5/13/3 MACD)
+5. Quick trailing stops (0.8/0.6 ATR)
+6. M15 trend filter (faster than H1)
+7. 5% daily loss limit (stops trading when hit)
+8. 0.3% risk per trade
+9. 10-second update interval
+10. Unlimited trades (until 5% daily loss)
 """
 
 import MetaTrader5 as mt5
@@ -17,17 +23,17 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'GBPUSD']  # Gold + GBP/USD
+SYMBOLS = ['XAUUSD', 'GBPUSD', 'XAGUSD']  # Gold, GBP/USD, Silver
 
 # ==============================================================================
-# TIMEFRAME SETTINGS - OPTIMIZED FOR M5
+# TIMEFRAME SETTINGS - M1 EXTREME HIGH-FREQUENCY MODE
 # ==============================================================================
-TIMEFRAME = mt5.TIMEFRAME_M5  # 5-minute timeframe (MUCH BETTER than M1!)
+TIMEFRAME = mt5.TIMEFRAME_M1  # 1-minute timeframe (100-200+ trades/day expected!)
 
 # ==============================================================================
-# RISK MANAGEMENT - REDUCED FOR TESTING
+# RISK MANAGEMENT - M1 TESTING
 # ==============================================================================
-RISK_PERCENT = 0.2          # Risk 0.2% per trade (reduced from 0.3%)
+RISK_PERCENT = 0.3          # Risk 0.3% per trade (higher for M1 testing)
 REWARD_RATIO = 1.5          # Risk:Reward ratio 1:1.5
 DEFAULT_LOT_SIZE = 0.01     # Fallback lot size
 
@@ -41,8 +47,8 @@ MIN_LOT_SIZE = 0.01
 USE_SPLIT_ORDERS = True
 NUM_POSITIONS = 3
 
-# More realistic TP levels for M5
-TP_LEVELS = [1.2, 1.8, 2.5]  # Conservative targets
+# Aggressive TP levels for M1 (quick profits)
+TP_LEVELS = [1.0, 1.3, 1.8]  # M1 optimized - quick exits
 PARTIAL_CLOSE_PERCENT = [40, 30, 30]
 MAX_LOT_PER_ORDER = 0.5
 
@@ -51,66 +57,78 @@ MAX_LOT_PER_ORDER = 0.5
 # ==============================================================================
 USE_ADAPTIVE_RISK = True
 
-# M5 optimized periods
-TREND_STRENGTH_PERIOD = 30  # Longer period for M5
+# M1 optimized periods
+TREND_STRENGTH_PERIOD = 20  # Shorter period for M1
 
-# Stricter thresholds
-ADX_STRONG_TREND = 20       # Standard ADX threshold
-ADX_RANGING = 15
-TREND_CONSISTENCY_HIGH = 65
+# Relaxed thresholds for M1 (more signals)
+ADX_STRONG_TREND = 18       # Lower threshold for M1
+ADX_RANGING = 12
+TREND_CONSISTENCY_HIGH = 60
 VOLATILITY_HIGH = 1.2
 
-# HIGHER confidence requirement (KEY CHANGE!)
-MIN_TRADE_CONFIDENCE = 0.70  # 70% minimum (was 50%)
+# LOWER confidence for M1 testing (more trades)
+MIN_TRADE_CONFIDENCE = 0.50  # 50% minimum for M1 testing
 
 MAX_RISK_MULTIPLIER = 1.5
 MIN_RISK_MULTIPLIER = 0.3
 
 # ==============================================================================
-# MOVING AVERAGE STRATEGY - M5 OPTIMIZED
+# MOVING AVERAGE STRATEGY - M1 OPTIMIZED
 # ==============================================================================
-FAST_MA_PERIOD = 10         # 10-period EMA
-SLOW_MA_PERIOD = 20         # 20-period EMA
+FAST_MA_PERIOD = 5          # 5-period EMA (M1 optimized)
+SLOW_MA_PERIOD = 10         # 10-period EMA (M1 optimized)
 MA_TYPE = 'EMA'
 
 WAIT_FOR_CONFIRMATION = True
 MIN_MA_SEPARATION = 0.0001
 
 # ==============================================================================
-# MACD INDICATOR - STRICTER CONFIRMATION
+# RSI INDICATOR (ENHANCED - Most Popular Filter)
+# ==============================================================================
+USE_RSI = True
+RSI_PERIOD = 14             # Standard RSI period
+RSI_OVERBOUGHT = 70         # Don't buy above this
+RSI_OVERSOLD = 30           # Don't sell below this
+
+# ==============================================================================
+# MACD INDICATOR - M1 OPTIMIZED
 # ==============================================================================
 USE_MACD = True
-MACD_FAST = 8
-MACD_SLOW = 17
-MACD_SIGNAL = 5
+MACD_FAST = 5               # Faster for M1
+MACD_SLOW = 13              # Faster for M1
+MACD_SIGNAL = 3             # Faster for M1
 
-# Require stronger MACD signal (KEY CHANGE!)
-MACD_MIN_HISTOGRAM = 0.5    # Minimum histogram value (was 0.0)
+# Relaxed MACD for M1 (more signals)
+MACD_MIN_HISTOGRAM = 0.0    # No minimum for M1 testing
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
-# ATR-BASED STOP LOSS - WIDER STOPS
+# ATR-BASED STOP LOSS - M1 OPTIMIZED
 # ==============================================================================
-ATR_PERIOD = 14
-ATR_MULTIPLIER_SL = 2.0     # WIDER stop loss (was 1.2) - KEY CHANGE!
+# Adjusted for M1 timeframe
+ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 14 minutes)
+ATR_MULTIPLIER_SL = 1.2     # Stop Loss multiplier (VERY TIGHT for M1)
 
 MIN_ATR_VALUE = 0.0001
 MAX_ATR_VALUE = 999999
 
 # ==============================================================================
-# TRAILING STOP SETTINGS - RELAXED
+# TRAILING STOP SETTINGS - M1 OPTIMIZED
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-# More profit before trailing activates (KEY CHANGE!)
-TRAIL_ACTIVATION_ATR = 1.5  # was 0.8
-TRAIL_DISTANCE_ATR = 1.0    # was 0.6
-TRAIL_TYPE = 'atr'
+# Activation threshold (adjusted for M1)
+TRAIL_ACTIVATION_ATR = 0.8  # Activate trailing very quickly on M1
+# Example: If ATR=10 and this is 0.8, trailing activates after 8 points profit
+
+# Trailing distance (adjusted for M1)
+TRAIL_DISTANCE_ATR = 0.6    # Trail very close on M1
+TRAIL_TYPE = 'atr'          # 'atr', 'percentage', 'swing', 'chandelier', 'breakeven'
 
 TRAIL_PERCENT = 1.5
-BREAKEVEN_ACTIVATION_PIPS = 50
+BREAKEVEN_ACTIVATION_PIPS = 30  # M1 optimized - faster breakeven
 BREAKEVEN_PLUS_PIPS = 5
-TRAIL_START_PIPS = 75
+TRAIL_START_PIPS = 50           # M1 optimized - faster trailing
 
 # ==============================================================================
 # TRAILING TAKE PROFIT SETTINGS
@@ -123,25 +141,25 @@ TRAILING_TP_RATIO = 0.5
 # ==============================================================================
 MAGIC_NUMBER = 234000
 
-# M5 limits (fewer trades than M1)
-MAX_TRADES_TOTAL = 6        # Reduced from 10
-MAX_TRADES_PER_SYMBOL = 2   # Reduced from 3
+# Maximum trades (UNLIMITED FOR TESTING)
+MAX_TRADES_TOTAL = 999        # Effectively unlimited
+MAX_TRADES_PER_SYMBOL = 999   # Effectively unlimited
 ALLOW_HEDGING = False
 
-# TRADING HOURS - ENABLED (KEY CHANGE!)
-ENABLE_TRADING_HOURS = True
-TRADING_START_HOUR = 8      # 8 AM UTC (London open)
-TRADING_END_HOUR = 16       # 4 PM UTC (before NY close)
+# TRADING HOURS - DISABLED FOR TESTING
+ENABLE_TRADING_HOURS = False  # Trade 24/7 during testing
+TRADING_START_HOUR = 0        # Not used when disabled
+TRADING_END_HOUR = 24         # Not used when disabled
 
 TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 
 # ==============================================================================
 # ADDITIONAL FILTERS - STRONGER
 # ==============================================================================
-# STRONGER trend filter (KEY CHANGE!)
+# FASTER trend filter for M1
 USE_TREND_FILTER = True
-TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # H1 for trend (was M15)
-TREND_MA_PERIOD = 50                # Longer MA (was 20)
+TREND_TIMEFRAME = mt5.TIMEFRAME_M15  # M15 for trend (faster than H1)
+TREND_MA_PERIOD = 20                 # Shorter MA for M1 responsiveness
 
 USE_VOLUME_FILTER = False
 MIN_VOLUME_MA = 1.2
@@ -161,7 +179,7 @@ MAX_TP_EXTENSIONS = 5           # Maximum TP extensions per position
 # ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
-UPDATE_INTERVAL = 30        # Check every 30 seconds (was 10)
+UPDATE_INTERVAL = 10        # Check every 10 seconds (M1 needs fast updates)
 LOG_LEVEL = 'INFO'
 SAVE_TRADE_HISTORY = True
 
@@ -175,11 +193,11 @@ EMAIL_ADDRESS = ''
 EMAIL_PASSWORD = ''
 
 # ==============================================================================
-# SAFETY LIMITS
+# SAFETY LIMITS (RELAXED FOR TESTING)
 # ==============================================================================
-MAX_DAILY_LOSS = 100.0
-MAX_DAILY_TRADES = 30       # Reduced from 100
-MAX_DAILY_LOSS_PERCENT = 5.0
+MAX_DAILY_LOSS = 100.0      # Absolute dollar amount (backup limit)
+MAX_DAILY_TRADES = 999      # Unlimited for testing
+MAX_DAILY_LOSS_PERCENT = 5.0  # Stop trading if daily loss exceeds 5% of equity
 
 MAX_DRAWDOWN_PERCENT = 10.0
 MIN_ACCOUNT_BALANCE = 100.0
@@ -223,6 +241,10 @@ def get_config():
         'slow_ma_period': SLOW_MA_PERIOD,
         'ma_type': MA_TYPE,
         'wait_for_confirmation': WAIT_FOR_CONFIRMATION,
+        'use_rsi': USE_RSI,
+        'rsi_period': RSI_PERIOD,
+        'rsi_overbought': RSI_OVERBOUGHT,
+        'rsi_oversold': RSI_OVERSOLD,
         'use_macd': USE_MACD,
         'macd_fast': MACD_FAST,
         'macd_slow': MACD_SLOW,
@@ -291,17 +313,22 @@ if __name__ == "__main__":
     import json
     config = get_config()
     print("=" * 80)
-    print("OPTIMIZED CONFIGURATION")
+    print("M1 TESTING CONFIGURATION - EXTREME HIGH-FREQUENCY MODE")
     print("=" * 80)
     print()
-    print("Key Improvements:")
-    print("  ✓ M5 timeframe (less noise)")
-    print("  ✓ Wider stops (2.0x ATR)")
-    print("  ✓ Higher confidence (70%)")
-    print("  ✓ Relaxed trailing stops")
-    print("  ✓ Stronger trend filter (H1)")
-    print("  ✓ Trading hours enabled")
-    print("  ✓ Reduced risk (0.2%)")
+    print("⚠️  WARNING: Expect 100-200+ trades per day!")
+    print()
+    print("Key M1 Settings:")
+    print("  ✓ M1 (1-minute) timeframe")
+    print("  ✓ Fast indicators (5/10 MA, 5/13/3 MACD)")
+    print("  ✓ Tight stops (1.2x ATR)")
+    print("  ✓ Quick trailing (0.8/0.6 ATR)")
+    print("  ✓ Lower confidence (50%)")
+    print("  ✓ M15 trend filter")
+    print("  ✓ 5% daily loss limit")
+    print("  ✓ 0.3% risk per trade")
+    print("  ✓ 10-second updates")
+    print("  ✓ Unlimited trades (until loss limit)")
     print()
     print("Configuration:")
     print(json.dumps({k: str(v) for k, v in config.items()}, indent=2))

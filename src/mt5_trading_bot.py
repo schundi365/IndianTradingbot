@@ -134,7 +134,7 @@ class MT5TradingBot:
     
     def calculate_indicators(self, df):
         """
-        Calculate technical indicators
+        Calculate technical indicators (Enhanced with RSI)
         
         Args:
             df (pd.DataFrame): Price data
@@ -152,6 +152,22 @@ class MT5TradingBot:
         df['low_close'] = np.abs(df['low'] - df['close'].shift())
         df['tr'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
         df['atr'] = df['tr'].rolling(window=self.atr_period).mean()
+        
+        # RSI (Relative Strength Index) - Popular filter for gold/silver
+        delta = df['close'].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+        rs = avg_gain / avg_loss
+        df['rsi'] = 100 - (100 / (1 + rs))
+        
+        # Enhanced MACD (already configured in config, but calculate properly)
+        ema_fast = df['close'].ewm(span=self.macd_fast, adjust=False).mean()
+        ema_slow = df['close'].ewm(span=self.macd_slow, adjust=False).mean()
+        df['macd'] = ema_fast - ema_slow
+        df['macd_signal'] = df['macd'].ewm(span=self.macd_signal, adjust=False).mean()
+        df['macd_histogram'] = df['macd'] - df['macd_signal']
         
         # Trend direction
         df['ma_trend'] = np.where(df['fast_ma'] > df['slow_ma'], 1, -1)
@@ -334,7 +350,7 @@ class MT5TradingBot:
     
     def check_entry_signal(self, df):
         """
-        Check for entry signals based on moving pattern
+        Check for entry signals with RSI and MACD filtering
         
         Args:
             df (pd.DataFrame): Price data with indicators
@@ -349,26 +365,60 @@ class MT5TradingBot:
         previous = df.iloc[-2]
         
         # Check for MA crossover
+        signal = 0
         if latest['ma_cross'] == 1:
             logging.info(f"Bullish MA crossover detected")
-            return 1
+            signal = 1
         elif latest['ma_cross'] == -1:
             logging.info(f"Bearish MA crossover detected")
-            return -1
+            signal = -1
         
         # Additional confirmation: price above/below both MAs
-        if (latest['close'] > latest['fast_ma'] and 
-            latest['close'] > latest['slow_ma'] and 
-            latest['ma_trend'] == 1 and previous['ma_trend'] == -1):
-            logging.info(f"Bullish trend confirmation")
-            return 1
-        elif (latest['close'] < latest['fast_ma'] and 
-              latest['close'] < latest['slow_ma'] and 
-              latest['ma_trend'] == -1 and previous['ma_trend'] == 1):
-            logging.info(f"Bearish trend confirmation")
-            return -1
+        if signal == 0:
+            if (latest['close'] > latest['fast_ma'] and 
+                latest['close'] > latest['slow_ma'] and 
+                latest['ma_trend'] == 1 and previous['ma_trend'] == -1):
+                logging.info(f"Bullish trend confirmation")
+                signal = 1
+            elif (latest['close'] < latest['fast_ma'] and 
+                  latest['close'] < latest['slow_ma'] and 
+                  latest['ma_trend'] == -1 and previous['ma_trend'] == 1):
+                logging.info(f"Bearish trend confirmation")
+                signal = -1
         
-        return 0
+        # Apply RSI filter (most popular enhancement)
+        if signal != 0 and not pd.isna(latest['rsi']):
+            rsi = latest['rsi']
+            if signal == 1:  # BUY
+                if rsi > 70:
+                    logging.info(f"  ❌ RSI filter: Too overbought (RSI: {rsi:.1f})")
+                    return 0
+                else:
+                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
+            elif signal == -1:  # SELL
+                if rsi < 30:
+                    logging.info(f"  ❌ RSI filter: Too oversold (RSI: {rsi:.1f})")
+                    return 0
+                else:
+                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
+        
+        # Apply MACD confirmation (second most popular)
+        if signal != 0 and not pd.isna(latest['macd_histogram']):
+            histogram = latest['macd_histogram']
+            if signal == 1:  # BUY
+                if histogram <= 0:
+                    logging.info(f"  ❌ MACD filter: Histogram not positive ({histogram:.6f})")
+                    return 0
+                else:
+                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
+            elif signal == -1:  # SELL
+                if histogram >= 0:
+                    logging.info(f"  ❌ MACD filter: Histogram not negative ({histogram:.6f})")
+                    return 0
+                else:
+                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
+        
+        return signal
     
     def open_position(self, symbol, direction, entry_price, stop_loss, take_profit, lot_size):
         """
@@ -399,6 +449,9 @@ class MT5TradingBot:
         order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
         price = mt5.symbol_info_tick(symbol).ask if direction == 1 else mt5.symbol_info_tick(symbol).bid
         
+        # Get correct filling mode for this symbol
+        filling_mode = self.get_filling_mode(symbol)
+        
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -411,7 +464,7 @@ class MT5TradingBot:
             "magic": self.magic_number,
             "comment": f"MT5Bot_{direction}",
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_IOC,
+            "type_filling": filling_mode,
         }
         
         # Send order
@@ -434,6 +487,31 @@ class MT5TradingBot:
         }
         
         return True
+    
+    def get_filling_mode(self, symbol):
+        """
+        Get the appropriate filling mode for the symbol
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            int: MT5 filling mode constant
+        """
+        symbol_info = mt5.symbol_info(symbol)
+        if symbol_info is None:
+            return mt5.ORDER_FILLING_FOK
+        
+        # Check which filling modes are supported
+        filling_mode = symbol_info.filling_mode
+        
+        # Try filling modes in order of preference
+        if filling_mode & 1:  # FOK (Fill or Kill)
+            return mt5.ORDER_FILLING_FOK
+        elif filling_mode & 2:  # IOC (Immediate or Cancel)
+            return mt5.ORDER_FILLING_IOC
+        else:  # Return (market execution)
+            return mt5.ORDER_FILLING_RETURN
     
     def open_split_positions(self, symbol, direction, entry_price, stop_loss, total_lot_size):
         """
@@ -484,6 +562,9 @@ class MT5TradingBot:
         tickets = []
         order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
         
+        # Get correct filling mode for this symbol
+        filling_mode = self.get_filling_mode(symbol)
+        
         # Open each position with its respective TP level
         for i, (lot, tp) in enumerate(zip(lot_sizes, tp_prices)):
             # Round lot size to volume step
@@ -512,7 +593,7 @@ class MT5TradingBot:
                 "magic": self.magic_number,
                 "comment": f"MT5Bot_Split_{group_id}_{i+1}",
                 "type_time": mt5.ORDER_TIME_GTC,
-                "type_filling": mt5.ORDER_FILLING_IOC,
+                "type_filling": filling_mode,
             }
             
             # Send order
@@ -730,6 +811,12 @@ class MT5TradingBot:
             direction = 1 if position.type == mt5.ORDER_TYPE_BUY else -1
             
             try:
+                # Verify position still exists before processing
+                verify_position = mt5.positions_get(ticket=ticket)
+                if not verify_position or len(verify_position) == 0:
+                    logging.debug(f"Position {ticket} already closed, skipping update")
+                    continue
+                
                 # Get current data and market condition for dynamic adjustments
                 df = self.get_historical_data(symbol, self.timeframe, 100)
                 if df is not None:
@@ -769,7 +856,12 @@ class MT5TradingBot:
                     # Single position, update individually
                     self.update_trailing_stop(ticket, symbol, direction)
             except Exception as e:
-                logging.warning(f"Error updating position {ticket}: {str(e)}")
+                # More informative error message
+                error_msg = str(e)
+                if "not found" in error_msg.lower() or ticket == int(error_msg):
+                    logging.debug(f"Position {ticket} closed during update, will clean up")
+                else:
+                    logging.warning(f"Error updating position {ticket} ({symbol}): {error_msg}")
                 continue
         
         # Clean up closed positions and groups
@@ -819,6 +911,54 @@ class MT5TradingBot:
         if len(tickets_to_remove) > 0:
             logging.info(f"Cleaned up {len(tickets_to_remove)} closed position(s)")
     
+    def check_daily_loss_limit(self):
+        """
+        Check if daily loss limit has been exceeded
+        
+        Returns:
+            bool: True if can continue trading, False if limit exceeded
+        """
+        from datetime import datetime, timedelta
+        
+        # Get account info
+        account_info = mt5.account_info()
+        if not account_info:
+            return True  # Can't check, allow trading
+        
+        current_equity = account_info.equity
+        
+        # Get today's deals
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        deals = mt5.history_deals_get(today_start, datetime.now())
+        
+        if deals is None or len(deals) == 0:
+            return True  # No deals today, can trade
+        
+        # Calculate today's profit/loss for bot trades only
+        daily_pnl = 0.0
+        for deal in deals:
+            if deal.magic == self.magic_number:
+                daily_pnl += deal.profit
+        
+        # Calculate loss percentage of current equity
+        if daily_pnl < 0:
+            loss_percent = abs(daily_pnl) / current_equity * 100
+            
+            max_loss_percent = self.config.get('max_daily_loss_percent', 5.0)
+            
+            if loss_percent >= max_loss_percent:
+                logging.warning(f"Daily loss limit reached: {loss_percent:.2f}% (Max: {max_loss_percent}%)")
+                logging.warning(f"Daily P/L: ${daily_pnl:.2f}, Equity: ${current_equity:.2f}")
+                logging.warning(f"Trading paused for today. Will resume tomorrow.")
+                return False
+            
+            # Log warning when approaching limit (at 80%)
+            if loss_percent >= max_loss_percent * 0.8:
+                logging.warning(f"Approaching daily loss limit: {loss_percent:.2f}% of {max_loss_percent}%")
+                logging.warning(f"Daily P/L: ${daily_pnl:.2f}, Remaining: ${(max_loss_percent * current_equity / 100) - abs(daily_pnl):.2f}")
+        
+        return True
+    
     def run_strategy(self, symbol):
         """
         Execute trading strategy for a symbol
@@ -826,10 +966,16 @@ class MT5TradingBot:
         Args:
             symbol (str): Trading symbol
         """
-        # Check if already have position for this symbol
+        # Check daily loss limit before trading
+        if not self.check_daily_loss_limit():
+            return
+        
+        # Check if already have maximum positions for this symbol
         positions = mt5.positions_get(symbol=symbol, magic=self.magic_number)
-        if positions and len(positions) > 0:
-            logging.info(f"Already have position for {symbol}")
+        max_per_symbol = self.config.get('max_trades_per_symbol', 1)
+        
+        if positions and len(positions) >= max_per_symbol:
+            logging.info(f"Already have {len(positions)} position(s) for {symbol} (Max: {max_per_symbol})")
             return
         
         # Get data and calculate indicators
