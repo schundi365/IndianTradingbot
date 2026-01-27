@@ -42,6 +42,20 @@ MAX_LOT_SIZE = 1.0
 MIN_LOT_SIZE = 0.01
 
 # ==============================================================================
+# SCALPING MODE (M1 TIMEFRAME)
+# ==============================================================================
+USE_SCALPING_MODE = True        # Use dynamic scalping exits instead of fixed TP
+SCALP_MIN_PROFIT_PIPS = 20      # Minimum 20 pips before considering exit
+SCALP_MAX_HOLD_MINUTES = 30     # Maximum 30 minutes hold time
+SCALP_TRAIL_AFTER_PIPS = 30     # Start trailing after 30 pips profit
+SCALP_TRAIL_DISTANCE_PIPS = 15  # Trail 15 pips behind price
+
+# Scalping exit triggers
+SCALP_MOMENTUM_EXIT = True      # Exit when momentum weakens
+SCALP_REVERSAL_EXIT = True      # Exit on reversal signals
+SCALP_TIME_EXIT = True          # Exit after max hold time
+
+# ==============================================================================
 # SPLIT ORDERS & PARTIAL PROFIT TAKING
 # ==============================================================================
 USE_SPLIT_ORDERS = True
@@ -306,6 +320,16 @@ def get_config():
         'dynamic_sl_check_interval': DYNAMIC_SL_CHECK_INTERVAL,
         'dynamic_tp_check_interval': DYNAMIC_TP_CHECK_INTERVAL,
         'max_tp_extensions': MAX_TP_EXTENSIONS,
+        
+        # Scalping Mode
+        'use_scalping_mode': USE_SCALPING_MODE,
+        'scalp_min_profit_pips': SCALP_MIN_PROFIT_PIPS,
+        'scalp_max_hold_minutes': SCALP_MAX_HOLD_MINUTES,
+        'scalp_trail_after_pips': SCALP_TRAIL_AFTER_PIPS,
+        'scalp_trail_distance_pips': SCALP_TRAIL_DISTANCE_PIPS,
+        'scalp_momentum_exit': SCALP_MOMENTUM_EXIT,
+        'scalp_reversal_exit': SCALP_REVERSAL_EXIT,
+        'scalp_time_exit': SCALP_TIME_EXIT,
     }
 
 

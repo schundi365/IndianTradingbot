@@ -860,6 +860,16 @@ class MT5TradingBot:
                             integrate_dynamic_tp(self, position, df, market_condition)
                         except Exception as e:
                             logging.debug(f"Dynamic TP not available: {str(e)}")
+                    
+                    # Scalping Mode (M1 only) - Dynamic exits instead of fixed TP
+                    if self.config.get('use_scalping_mode', False) and self.timeframe == mt5.TIMEFRAME_M1:
+                        try:
+                            from scalping_manager import integrate_scalping
+                            # Returns True if position was closed
+                            if integrate_scalping(self, position, df):
+                                continue  # Position closed, skip trailing stop logic
+                        except Exception as e:
+                            logging.debug(f"Scalping mode not available: {str(e)}")
                 
                 # Standard trailing stop logic
                 # Check if this is part of a split position group
