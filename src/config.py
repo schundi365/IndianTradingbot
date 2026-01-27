@@ -9,7 +9,7 @@ import MetaTrader5 as mt5
 # TRADING SYMBOLS
 # ==============================================================================
 # Add any MT5 symbols you want to trade
-SYMBOLS = ['XAUUSD', 'GBPUSD']  # Example: Major Forex pairs
+SYMBOLS = ['XAUUSD', 'GBPUSD']  # Gold (commodity) + GBP/USD (forex pair)
 
 # You can trade any symbols your broker supports:
 # Forex pairs: 'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'
