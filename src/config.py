@@ -61,13 +61,13 @@ USE_ADAPTIVE_RISK = True
 TREND_STRENGTH_PERIOD = 20  # Shorter period for M1
 
 # Relaxed thresholds for M1 (more signals)
-ADX_STRONG_TREND = 18       # Lower threshold for M1
-ADX_RANGING = 12
-TREND_CONSISTENCY_HIGH = 60
+ADX_STRONG_TREND = 15       # Lower threshold for M1 (was 18)
+ADX_RANGING = 10            # Lower threshold (was 12)
+TREND_CONSISTENCY_HIGH = 55 # Lower threshold (was 60)
 VOLATILITY_HIGH = 1.2
 
 # LOWER confidence for M1 testing (more trades)
-MIN_TRADE_CONFIDENCE = 0.50  # 50% minimum for M1 testing
+MIN_TRADE_CONFIDENCE = 0.45  # 45% minimum (was 50% - too strict)
 
 MAX_RISK_MULTIPLIER = 1.5
 MIN_RISK_MULTIPLIER = 0.3
