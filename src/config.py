@@ -23,7 +23,7 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'GBPUSD', 'XAGUSD']  # Gold, GBP/USD, Silver
+SYMBOLS = ['XAUUSD', 'GBPUSD']  # Removed XAGUSD (57% of losses)
 
 # ==============================================================================
 # TIMEFRAME SETTINGS - M1 EXTREME HIGH-FREQUENCY MODE
@@ -46,7 +46,7 @@ MIN_LOT_SIZE = 0.01
 # ==============================================================================
 USE_SCALPING_MODE = True        # Use dynamic scalping exits instead of fixed TP
 SCALP_MIN_PROFIT_PIPS = 20      # Minimum 20 pips before considering exit
-SCALP_MAX_HOLD_MINUTES = 30     # Maximum 30 minutes hold time
+SCALP_MAX_HOLD_MINUTES = 20     # Maximum 20 minutes hold time (was 30)
 SCALP_TRAIL_AFTER_PIPS = 30     # Start trailing after 30 pips profit
 SCALP_TRAIL_DISTANCE_PIPS = 15  # Trail 15 pips behind price
 
@@ -117,11 +117,11 @@ MACD_MIN_HISTOGRAM = 0.0    # No minimum for M1 testing
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
-# ATR-BASED STOP LOSS - M1 OPTIMIZED
+# ATR-BASED STOP LOSS - M1 OPTIMIZED (TIGHTENED)
 # ==============================================================================
 # Adjusted for M1 timeframe
 ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 14 minutes)
-ATR_MULTIPLIER_SL = 1.2     # Stop Loss multiplier (VERY TIGHT for M1)
+ATR_MULTIPLIER_SL = 0.8     # Stop Loss multiplier (TIGHTER for M1 - was 1.2)
 
 MIN_ATR_VALUE = 0.0001
 MAX_ATR_VALUE = 999999
@@ -160,20 +160,20 @@ MAX_TRADES_TOTAL = 999        # Effectively unlimited
 MAX_TRADES_PER_SYMBOL = 999   # Effectively unlimited
 ALLOW_HEDGING = False
 
-# TRADING HOURS - DISABLED FOR TESTING
-ENABLE_TRADING_HOURS = False  # Trade 24/7 during testing
-TRADING_START_HOUR = 0        # Not used when disabled
-TRADING_END_HOUR = 24         # Not used when disabled
+# TRADING HOURS - AVOID 19:00 HOUR (100% of losses)
+ENABLE_TRADING_HOURS = True   # Enable time filter
+TRADING_START_HOUR = 0        # Start at midnight
+TRADING_END_HOUR = 19         # Stop at 19:00 (avoid 19:00-20:00)
 
 TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 
 # ==============================================================================
 # ADDITIONAL FILTERS - STRONGER
 # ==============================================================================
-# FASTER trend filter for M1
+# FASTER trend filter for M1 (STRENGTHENED)
 USE_TREND_FILTER = True
-TREND_TIMEFRAME = mt5.TIMEFRAME_M15  # M15 for trend (faster than H1)
-TREND_MA_PERIOD = 20                 # Shorter MA for M1 responsiveness
+TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # H1 for stronger trend (was M15)
+TREND_MA_PERIOD = 50                # Longer MA for trend (was 20)
 
 USE_VOLUME_FILTER = False
 MIN_VOLUME_MA = 1.2
