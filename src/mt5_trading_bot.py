@@ -710,33 +710,70 @@ class MT5TradingBot:
         return updated_count
     
     def manage_positions(self):
-        """Check and manage all open positions"""
+        """Check and manage all open positions with dynamic SL/TP"""
         positions = mt5.positions_get(magic=self.magic_number)
         
         if positions is None or len(positions) == 0:
+            # Clean up tracking dictionaries if no positions
+            self.cleanup_closed_positions()
             return
         
         # Track which groups we've already processed
         processed_groups = set()
+        
+        # Get list of open ticket numbers
+        open_tickets = {pos.ticket for pos in positions}
         
         for position in positions:
             ticket = position.ticket
             symbol = position.symbol
             direction = 1 if position.type == mt5.ORDER_TYPE_BUY else -1
             
-            # Check if this is part of a split position group
-            if ticket in self.positions and 'group_id' in self.positions[ticket]:
-                group_id = self.positions[ticket]['group_id']
+            try:
+                # Get current data and market condition for dynamic adjustments
+                df = self.get_historical_data(symbol, self.timeframe, 100)
+                if df is not None:
+                    df = self.calculate_indicators(df)
+                    
+                    # Get market condition if adaptive risk is enabled
+                    market_condition = None
+                    if self.use_adaptive_risk and self.adaptive_risk_manager:
+                        market_condition = self.adaptive_risk_manager.analyze_market_condition(df)
+                    
+                    # Dynamic Stop Loss adjustment
+                    if self.config.get('use_dynamic_sl', False):
+                        try:
+                            from dynamic_sl_manager import integrate_dynamic_sl
+                            integrate_dynamic_sl(self, position, df, market_condition)
+                        except Exception as e:
+                            logging.debug(f"Dynamic SL not available: {str(e)}")
+                    
+                    # Dynamic Take Profit extension
+                    if self.config.get('use_dynamic_tp', False) and position.profit > 0:
+                        try:
+                            from dynamic_tp_manager import integrate_dynamic_tp
+                            integrate_dynamic_tp(self, position, df, market_condition)
+                        except Exception as e:
+                            logging.debug(f"Dynamic TP not available: {str(e)}")
                 
-                # Update entire group together (only once)
-                if group_id not in processed_groups:
-                    self.update_group_trailing_stop(group_id)
-                    processed_groups.add(group_id)
-            else:
-                # Single position, update individually
-                self.update_trailing_stop(ticket, symbol, direction)
+                # Standard trailing stop logic
+                # Check if this is part of a split position group
+                if ticket in self.positions and 'group_id' in self.positions[ticket]:
+                    group_id = self.positions[ticket]['group_id']
+                    
+                    # Update entire group together (only once)
+                    if group_id not in processed_groups:
+                        self.update_group_trailing_stop(group_id)
+                        processed_groups.add(group_id)
+                else:
+                    # Single position, update individually
+                    self.update_trailing_stop(ticket, symbol, direction)
+            except Exception as e:
+                logging.warning(f"Error updating position {ticket}: {str(e)}")
+                continue
         
-        # Clean up closed groups
+        # Clean up closed positions and groups
+        self.cleanup_closed_positions()
         self.cleanup_closed_groups()
     
     def cleanup_closed_groups(self):
@@ -757,6 +794,30 @@ class MT5TradingBot:
         for group_id in groups_to_remove:
             del self.split_position_groups[group_id]
             logging.info(f"Cleaned up closed group: {group_id}")
+    
+    def cleanup_closed_positions(self):
+        """Remove closed positions from tracking dictionary"""
+        # Get all currently open positions
+        open_positions = mt5.positions_get(magic=self.magic_number)
+        
+        if open_positions is None:
+            open_tickets = set()
+        else:
+            open_tickets = {pos.ticket for pos in open_positions}
+        
+        # Find positions in tracking that are no longer open
+        tickets_to_remove = []
+        for ticket in self.positions.keys():
+            if ticket not in open_tickets:
+                tickets_to_remove.append(ticket)
+        
+        # Remove closed positions from tracking
+        for ticket in tickets_to_remove:
+            del self.positions[ticket]
+            logging.debug(f"Cleaned up closed position: {ticket}")
+        
+        if len(tickets_to_remove) > 0:
+            logging.info(f"Cleaned up {len(tickets_to_remove)} closed position(s)")
     
     def run_strategy(self, symbol):
         """
@@ -893,12 +954,14 @@ class MT5TradingBot:
                         self.run_strategy(symbol)
                     except Exception as e:
                         logging.error(f"Error processing {symbol}: {str(e)}")
+                        logging.debug(f"Traceback:", exc_info=True)
                 
                 # Manage existing positions (trailing stops)
                 try:
                     self.manage_positions()
                 except Exception as e:
                     logging.error(f"Error managing positions: {str(e)}")
+                    logging.debug(f"Traceback:", exc_info=True)
                 
                 # Wait before next iteration
                 time.sleep(60)  # Check every minute

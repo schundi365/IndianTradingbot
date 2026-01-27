@@ -150,15 +150,6 @@ AVOID_NEWS_TRADING = False
 NEWS_BUFFER_MINUTES = 30
 
 # ==============================================================================
-# DYNAMIC RISK MANAGEMENT (NEW!)
-# ==============================================================================
-USE_DYNAMIC_SL = True           # Enable dynamic stop loss adjustments
-USE_DYNAMIC_TP = True           # Enable dynamic take profit extensions
-DYNAMIC_SL_CHECK_INTERVAL = 60  # Check SL every 60 seconds
-DYNAMIC_TP_CHECK_INTERVAL = 60  # Check TP every 60 seconds
-MAX_TP_EXTENSIONS = 5           # Maximum TP extensions per position
-
-# ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
 UPDATE_INTERVAL = 30        # Check every 30 seconds (was 10)
@@ -272,18 +263,9 @@ def get_config():
         'max_daily_loss_percent': MAX_DAILY_LOSS_PERCENT,
         'max_drawdown_percent': MAX_DRAWDOWN_PERCENT,
         'min_account_balance': MIN_ACCOUNT_BALANCE,
-        
-        # Backtesting
         'backtest_mode': BACKTEST_MODE,
         'backtest_start_date': BACKTEST_START_DATE,
         'backtest_end_date': BACKTEST_END_DATE,
-        
-        # Dynamic Risk Management
-        'use_dynamic_sl': USE_DYNAMIC_SL,
-        'use_dynamic_tp': USE_DYNAMIC_TP,
-        'dynamic_sl_check_interval': DYNAMIC_SL_CHECK_INTERVAL,
-        'dynamic_tp_check_interval': DYNAMIC_TP_CHECK_INTERVAL,
-        'max_tp_extensions': MAX_TP_EXTENSIONS,
     }
 
 
