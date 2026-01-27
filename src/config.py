@@ -179,7 +179,7 @@ MAX_TP_EXTENSIONS = 5           # Maximum TP extensions per position
 # ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
-UPDATE_INTERVAL = 10        # Check every 10 seconds (M1 needs fast updates)
+UPDATE_INTERVAL = 15        # Check every 15 seconds (reduced load on MT5)
 LOG_LEVEL = 'INFO'
 SAVE_TRADE_HISTORY = True
 

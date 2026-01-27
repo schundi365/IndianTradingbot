@@ -107,7 +107,7 @@ class MT5TradingBot:
     
     def get_historical_data(self, symbol, timeframe, bars=200):
         """
-        Fetch historical price data from MT5
+        Fetch historical price data from MT5 with improved error handling
         
         Args:
             symbol (str): Trading symbol
@@ -127,12 +127,25 @@ class MT5TradingBot:
                 df['time'] = pd.to_datetime(df['time'], unit='s')
                 return df
             
+            # Check error type
+            error = mt5.last_error()
+            error_code = error[0] if error else 0
+            
+            # If IPC error, try to reconnect
+            if error_code == -10001:
+                logging.warning(f"IPC error for {symbol}, attempting to reconnect MT5...")
+                mt5.shutdown()
+                time.sleep(2)
+                if mt5.initialize():
+                    logging.info("MT5 reconnected successfully")
+                else:
+                    logging.error("Failed to reconnect MT5")
+            
             # If failed, log and retry
             if attempt < max_retries - 1:
                 logging.warning(f"Failed to get data for {symbol} (attempt {attempt + 1}/{max_retries}), retrying...")
-                time.sleep(1)  # Wait 1 second before retry
+                time.sleep(2)  # Wait 2 seconds before retry (increased from 1)
             else:
-                error = mt5.last_error()
                 logging.error(f"Failed to get data for {symbol} after {max_retries} attempts. Error: {error}")
         
         return None
