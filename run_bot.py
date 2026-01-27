@@ -15,7 +15,7 @@ from mt5_trading_bot import MT5TradingBot
 
 def main():
     print("=" * 60)
-    print("MT5 GOLD & SILVER TRADING BOT")
+    print("MT5 AUTOMATED TRADING BOT")
     print("=" * 60)
     print()
     

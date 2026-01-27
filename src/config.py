@@ -8,8 +8,17 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'XAGUSD']  # Gold and Silver
-# Other options: 'XAUUSD' (Gold), 'XAGUSD' (Silver), 'XPTUSD' (Platinum)
+# Add any MT5 symbols you want to trade
+SYMBOLS = ['XAUUSD', 'GBPUSD']  # Example: Major Forex pairs
+
+# You can trade any symbols your broker supports:
+# Forex pairs: 'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'
+# Commodities: 'XAUUSD' (Gold), 'XAGUSD' (Silver), 'XTIUSD' (Oil), 'XBRUSD' (Brent)
+# Indices: 'US30' (Dow), 'US500' (S&P500), 'NAS100' (Nasdaq), 'GER40' (DAX)
+# Crypto: 'BTCUSD', 'ETHUSD' (if broker supports)
+# Stocks: 'AAPL', 'TSLA', 'GOOGL' (if broker supports)
+
+# Note: Symbol names may vary by broker. Check your MT5 Market Watch for exact names.
 
 # ==============================================================================
 # TIMEFRAME SETTINGS
