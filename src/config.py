@@ -81,7 +81,7 @@ TREND_CONSISTENCY_HIGH = 55 # Lower threshold (was 60)
 VOLATILITY_HIGH = 1.2
 
 # LOWER confidence for M1 testing (more trades)
-MIN_TRADE_CONFIDENCE = 0.45  # 45% minimum (was 50% - too strict)
+MIN_TRADE_CONFIDENCE = 0.40  # 40% minimum (was 45% - more aggressive)
 
 MAX_RISK_MULTIPLIER = 1.5
 MIN_RISK_MULTIPLIER = 0.3
@@ -161,7 +161,7 @@ MAX_TRADES_PER_SYMBOL = 999   # Effectively unlimited
 ALLOW_HEDGING = False
 
 # TRADING HOURS - AVOID 19:00 HOUR (100% of losses)
-ENABLE_TRADING_HOURS = True   # Enable time filter
+ENABLE_TRADING_HOURS = False   # Enable time filter
 TRADING_START_HOUR = 0        # Start at midnight
 TRADING_END_HOUR = 19         # Stop at 19:00 (avoid 19:00-20:00)
 
