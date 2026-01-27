@@ -53,8 +53,12 @@ USE_SPLIT_ORDERS = True     # Split position into multiple orders with different
 # Number of positions to split into (2-5 recommended)
 NUM_POSITIONS = 3           # Split into 3 separate positions
 
-# Take profit levels (Risk:Reward ratios for each position)
-# Example: [1.5, 2.5, 4.0] means:
+# Take profit levels (Risk:Reward ratios for each position) - adjusted for M5
+# Example: [1.2, 1.8, 2.5] means:
+#   - Position 1 exits at 1.2x risk distance (quick profit)
+#   - Position 2 exits at 1.8x risk distance (moderate)
+#   - Position 3 exits at 2.5x risk distance (let it run)
+TP_LEVELS = [1.2, 1.8, 2.5]  # More realistic for M5 (was [1.5, 2.5, 4.0] for H1)
 #   - Position 1 exits at 1.5x risk distance
 #   - Position 2 exits at 2.5x risk distance  
 #   - Position 3 exits at 4.0x risk distance
@@ -87,19 +91,20 @@ USE_ADAPTIVE_RISK = True    # Enable intelligent risk adjustment based on market
 # - Increase/decrease position size based on market favorability
 # - Filter trades based on confidence scores
 
-# Trend strength analysis
-TREND_STRENGTH_PERIOD = 50  # Period for analyzing trend consistency
+# Trend strength analysis (adjusted for M5)
+TREND_STRENGTH_PERIOD = 30  # Period for analyzing trend consistency (was 50 for H1)
 
-# Market condition thresholds (Advanced - leave as default unless experienced)
-ADX_STRONG_TREND = 25       # ADX above this = trending market
-ADX_RANGING = 20            # ADX below this = ranging market
-TREND_CONSISTENCY_HIGH = 70 # % of bars in same direction = strong trend
-VOLATILITY_HIGH = 1.3       # ATR ratio above this = volatile market
+# Market condition thresholds (adjusted for M5)
+ADX_STRONG_TREND = 20       # ADX above this = trending market (was 25 for H1)
+ADX_RANGING = 15            # ADX below this = ranging market (was 20 for H1)
+TREND_CONSISTENCY_HIGH = 65 # % of bars in same direction = strong trend (was 70)
+VOLATILITY_HIGH = 1.2       # ATR ratio above this = volatile market (was 1.3)
 
 # Trade confidence requirements
-MIN_TRADE_CONFIDENCE = 0.60 # Minimum confidence score to take trade (60%)
-# Higher = fewer trades but higher quality
-# Lower = more trades but some lower quality
+# Trade confidence requirements (adjusted for M5)
+MIN_TRADE_CONFIDENCE = 0.55 # Minimum confidence score to take trade (55% for M5)
+# Lower threshold for M5 due to more noise, but still selective
+# H1 used 60%, M5 uses 55%
 
 # Risk adjustment limits
 MAX_RISK_MULTIPLIER = 1.5   # Maximum risk increase in favorable conditions
@@ -120,10 +125,11 @@ MIN_MA_SEPARATION = 0.0001      # Minimum distance between MAs for signal (0 = a
 # ==============================================================================
 # ATR-BASED STOP LOSS
 # ==============================================================================
-ATR_PERIOD = 14             # Period for ATR calculation
-ATR_MULTIPLIER_SL = 2.0     # Stop Loss = Entry ± (ATR × this multiplier)
+# Adjusted for M5 timeframe
+ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 70 minutes)
+ATR_MULTIPLIER_SL = 1.5     # Stop Loss multiplier (REDUCED for M5 - tighter stops)
 
-# ATR filters
+# ATR filters (adjusted for M5 volatility)
 MIN_ATR_VALUE = 0.0001      # Minimum ATR to place trade (avoid low volatility)
 MAX_ATR_VALUE = 999999      # Maximum ATR to place trade (avoid high volatility)
 
@@ -132,21 +138,21 @@ MAX_ATR_VALUE = 999999      # Maximum ATR to place trade (avoid high volatility)
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-# Activation threshold
-TRAIL_ACTIVATION_ATR = 1.5  # Activate trailing after this many ATRs of profit
-# Example: If ATR=10 and this is 1.5, trailing activates after 15 points profit
+# Activation threshold (adjusted for M5)
+TRAIL_ACTIVATION_ATR = 1.0  # Activate trailing sooner on M5 (was 1.5 for H1)
+# Example: If ATR=10 and this is 1.0, trailing activates after 10 points profit
 
-# Trailing distance
-TRAIL_DISTANCE_ATR = 1.0    # Trail at this many ATRs from current price
+# Trailing distance (adjusted for M5)
+TRAIL_DISTANCE_ATR = 0.8    # Trail closer on M5 (was 1.0 for H1)
 TRAIL_TYPE = 'atr'          # 'atr', 'percentage', 'swing', 'chandelier', 'breakeven'
 
 # Percentage trailing (if TRAIL_TYPE = 'percentage')
-TRAIL_PERCENT = 2.0         # Trail 2% from current price
+TRAIL_PERCENT = 1.5         # Trail 1.5% from current price (was 2.0 for H1)
 
-# Breakeven settings (if TRAIL_TYPE = 'breakeven')
-BREAKEVEN_ACTIVATION_PIPS = 100  # Move to BE after this many pips
-BREAKEVEN_PLUS_PIPS = 10         # Lock in this many pips at BE
-TRAIL_START_PIPS = 150           # Start normal trailing after this profit
+# Breakeven settings (if TRAIL_TYPE = 'breakeven') - adjusted for M5
+BREAKEVEN_ACTIVATION_PIPS = 50   # Move to BE after this many pips (was 100)
+BREAKEVEN_PLUS_PIPS = 5          # Lock in this many pips at BE (was 10)
+TRAIL_START_PIPS = 75            # Start normal trailing after this profit (was 150)
 
 # ==============================================================================
 # TRAILING TAKE PROFIT SETTINGS
@@ -159,9 +165,9 @@ TRAILING_TP_RATIO = 0.5     # Give back 50% of unrealized profit before hitting 
 # ==============================================================================
 MAGIC_NUMBER = 234000       # Unique identifier for bot trades (change if running multiple bots)
 
-# Maximum trades
-MAX_TRADES_TOTAL = 5        # Maximum total open trades
-MAX_TRADES_PER_SYMBOL = 1   # Maximum trades per symbol
+# Maximum trades (adjusted for M5 - more active)
+MAX_TRADES_TOTAL = 8        # Maximum total open trades (was 5 for H1)
+MAX_TRADES_PER_SYMBOL = 2   # Maximum trades per symbol (was 1 for H1)
 ALLOW_HEDGING = False       # Allow both buy and sell on same symbol
 
 # Trading hours (UTC time)
@@ -175,9 +181,10 @@ TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 # ==============================================================================
 # ADDITIONAL FILTERS
 # ==============================================================================
-# Trend filter
+# Trend filter (adjusted for M5)
 USE_TREND_FILTER = True     # Only trade in direction of higher timeframe trend
-TREND_TIMEFRAME = mt5.TIMEFRAME_H4  # Timeframe for trend determination
+TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # Use H1 for trend on M5 (was H4 for H1)
+TREND_MA_PERIOD = 50        # MA period for trend (was 200 for H1)
 TREND_MA_PERIOD = 200       # MA period for trend (price above = uptrend)
 
 # Volume filter
