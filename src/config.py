@@ -14,11 +14,11 @@ SYMBOLS = ['XAUUSD', 'XAGUSD']  # Gold and Silver
 # ==============================================================================
 # TIMEFRAME SETTINGS
 # ==============================================================================
-TIMEFRAME = mt5.TIMEFRAME_H1  # 1-hour timeframe
+TIMEFRAME = mt5.TIMEFRAME_M5  # 5-minute timeframe (CHANGED FROM H1)
 
 # Available timeframes:
-# mt5.TIMEFRAME_M1  - 1 minute
-# mt5.TIMEFRAME_M5  - 5 minutes
+# mt5.TIMEFRAME_M1  - 1 minute (NOT RECOMMENDED - too fast)
+# mt5.TIMEFRAME_M5  - 5 minutes (CURRENT - active trading)
 # mt5.TIMEFRAME_M15 - 15 minutes
 # mt5.TIMEFRAME_M30 - 30 minutes
 # mt5.TIMEFRAME_H1  - 1 hour
@@ -26,11 +26,18 @@ TIMEFRAME = mt5.TIMEFRAME_H1  # 1-hour timeframe
 # mt5.TIMEFRAME_D1  - 1 day
 # mt5.TIMEFRAME_W1  - 1 week
 
+# ⚠️ WARNING: M5 timeframe is VERY ACTIVE
+# - Expect 20-50+ trades per day
+# - Requires constant monitoring
+# - Higher spread costs
+# - More false signals
+# - Recommended for experienced traders only
+
 # ==============================================================================
 # RISK MANAGEMENT
 # ==============================================================================
-RISK_PERCENT = 1.0          # Risk 1% of account balance per trade
-REWARD_RATIO = 2.0          # Risk:Reward ratio (1:2 means TP is 2x SL distance)
+RISK_PERCENT = 0.5          # Risk 0.5% per trade (REDUCED for M5 - more trades)
+REWARD_RATIO = 1.5          # Risk:Reward ratio (1:1.5 for faster timeframe)
 DEFAULT_LOT_SIZE = 0.01     # Fallback lot size if calculation fails
 
 # Position sizing
@@ -101,9 +108,10 @@ MIN_RISK_MULTIPLIER = 0.3   # Minimum risk in unfavorable conditions
 # ==============================================================================
 # MOVING AVERAGE STRATEGY
 # ==============================================================================
-FAST_MA_PERIOD = 20         # Fast moving average period
-SLOW_MA_PERIOD = 50         # Slow moving average period
-MA_TYPE = 'SMA'            # 'SMA' or 'EMA' (Simple or Exponential)
+# Adjusted for M5 timeframe (shorter periods for faster signals)
+FAST_MA_PERIOD = 10         # Fast moving average period (was 20 for H1)
+SLOW_MA_PERIOD = 20         # Slow moving average period (was 50 for H1)
+MA_TYPE = 'EMA'            # 'SMA' or 'EMA' (EMA better for lower timeframes)
 
 # Entry conditions
 WAIT_FOR_CONFIRMATION = True    # Wait for price to confirm above/below MAs
@@ -183,7 +191,7 @@ NEWS_BUFFER_MINUTES = 30    # Don't trade X minutes before/after news
 # ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
-UPDATE_INTERVAL = 60        # Check for signals every X seconds (60 = 1 minute)
+UPDATE_INTERVAL = 30        # Check for signals every X seconds (30 = 30 seconds for M5)
 LOG_LEVEL = 'INFO'          # 'DEBUG', 'INFO', 'WARNING', 'ERROR'
 SAVE_TRADE_HISTORY = True   # Save trade history to CSV
 
@@ -199,9 +207,9 @@ EMAIL_PASSWORD = ''         # Your email password
 # ==============================================================================
 # SAFETY LIMITS
 # ==============================================================================
-# Daily limits
+# Daily limits (ADJUSTED for M5 - more trades expected)
 MAX_DAILY_LOSS = 100.0      # Stop trading if daily loss exceeds this (in account currency)
-MAX_DAILY_TRADES = 10       # Maximum trades per day
+MAX_DAILY_TRADES = 30       # Maximum trades per day (INCREASED for M5)
 MAX_DAILY_LOSS_PERCENT = 5.0  # Stop if account loses X% in a day
 
 # Drawdown protection
