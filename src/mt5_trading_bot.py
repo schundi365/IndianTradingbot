@@ -409,32 +409,32 @@ class MT5TradingBot:
             rsi = latest['rsi']
             if signal == 1:  # BUY
                 if rsi > 70:
-                    logging.info(f"  ❌ RSI filter: Too overbought (RSI: {rsi:.1f})")
+                    logging.info(f"  [X] RSI filter: Too overbought (RSI: {rsi:.1f})")
                     return 0
                 else:
-                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
+                    logging.info(f"  [OK] RSI filter: OK (RSI: {rsi:.1f})")
             elif signal == -1:  # SELL
                 if rsi < 30:
-                    logging.info(f"  ❌ RSI filter: Too oversold (RSI: {rsi:.1f})")
+                    logging.info(f"  [X] RSI filter: Too oversold (RSI: {rsi:.1f})")
                     return 0
                 else:
-                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
+                    logging.info(f"  [OK] RSI filter: OK (RSI: {rsi:.1f})")
         
         # Apply MACD confirmation (second most popular)
         if signal != 0 and not pd.isna(latest['macd_histogram']):
             histogram = latest['macd_histogram']
             if signal == 1:  # BUY
                 if histogram <= 0:
-                    logging.info(f"  ❌ MACD filter: Histogram not positive ({histogram:.6f})")
+                    logging.info(f"  [X] MACD filter: Histogram not positive ({histogram:.6f})")
                     return 0
                 else:
-                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
+                    logging.info(f"  [OK] MACD filter: Confirmed ({histogram:.6f})")
             elif signal == -1:  # SELL
                 if histogram >= 0:
-                    logging.info(f"  ❌ MACD filter: Histogram not negative ({histogram:.6f})")
+                    logging.info(f"  [X] MACD filter: Histogram not negative ({histogram:.6f})")
                     return 0
                 else:
-                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
+                    logging.info(f"  [OK] MACD filter: Confirmed ({histogram:.6f})")
         
         return signal
     
