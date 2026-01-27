@@ -19,6 +19,7 @@ class AdaptiveRiskManager:
         self.config = config
         self.atr_period = config.get('atr_period', 14)
         self.trend_strength_period = config.get('trend_strength_period', 50)
+        self.min_trade_confidence = config.get('min_trade_confidence', 0.60)  # Use config threshold
         
     def analyze_market_condition(self, df):
         """
@@ -494,8 +495,8 @@ class AdaptiveRiskManager:
         if sr_proximity < 0.8:
             confidence -= 0.2  # Too close to S/R - risky
         
-        # Decision threshold
-        should_trade = confidence >= 0.6  # Require 60% confidence
+        # Decision threshold (use config value)
+        should_trade = confidence >= self.min_trade_confidence
         
         logging.info(f"Trade Decision: Confidence={confidence:.2f}, Take Trade={should_trade}")
         
