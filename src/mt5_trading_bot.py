@@ -52,6 +52,11 @@ class MT5TradingBot:
         self.atr_period = config.get('atr_period', 14)
         self.atr_multiplier = config.get('atr_multiplier', 2.0)
         
+        # MACD parameters
+        self.macd_fast = config.get('macd_fast', 12)
+        self.macd_slow = config.get('macd_slow', 26)
+        self.macd_signal = config.get('macd_signal', 9)
+        
         # Trailing parameters
         self.trail_activation = config.get('trail_activation', 1.5)  # ATR multiplier to activate
         self.trail_distance = config.get('trail_distance', 1.0)  # ATR multiplier for trail distance
