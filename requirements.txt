@@ -1,0 +1,34 @@
+# MT5 Trading Bot - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+MetaTrader5>=5.0.45
+pandas>=1.3.0
+numpy>=1.21.0
+
+# Optional dependencies for enhanced features
+# Uncomment if you plan to use these features:
+
+# For notifications
+# python-telegram-bot>=20.0  # Telegram notifications
+# smtplib                     # Email notifications (built-in)
+
+# For advanced technical analysis
+# ta-lib>=0.4.0              # Technical Analysis Library (requires C++ dependencies)
+# pandas-ta>=0.3.14          # Alternative TA library (pure Python)
+
+# For backtesting (future development)
+# backtrader>=1.9.76
+# vectorbt>=0.25.0
+
+# For data visualization (optional)
+# matplotlib>=3.4.0
+# plotly>=5.0.0
+
+# For database storage (optional)
+# sqlalchemy>=1.4.0
+# sqlite3                    # Built-in to Python
+
+# For web dashboard (optional - future development)
+# flask>=2.0.0
+# dash>=2.0.0
