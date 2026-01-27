@@ -36,12 +36,19 @@ cd mt5-trading-bot
 # Run setup
 python setup.py
 
-# Test connection
-python test_connection.py
+# Test connection (make sure MT5 is running and logged in!)
+python test_mt5_simple.py
 
 # Start trading
 python run_bot.py
 ```
+
+**Important**: Before testing, make sure:
+1. ✅ MetaTrader 5 is installed and running
+2. ✅ You're logged into a demo or live account in MT5
+3. ✅ You can see your account balance in MT5
+
+If you get "Authorization failed" error, see [Troubleshooting Guide](TROUBLESHOOTING.md).
 
 ### Configuration
 
@@ -69,6 +76,7 @@ TP_LEVELS = [1.5, 2.5, 4.0]     # Multiple profit targets
 - **[Split Orders Guide](docs/SPLIT_ORDERS_GUIDE.md)** - Understanding split order strategy
 - **[Trailing Strategies](docs/TRAILING_STRATEGIES_GUIDE.md)** - 6 different trailing methods
 - **[Quick Start](docs/QUICK_START_ADAPTIVE.md)** - Get started in 5 minutes
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## 🎯 Trading Strategy
 
