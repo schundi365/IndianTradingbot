@@ -482,6 +482,11 @@
             <p class="subtitle">Real-time monitoring and configuration</p>
         </header>
         
+        <!-- Refresh Button for Dashboard -->
+        <div style="margin-bottom: 20px; text-align: right;">
+            <button class="btn btn-secondary" onclick="refreshDashboard()">🔄 Refresh Dashboard</button>
+        </div>
+        
         <!-- Status Cards -->
         <div class="grid">
             <div class="card">
@@ -573,7 +578,10 @@
             
             <!-- Configuration Tab -->
             <div id="config-tab" class="tab-content active">
-                <h2>Bot Configuration</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Bot Configuration</h2>
+                    <button class="btn btn-secondary" onclick="refreshConfig()">🔄 Reload Configuration</button>
+                </div>
                 
                 <!-- Configuration Preset Selector -->
                 <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px;">
@@ -918,7 +926,10 @@
             
             <!-- Charts & Analytics Tab -->
             <div id="charts-tab" class="tab-content">
-                <h2>Charts & Analytics</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Charts & Analytics</h2>
+                    <button class="btn btn-secondary" onclick="refreshCharts()">🔄 Refresh Charts</button>
+                </div>
                 
                 <div class="grid" style="margin-bottom: 30px;">
                     <!-- Profit by Symbol Chart -->
@@ -956,7 +967,10 @@
             
             <!-- Trade History Tab -->
             <div id="trades-tab" class="tab-content">
-                <h2>Trade History (Last 7 Days)</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Trade History (Last 7 Days)</h2>
+                    <button class="btn btn-secondary" onclick="refreshTrades()">🔄 Refresh Trades</button>
+                </div>
                 
                 <!-- Filters and Sorting -->
                 <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -1017,7 +1031,10 @@
             
             <!-- Open Positions Tab -->
             <div id="positions-tab" class="tab-content">
-                <h2>Open Positions</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Open Positions</h2>
+                    <button class="btn btn-secondary" onclick="refreshPositions()">🔄 Refresh Positions</button>
+                </div>
                 <div class="table-container">
                     <table id="positions-table">
                         <thead>
@@ -1042,7 +1059,10 @@
             
             <!-- Analysis Tab -->
             <div id="analysis-tab" class="tab-content">
-                <h2>AI Recommendations</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">AI Recommendations</h2>
+                    <button class="btn btn-secondary" onclick="refreshRecommendations()">🔄 Refresh Recommendations</button>
+                </div>
                 <div id="recommendations-container">
                     <div class="loading">Loading recommendations...</div>
                 </div>
@@ -1421,6 +1441,118 @@
         // Update status every 5 seconds
         setInterval(updateStatus, 5000);
         updateStatus();
+        
+        // Refresh functions for each tab
+        function refreshDashboard() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            // Refresh all dashboard data
+            updateStatus();
+            updateBalance();
+            updatePerformance();
+            checkMT5ConnectionStatus();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Refresh Dashboard';
+                showToast('✅ Dashboard refreshed', 'success');
+            }, 1000);
+        }
+        
+        function refreshCharts() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            loadCharts();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Refresh Charts';
+                showToast('✅ Charts refreshed', 'success');
+            }, 1000);
+        }
+        
+        function refreshTrades() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            loadTrades();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Refresh Trades';
+                showToast('✅ Trade history refreshed', 'success');
+            }, 1000);
+        }
+        
+        function refreshPositions() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            loadPositions();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Refresh Positions';
+                showToast('✅ Positions refreshed', 'success');
+            }, 1000);
+        }
+        
+        function refreshRecommendations() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            loadRecommendations();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Refresh Recommendations';
+                showToast('✅ Recommendations refreshed', 'success');
+            }, 1000);
+        }
+        
+        function refreshConfig() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Reloading...';
+            
+            // Reload configuration from server
+            fetch('/api/config/get')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.config) {
+                        // Populate form with current config
+                        Object.keys(data.config).forEach(key => {
+                            const element = document.getElementById(key.replace(/_/g, '-'));
+                            if (element) {
+                                if (element.tagName === 'SELECT' && element.multiple) {
+                                    // Handle multi-select
+                                    const values = data.config[key];
+                                    Array.from(element.options).forEach(option => {
+                                        option.selected = values.includes(option.value);
+                                    });
+                                } else {
+                                    element.value = data.config[key];
+                                }
+                            }
+                        });
+                        showToast('✅ Configuration reloaded', 'success');
+                    }
+                })
+                .catch(err => {
+                    showToast('❌ Failed to reload configuration', 'error');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 Reload Configuration';
+                });
+        }
         
         // Check MT5 connection on page load
         setTimeout(checkMT5ConnectionStatus, 1000);
