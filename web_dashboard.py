@@ -519,9 +519,37 @@ def charts_data():
     if not mt5.initialize():
         return jsonify({'status': 'error', 'message': 'MT5 not connected'})
     
-    # Get last 30 days of deals
-    from_date = datetime.now() - timedelta(days=30)
-    deals = mt5.history_deals_get(from_date, datetime.now())
+    # Get date range from query parameter (default: last 30 days)
+    date_range = request.args.get('range', 'last30days')
+    
+    # Calculate from_date based on range
+    now = datetime.now()
+    if date_range == 'today':
+        from_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif date_range == 'last7days':
+        from_date = now - timedelta(days=7)
+    elif date_range == 'last30days':
+        from_date = now - timedelta(days=30)
+    elif date_range == 'thisweek':
+        # Monday of current week
+        days_since_monday = now.weekday()
+        from_date = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif date_range == 'lastweek':
+        # Monday of last week
+        days_since_monday = now.weekday()
+        from_date = (now - timedelta(days=days_since_monday + 7)).replace(hour=0, minute=0, second=0, microsecond=0)
+        now = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif date_range == 'thismonth':
+        from_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif date_range == 'lastmonth':
+        # First day of last month
+        first_of_this_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        from_date = (first_of_this_month - timedelta(days=1)).replace(day=1)
+        now = first_of_this_month
+    else:  # 'all' or unknown
+        from_date = now - timedelta(days=365)  # Last year for 'all'
+    
+    deals = mt5.history_deals_get(from_date, now)
     
     if deals is None or len(deals) == 0:
         mt5.shutdown()

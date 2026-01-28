@@ -24,7 +24,78 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'XAGUSD']
+# To verify which symbols are available with your broker, run:
+#   python verify_symbols.py
+#
+# This will show all available symbols and their spreads.
+
+# Major Currency Pairs (Forex Majors)
+FOREX_MAJORS = [
+    'EURUSD',  # Euro / US Dollar
+    'GBPUSD',  # British Pound / US Dollar
+    'USDJPY',  # US Dollar / Japanese Yen
+    'USDCHF',  # US Dollar / Swiss Franc
+    'AUDUSD',  # Australian Dollar / US Dollar
+    'USDCAD',  # US Dollar / Canadian Dollar
+    'NZDUSD',  # New Zealand Dollar / US Dollar
+]
+
+# Forex Cross Pairs (Popular)
+FOREX_CROSSES = [
+    'EURJPY',  # Euro / Japanese Yen
+    'GBPJPY',  # British Pound / Japanese Yen
+    'EURGBP',  # Euro / British Pound
+    'EURAUD',  # Euro / Australian Dollar
+    'EURCAD',  # Euro / Canadian Dollar
+    'GBPAUD',  # British Pound / Australian Dollar
+    'GBPCAD',  # British Pound / Canadian Dollar
+]
+
+# Commodities (Metals)
+COMMODITIES_METALS = [
+    'XAUUSD',  # Gold / US Dollar
+    'XAGUSD',  # Silver / US Dollar
+    'XPTUSD',  # Platinum / US Dollar (if available)
+    'XPDUSD',  # Palladium / US Dollar (if available)
+]
+
+# Commodities (Energy)
+COMMODITIES_ENERGY = [
+    'XTIUSD',  # Crude Oil WTI / US Dollar
+    'XBRUSD',  # Crude Oil Brent / US Dollar
+    'XNGUSD',  # Natural Gas / US Dollar
+]
+
+# Indices (Major Stock Indices)
+INDICES = [
+    'US30',    # Dow Jones Industrial Average
+    'US500',   # S&P 500
+    'NAS100',  # NASDAQ 100
+    'UK100',   # FTSE 100
+    'GER40',   # DAX 40
+    'FRA40',   # CAC 40
+    'JPN225',  # Nikkei 225
+    'AUS200',  # ASX 200
+]
+
+# Default symbols (conservative - metals only)
+# Uncomment categories below to add more symbols
+SYMBOLS = ['XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD', 'AUDUSD']
+
+# To trade forex majors, uncomment:
+# SYMBOLS.extend(FOREX_MAJORS)
+
+# To trade forex crosses, uncomment:
+# SYMBOLS.extend(FOREX_CROSSES)
+
+# To trade energy commodities, uncomment:
+# SYMBOLS.extend(COMMODITIES_ENERGY)
+
+# To trade indices, uncomment:
+# SYMBOLS.extend(INDICES)
+
+# Or manually specify your preferred symbols:
+# SYMBOLS = ['XAUUSD', 'EURUSD', 'GBPUSD', 'US30']
 
 # ==============================================================================
 # TIMEFRAME - H1 FOR QUALITY TRADES

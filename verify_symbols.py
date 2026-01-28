@@ -1,102 +1,158 @@
 """
-Verify Current Symbols Configuration
-Checks if XAUUSD and GBPUSD are available
+Symbol Availability Checker for MT5 Trading Bot
+Verifies which symbols are available with your broker
 """
 
-import sys
-sys.path.insert(0, 'src')
-from config import get_config
 import MetaTrader5 as mt5
+from datetime import datetime
 
+# Import symbol lists from config
+import sys
+sys.path.append('src')
+from config import FOREX_MAJORS, FOREX_CROSSES, COMMODITIES_METALS, COMMODITIES_ENERGY, INDICES
 
-def verify_symbols():
-    """Verify configured symbols are available"""
+def check_symbol_availability():
+    """Check which symbols are available with your broker"""
     
-    print("=" * 70)
-    print("SYMBOL VERIFICATION")
-    print("=" * 70)
+    print("=" * 80)
+    print("MT5 SYMBOL AVAILABILITY CHECKER")
+    print("=" * 80)
     print()
     
     # Initialize MT5
     if not mt5.initialize():
-        print(f"❌ Failed to initialize MT5: {mt5.last_error()}")
-        return False
+        print("❌ Failed to initialize MT5")
+        print(f"Error: {mt5.last_error()}")
+        return
     
-    # Get config
-    config = get_config()
-    symbols = config['symbols']
+    print("✅ MT5 Connected")
     
-    print(f"Configured Symbols: {symbols}")
+    # Get account info
+    account_info = mt5.account_info()
+    if account_info:
+        print(f"📊 Account: {account_info.login}")
+        print(f"💰 Balance: ${account_info.balance:.2f}")
+        print(f"🏢 Broker: {account_info.company}")
     print()
     
-    all_ok = True
+    # Check all symbol categories
+    categories = {
+        'Forex Majors': FOREX_MAJORS,
+        'Forex Crosses': FOREX_CROSSES,
+        'Commodities (Metals)': COMMODITIES_METALS,
+        'Commodities (Energy)': COMMODITIES_ENERGY,
+        'Indices': INDICES
+    }
     
-    for symbol in symbols:
-        print(f"Checking {symbol}:")
-        print("-" * 70)
-        
-        # Check if symbol exists
-        symbol_info = mt5.symbol_info(symbol)
-        if symbol_info is None:
-            print(f"❌ {symbol} NOT FOUND")
-            print(f"   Your broker may use a different name")
-            all_ok = False
-            continue
-        
-        # Enable symbol if not visible
-        if not symbol_info.visible:
-            if mt5.symbol_select(symbol, True):
-                print(f"✅ {symbol} enabled in Market Watch")
-            else:
-                print(f"⚠️  Could not enable {symbol}")
-        
-        # Get symbol info
-        print(f"✅ {symbol} is available")
-        print(f"   Bid: {symbol_info.bid}")
-        print(f"   Ask: {symbol_info.ask}")
-        print(f"   Spread: {symbol_info.spread} points")
-        print(f"   Min Lot: {symbol_info.volume_min}")
-        print(f"   Max Lot: {symbol_info.volume_max}")
-        print(f"   Lot Step: {symbol_info.volume_step}")
-        
-        # Test M1 data
-        rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 100)
-        if rates is None or len(rates) == 0:
-            print(f"   ⚠️  M1 data not available")
-            all_ok = False
-        else:
-            print(f"   ✅ M1 data available ({len(rates)} bars)")
-        
-        print()
+    all_available = []
+    all_unavailable = []
     
-    print("=" * 70)
-    
-    if all_ok:
-        print("✅ ALL SYMBOLS VERIFIED!")
-        print()
-        print("Your bot is configured to trade:")
+    for category_name, symbols in categories.items():
+        print(f"{'=' * 80}")
+        print(f"{category_name.upper()}")
+        print(f"{'=' * 80}")
+        
+        available = []
+        unavailable = []
+        
         for symbol in symbols:
-            print(f"  • {symbol}")
+            info = mt5.symbol_info(symbol)
+            
+            if info is None:
+                print(f"❌ {symbol:12} - NOT AVAILABLE")
+                unavailable.append(symbol)
+                all_unavailable.append(symbol)
+            else:
+                # Check if symbol is visible
+                if not info.visible:
+                    # Try to make it visible
+                    if mt5.symbol_select(symbol, True):
+                        info = mt5.symbol_info(symbol)
+                
+                spread = info.spread
+                spread_pips = spread * info.point
+                
+                # Get current price
+                tick = mt5.symbol_info_tick(symbol)
+                if tick:
+                    bid = tick.bid
+                    ask = tick.ask
+                    print(f"✅ {symbol:12} - Spread: {spread:4} ({spread_pips:.5f}) | Bid: {bid:.5f} | Ask: {ask:.5f}")
+                else:
+                    print(f"✅ {symbol:12} - Spread: {spread:4} ({spread_pips:.5f}) | (No tick data)")
+                
+                available.append(symbol)
+                all_available.append(symbol)
+        
         print()
-        print("Ready to run: python run_bot.py")
+        print(f"Available: {len(available)}/{len(symbols)}")
+        if unavailable:
+            print(f"Unavailable: {', '.join(unavailable)}")
+        print()
+    
+    # Summary
+    print("=" * 80)
+    print("SUMMARY")
+    print("=" * 80)
+    print(f"✅ Total Available: {len(all_available)}")
+    print(f"❌ Total Unavailable: {len(all_unavailable)}")
+    print()
+    
+    if all_available:
+        print("Available Symbols:")
+        print("-" * 80)
+        # Group by category for easy copying
+        for i in range(0, len(all_available), 5):
+            symbols_line = ', '.join(f"'{s}'" for s in all_available[i:i+5])
+            print(f"    {symbols_line},")
+        print()
+    
+    if all_unavailable:
+        print("Unavailable Symbols:")
+        print("-" * 80)
+        for symbol in all_unavailable:
+            print(f"  - {symbol}")
+        print()
+        print("💡 Tip: Some symbols may need to be enabled in MT5 Market Watch")
+        print("   Right-click Market Watch → Symbols → Find symbol → Show")
+        print()
+    
+    # Recommended configuration
+    print("=" * 80)
+    print("RECOMMENDED CONFIGURATION")
+    print("=" * 80)
+    print()
+    
+    if len(all_available) >= 2:
+        print("Copy this to src/config.py:")
+        print("-" * 80)
+        print("SYMBOLS = [")
+        for symbol in all_available[:10]:  # Show first 10
+            print(f"    '{symbol}',")
+        if len(all_available) > 10:
+            print(f"    # ... and {len(all_available) - 10} more available")
+        print("]")
+        print()
     else:
-        print("⚠️  SOME SYMBOLS HAVE ISSUES")
+        print("⚠️  Warning: Very few symbols available")
+        print("   Check your broker's symbol list")
         print()
-        print("Please fix the issues above before running the bot.")
     
-    print("=" * 70)
-    
+    # Shutdown
     mt5.shutdown()
-    return all_ok
+    print("=" * 80)
+    print("✅ Check Complete!")
+    print("=" * 80)
 
 
 if __name__ == "__main__":
     try:
-        success = verify_symbols()
-        sys.exit(0 if success else 1)
+        check_symbol_availability()
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Interrupted by user")
+        mt5.shutdown()
     except Exception as e:
-        print(f"\n❌ Error: {str(e)}")
+        print(f"\n\n❌ Error: {str(e)}")
         import traceback
         traceback.print_exc()
         mt5.shutdown()
-        sys.exit(1)

@@ -484,7 +484,7 @@
         
         <!-- Refresh Button for Dashboard -->
         <div style="margin-bottom: 20px; text-align: right;">
-            <button class="btn btn-secondary" onclick="refreshDashboard()" title="Refresh Dashboard">🔄</button>
+            <button class="btn btn-secondary" onclick="refreshDashboard(event)" title="Refresh Dashboard">🔄</button>
         </div>
         
         <!-- Status Cards -->
@@ -551,6 +551,10 @@
                     <span class="stat-value" id="total-trades">0</span>
                 </div>
                 <div class="stat">
+                    <span class="stat-label">Total Trades Today</span>
+                    <span class="stat-value" id="total-trades-today">0</span>
+                </div>
+                <div class="stat">
                     <span class="stat-label">Today's Wins</span>
                     <span class="stat-value positive" id="today-wins">0</span>
                 </div>
@@ -580,7 +584,7 @@
             <div id="config-tab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Bot Configuration</h2>
-                    <button class="btn btn-secondary" onclick="refreshConfig()" title="Reload Configuration">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshConfig(event)" title="Reload Configuration">🔄</button>
                 </div>
                 
                 <!-- Configuration Preset Selector -->
@@ -604,14 +608,63 @@
                         <div class="grid">
                             <div class="form-group">
                                 <label>Trading Symbols</label>
-                                <select id="symbols" multiple style="height: 100px;">
-                                    <option value="XAUUSD" selected>XAUUSD (Gold)</option>
-                                    <option value="XAGUSD" selected>XAGUSD (Silver)</option>
-                                    <option value="GBPUSD">GBPUSD</option>
-                                    <option value="EURUSD">EURUSD</option>
-                                    <option value="USDJPY">USDJPY</option>
+                                <select id="symbols" multiple style="height: 200px;">
+                                    <!-- Commodities - Metals (Default) -->
+                                    <optgroup label="💰 Commodities - Metals">
+                                        <option value="XAUUSD" selected>XAUUSD (Gold)</option>
+                                        <option value="XAGUSD" selected>XAGUSD (Silver)</option>
+                                        <option value="XPTUSD">XPTUSD (Platinum)</option>
+                                        <option value="XPDUSD">XPDUSD (Palladium)</option>
+                                    </optgroup>
+                                    
+                                    <!-- Forex Majors -->
+                                    <optgroup label="💱 Forex Majors">
+                                        <option value="EURUSD">EURUSD (Euro/USD)</option>
+                                        <option value="GBPUSD">GBPUSD (Pound/USD)</option>
+                                        <option value="USDJPY">USDJPY (USD/Yen)</option>
+                                        <option value="USDCHF">USDCHF (USD/Franc)</option>
+                                        <option value="AUDUSD">AUDUSD (Aussie/USD)</option>
+                                        <option value="USDCAD">USDCAD (USD/CAD)</option>
+                                        <option value="NZDUSD">NZDUSD (Kiwi/USD)</option>
+                                    </optgroup>
+                                    
+                                    <!-- Forex Crosses -->
+                                    <optgroup label="💱 Forex Crosses">
+                                        <option value="EURJPY">EURJPY (Euro/Yen)</option>
+                                        <option value="GBPJPY">GBPJPY (Pound/Yen)</option>
+                                        <option value="EURGBP">EURGBP (Euro/Pound)</option>
+                                        <option value="EURAUD">EURAUD (Euro/Aussie)</option>
+                                        <option value="EURCAD">EURCAD (Euro/CAD)</option>
+                                        <option value="GBPAUD">GBPAUD (Pound/Aussie)</option>
+                                        <option value="GBPCAD">GBPCAD (Pound/CAD)</option>
+                                    </optgroup>
+                                    
+                                    <!-- Commodities - Energy -->
+                                    <optgroup label="⚡ Commodities - Energy">
+                                        <option value="XTIUSD">XTIUSD (Crude Oil WTI)</option>
+                                        <option value="XBRUSD">XBRUSD (Crude Oil Brent)</option>
+                                        <option value="XNGUSD">XNGUSD (Natural Gas)</option>
+                                    </optgroup>
+                                    
+                                    <!-- Indices -->
+                                    <optgroup label="📊 Indices">
+                                        <option value="US30">US30 (Dow Jones)</option>
+                                        <option value="US500">US500 (S&P 500)</option>
+                                        <option value="NAS100">NAS100 (NASDAQ)</option>
+                                        <option value="UK100">UK100 (FTSE 100)</option>
+                                        <option value="GER40">GER40 (DAX 40)</option>
+                                        <option value="FRA40">FRA40 (CAC 40)</option>
+                                        <option value="JPN225">JPN225 (Nikkei)</option>
+                                        <option value="AUS200">AUS200 (ASX 200)</option>
+                                    </optgroup>
                                 </select>
-                                <small style="color: #94a3b8;">Hold Ctrl/Cmd to select multiple</small>
+                                <small style="color: #94a3b8;">Hold Ctrl/Cmd to select multiple. Default: Gold & Silver</small>
+                                <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('metals')">Metals Only</button>
+                                    <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('forex')">+ Forex Majors</button>
+                                    <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('all')">Select All</button>
+                                    <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('none')">Clear All</button>
+                                </div>
                             </div>
                             
                             <div class="form-group">
@@ -928,7 +981,29 @@
             <div id="charts-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Charts & Analytics</h2>
-                    <button class="btn btn-secondary" onclick="refreshCharts()" title="Refresh Charts">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshCharts(event)" title="Refresh Charts">🔄</button>
+                </div>
+                
+                <!-- Date Range Filter for Charts -->
+                <div style="margin-bottom: 20px; padding: 15px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                            <label style="margin-bottom: 5px;">Chart Date Range</label>
+                            <select id="chart-date-range" onchange="applyChartDateRange()" style="padding: 8px;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="last7days" selected>Last 7 Days</option>
+                                <option value="last30days">Last 30 Days</option>
+                                <option value="thisweek">This Week</option>
+                                <option value="lastweek">Last Week</option>
+                                <option value="thismonth">This Month</option>
+                                <option value="lastmonth">Last Month</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button class="btn btn-secondary" onclick="applyChartDateRange()" style="padding: 8px 16px;">Apply</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="grid" style="margin-bottom: 30px;">
@@ -968,12 +1043,57 @@
             <!-- Trade History Tab -->
             <div id="trades-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">Trade History (Last 7 Days)</h2>
-                    <button class="btn btn-secondary" onclick="refreshTrades()" title="Refresh Trades">🔄</button>
+                    <h2 style="margin: 0;">Trade History</h2>
+                    <button class="btn btn-secondary" onclick="refreshTrades(event)" title="Refresh Trades">🔄</button>
+                </div>
+                
+                <!-- Win Rate Statistics -->
+                <div class="grid" style="margin-bottom: 20px;">
+                    <div class="card" style="padding: 15px;">
+                        <h3 style="color: #60a5fa; margin-bottom: 10px; font-size: 1em;">Overall Win Rate</h3>
+                        <div style="font-size: 2em; font-weight: bold;" id="overall-win-rate">0%</div>
+                        <div style="color: #94a3b8; font-size: 0.9em;" id="overall-trades-count">0 trades</div>
+                    </div>
+                    <div class="card" style="padding: 15px;">
+                        <h3 style="color: #60a5fa; margin-bottom: 10px; font-size: 1em;">Today's Win Rate</h3>
+                        <div style="font-size: 2em; font-weight: bold;" id="today-win-rate">0%</div>
+                        <div style="color: #94a3b8; font-size: 0.9em;" id="today-trades-count">0 trades</div>
+                    </div>
+                    <div class="card" style="padding: 15px;">
+                        <h3 style="color: #60a5fa; margin-bottom: 10px; font-size: 1em;">Last 7 Days Win Rate</h3>
+                        <div style="font-size: 2em; font-weight: bold;" id="week-win-rate">0%</div>
+                        <div style="color: #94a3b8; font-size: 0.9em;" id="week-trades-count">0 trades</div>
+                    </div>
                 </div>
                 
                 <!-- Filters and Sorting -->
                 <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                        <label style="margin-bottom: 5px;">Date Range</label>
+                        <select id="date-range" onchange="applySortFilter()" style="padding: 8px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last7days" selected>Last 7 Days</option>
+                            <option value="last30days">Last 30 Days</option>
+                            <option value="thisweek">This Week</option>
+                            <option value="lastweek">Last Week</option>
+                            <option value="thismonth">This Month</option>
+                            <option value="lastmonth">Last Month</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="custom-date-from" style="margin-bottom: 0; min-width: 150px; display: none;">
+                        <label style="margin-bottom: 5px;">From Date</label>
+                        <input type="date" id="date-from" onchange="applySortFilter()" style="padding: 8px;">
+                    </div>
+                    
+                    <div class="form-group" id="custom-date-to" style="margin-bottom: 0; min-width: 150px; display: none;">
+                        <label style="margin-bottom: 5px;">To Date</label>
+                        <input type="date" id="date-to" onchange="applySortFilter()" style="padding: 8px;">
+                    </div>
+                    
                     <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
                         <label style="margin-bottom: 5px;">Sort By</label>
                         <select id="sort-by" onchange="applySortFilter()" style="padding: 8px;">
@@ -992,7 +1112,6 @@
                             <option value="all">All Trades</option>
                             <option value="wins">Wins Only</option>
                             <option value="losses">Losses Only</option>
-                            <option value="today">Today Only</option>
                         </select>
                     </div>
                     
@@ -1004,7 +1123,7 @@
                     </div>
                     
                     <div style="display: flex; align-items: flex-end;">
-                        <button class="btn btn-secondary" onclick="applySortFilter()" style="padding: 8px 16px;">Apply</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()" style="padding: 8px 16px;">Reset</button>
                     </div>
                 </div>
                 
@@ -1033,7 +1152,7 @@
             <div id="positions-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Open Positions</h2>
-                    <button class="btn btn-secondary" onclick="refreshPositions()" title="Refresh Positions">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshPositions(event)" title="Refresh Positions">🔄</button>
                 </div>
                 <div class="table-container">
                     <table id="positions-table">
@@ -1061,7 +1180,7 @@
             <div id="analysis-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">AI Recommendations</h2>
-                    <button class="btn btn-secondary" onclick="refreshRecommendations()" title="Refresh Recommendations">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshRecommendations(event)" title="Refresh Recommendations">🔄</button>
                 </div>
                 <div id="recommendations-container">
                     <div class="loading">Loading recommendations...</div>
@@ -1167,6 +1286,52 @@
             localStorage.setItem('disclaimerAccepted', 'true');
             document.getElementById('disclaimer-modal').classList.remove('active');
             showToast('Welcome to GEM Trading! Please configure your settings.', 'success');
+        }
+        
+        // Symbol Selection Helper Functions
+        function selectSymbolGroup(group) {
+            const symbolSelect = document.getElementById('symbols');
+            const options = symbolSelect.options;
+            
+            // Define symbol groups
+            const metals = ['XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD'];
+            const forexMajors = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'];
+            const forexCrosses = ['EURJPY', 'GBPJPY', 'EURGBP', 'EURAUD', 'EURCAD', 'GBPAUD', 'GBPCAD'];
+            const energy = ['XTIUSD', 'XBRUSD', 'XNGUSD'];
+            const indices = ['US30', 'US500', 'NAS100', 'UK100', 'GER40', 'FRA40', 'JPN225', 'AUS200'];
+            
+            // Clear all selections first
+            for (let i = 0; i < options.length; i++) {
+                options[i].selected = false;
+            }
+            
+            // Select based on group
+            if (group === 'metals') {
+                // Select only metals
+                for (let i = 0; i < options.length; i++) {
+                    if (metals.includes(options[i].value)) {
+                        options[i].selected = true;
+                    }
+                }
+                showToast('✅ Metals selected (Conservative)', 'success');
+            } else if (group === 'forex') {
+                // Select metals + forex majors
+                for (let i = 0; i < options.length; i++) {
+                    if (metals.includes(options[i].value) || forexMajors.includes(options[i].value)) {
+                        options[i].selected = true;
+                    }
+                }
+                showToast('✅ Metals + Forex Majors selected (Balanced)', 'success');
+            } else if (group === 'all') {
+                // Select all
+                for (let i = 0; i < options.length; i++) {
+                    options[i].selected = true;
+                }
+                showToast('✅ All symbols selected (Advanced)', 'success');
+            } else if (group === 'none') {
+                // Already cleared above
+                showToast('✅ All symbols cleared', 'success');
+            }
         }
         
         // Validation Functions
@@ -1372,7 +1537,7 @@
             stopPositionsAutoRefresh();
             
             // Load data for the tab
-            if (tabName === 'charts') loadCharts();
+            if (tabName === 'charts') applyChartDateRange();
             if (tabName === 'trades') loadTrades();
             if (tabName === 'positions') {
                 // Start auto-refresh for positions tab
@@ -1443,14 +1608,12 @@
         updateStatus();
         
         // Refresh functions for each tab
-        function refreshDashboard() {
-            const btn = event.target;
+        function refreshDashboard(e) {
+            const btn = e.target;
             btn.disabled = true;
             
             // Refresh all dashboard data
             updateStatus();
-            updateBalance();
-            updatePerformance();
             checkMT5ConnectionStatus();
             
             setTimeout(() => {
@@ -1459,20 +1622,19 @@
             }, 1000);
         }
         
-        function refreshCharts() {
-            const btn = event.target;
+        function refreshCharts(e) {
+            const btn = e.target;
             btn.disabled = true;
             
-            loadCharts();
+            applyChartDateRange();
             
             setTimeout(() => {
                 btn.disabled = false;
-                showToast('✅ Charts refreshed', 'success');
             }, 1000);
         }
         
-        function refreshTrades() {
-            const btn = event.target;
+        function refreshTrades(e) {
+            const btn = e.target;
             btn.disabled = true;
             
             loadTrades();
@@ -1483,8 +1645,8 @@
             }, 1000);
         }
         
-        function refreshPositions() {
-            const btn = event.target;
+        function refreshPositions(e) {
+            const btn = e.target;
             btn.disabled = true;
             
             loadPositions();
@@ -1495,8 +1657,8 @@
             }, 1000);
         }
         
-        function refreshRecommendations() {
-            const btn = event.target;
+        function refreshRecommendations(e) {
+            const btn = e.target;
             btn.disabled = true;
             
             loadRecommendations();
@@ -1507,8 +1669,8 @@
             }, 1000);
         }
         
-        function refreshConfig() {
-            const btn = event.target;
+        function refreshConfig(e) {
+            const btn = e.target;
             btn.disabled = true;
             
             // Reload configuration from server
@@ -1614,9 +1776,11 @@
                     const totalTrades = data.total_trades || 0;
                     const todayWins = data.today_wins || 0;
                     const todayLosses = data.today_losses || 0;
+                    const totalTradesToday = todayWins + todayLosses;
                     
                     document.getElementById('win-rate').textContent = winRate + '%';
                     document.getElementById('total-trades').textContent = totalTrades;
+                    document.getElementById('total-trades-today').textContent = totalTradesToday;
                     
                     // Update today's wins (green)
                     const todayWinsEl = document.getElementById('today-wins');
@@ -1633,6 +1797,7 @@
                     // Set defaults on error
                     document.getElementById('win-rate').textContent = '0%';
                     document.getElementById('total-trades').textContent = '0';
+                    document.getElementById('total-trades-today').textContent = '0';
                     document.getElementById('today-wins').textContent = '0';
                     document.getElementById('today-losses').textContent = '0';
                 });
@@ -1714,23 +1879,145 @@
         let allTrades = [];
         let accountCurrency = 'USD'; // Default currency
         
+        // Show/hide custom date inputs
+        document.getElementById('date-range').addEventListener('change', function() {
+            const customFrom = document.getElementById('custom-date-from');
+            const customTo = document.getElementById('custom-date-to');
+            if (this.value === 'custom') {
+                customFrom.style.display = 'block';
+                customTo.style.display = 'block';
+            } else {
+                customFrom.style.display = 'none';
+                customTo.style.display = 'none';
+            }
+        });
+        
+        // Helper function to get date range
+        function getDateRange(rangeType) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            let startDate, endDate;
+            
+            switch(rangeType) {
+                case 'today':
+                    startDate = today;
+                    endDate = new Date(today.getTime() + 24*60*60*1000);
+                    break;
+                case 'yesterday':
+                    startDate = new Date(today.getTime() - 24*60*60*1000);
+                    endDate = today;
+                    break;
+                case 'last7days':
+                    startDate = new Date(today.getTime() - 7*24*60*60*1000);
+                    endDate = new Date(today.getTime() + 24*60*60*1000);
+                    break;
+                case 'last30days':
+                    startDate = new Date(today.getTime() - 30*24*60*60*1000);
+                    endDate = new Date(today.getTime() + 24*60*60*1000);
+                    break;
+                case 'thisweek':
+                    const dayOfWeek = today.getDay();
+                    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                    startDate = new Date(today.setDate(diff));
+                    endDate = new Date(today.getTime() + 7*24*60*60*1000);
+                    break;
+                case 'lastweek':
+                    const lastWeekStart = new Date(today.getTime() - 7*24*60*60*1000);
+                    const lastWeekDay = lastWeekStart.getDay();
+                    const lastWeekDiff = lastWeekStart.getDate() - lastWeekDay + (lastWeekDay === 0 ? -6 : 1);
+                    startDate = new Date(lastWeekStart.setDate(lastWeekDiff));
+                    endDate = new Date(startDate.getTime() + 7*24*60*60*1000);
+                    break;
+                case 'thismonth':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                    break;
+                case 'lastmonth':
+                    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    break;
+                case 'custom':
+                    const fromInput = document.getElementById('date-from').value;
+                    const toInput = document.getElementById('date-to').value;
+                    if (fromInput) startDate = new Date(fromInput);
+                    if (toInput) endDate = new Date(toInput + 'T23:59:59');
+                    break;
+                case 'all':
+                default:
+                    return null;
+            }
+            
+            return { startDate, endDate };
+        }
+        
+        // Calculate win rates
+        function calculateWinRates(trades) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const last7Days = new Date(today.getTime() - 7*24*60*60*1000);
+            
+            // Overall
+            const overallWins = trades.filter(t => t.profit > 0).length;
+            const overallTotal = trades.length;
+            const overallWinRate = overallTotal > 0 ? ((overallWins / overallTotal) * 100).toFixed(1) : 0;
+            
+            // Today
+            const todayTrades = trades.filter(t => {
+                const tradeDate = new Date(t.time);
+                return tradeDate >= today;
+            });
+            const todayWins = todayTrades.filter(t => t.profit > 0).length;
+            const todayTotal = todayTrades.length;
+            const todayWinRate = todayTotal > 0 ? ((todayWins / todayTotal) * 100).toFixed(1) : 0;
+            
+            // Last 7 days
+            const weekTrades = trades.filter(t => {
+                const tradeDate = new Date(t.time);
+                return tradeDate >= last7Days;
+            });
+            const weekWins = weekTrades.filter(t => t.profit > 0).length;
+            const weekTotal = weekTrades.length;
+            const weekWinRate = weekTotal > 0 ? ((weekWins / weekTotal) * 100).toFixed(1) : 0;
+            
+            // Update display
+            document.getElementById('overall-win-rate').textContent = overallWinRate + '%';
+            document.getElementById('overall-win-rate').className = overallWinRate >= 50 ? 'positive' : 'negative';
+            document.getElementById('overall-trades-count').textContent = `${overallWins}W / ${overallTotal - overallWins}L (${overallTotal} trades)`;
+            
+            document.getElementById('today-win-rate').textContent = todayWinRate + '%';
+            document.getElementById('today-win-rate').className = todayWinRate >= 50 ? 'positive' : 'negative';
+            document.getElementById('today-trades-count').textContent = `${todayWins}W / ${todayTotal - todayWins}L (${todayTotal} trades)`;
+            
+            document.getElementById('week-win-rate').textContent = weekWinRate + '%';
+            document.getElementById('week-win-rate').className = weekWinRate >= 50 ? 'positive' : 'negative';
+            document.getElementById('week-trades-count').textContent = `${weekWins}W / ${weekTotal - weekWins}L (${weekTotal} trades)`;
+        }
+        
         // Apply sort and filter
         function applySortFilter() {
             let filteredTrades = [...allTrades];
             
-            // Apply filter
-            const filterBy = document.getElementById('filter-by').value;
-            const filterSymbol = document.getElementById('filter-symbol').value;
-            const today = new Date().toISOString().split('T')[0];
+            // Apply date range filter
+            const dateRange = document.getElementById('date-range').value;
+            const range = getDateRange(dateRange);
             
+            if (range && range.startDate && range.endDate) {
+                filteredTrades = filteredTrades.filter(t => {
+                    const tradeDate = new Date(t.time);
+                    return tradeDate >= range.startDate && tradeDate < range.endDate;
+                });
+            }
+            
+            // Apply win/loss filter
+            const filterBy = document.getElementById('filter-by').value;
             if (filterBy === 'wins') {
                 filteredTrades = filteredTrades.filter(t => t.profit > 0);
             } else if (filterBy === 'losses') {
                 filteredTrades = filteredTrades.filter(t => t.profit < 0);
-            } else if (filterBy === 'today') {
-                filteredTrades = filteredTrades.filter(t => t.time.startsWith(today));
             }
             
+            // Apply symbol filter
+            const filterSymbol = document.getElementById('filter-symbol').value;
             if (filterSymbol !== 'all') {
                 filteredTrades = filteredTrades.filter(t => t.symbol === filterSymbol);
             }
@@ -1752,15 +2039,21 @@
                 filteredTrades.sort((a, b) => Math.abs(a.profit) - Math.abs(b.profit));
             }
             
+            // Calculate and display win rates (always based on all trades)
+            calculateWinRates(allTrades);
+            
             // Display filtered and sorted trades
             displayTrades(filteredTrades);
         }
         
         // Reset filters
         function resetFilters() {
+            document.getElementById('date-range').value = 'last7days';
             document.getElementById('sort-by').value = 'date-desc';
             document.getElementById('filter-by').value = 'all';
             document.getElementById('filter-symbol').value = 'all';
+            document.getElementById('custom-date-from').style.display = 'none';
+            document.getElementById('custom-date-to').style.display = 'none';
             applySortFilter();
         }
         
@@ -2077,6 +2370,256 @@
                                 }
                             }
                         }
+                    });
+                });
+        }
+        
+        // Apply chart date range filter
+        function applyChartDateRange() {
+            const dateRange = document.getElementById('chart-date-range').value;
+            
+            // Show loading state
+            const chartContainers = document.querySelectorAll('.chart-container canvas');
+            chartContainers.forEach(canvas => {
+                canvas.style.opacity = '0.5';
+            });
+            
+            // Fetch filtered chart data
+            fetch(`/api/charts/data?range=${dateRange}`)
+                .then(r => r.json())
+                .then(data => {
+                    // Destroy existing charts
+                    Object.values(charts).forEach(chart => chart.destroy());
+                    charts = {};
+                    
+                    // Get range label for chart titles
+                    const rangeLabels = {
+                        'all': 'All Time',
+                        'today': 'Today',
+                        'last7days': 'Last 7 Days',
+                        'last30days': 'Last 30 Days',
+                        'thisweek': 'This Week',
+                        'lastweek': 'Last Week',
+                        'thismonth': 'This Month',
+                        'lastmonth': 'Last Month'
+                    };
+                    const rangeLabel = rangeLabels[dateRange] || 'All Time';
+                    
+                    // Profit by Symbol
+                    const symbolLabels = Object.keys(data.symbol_profits);
+                    const symbolProfits = Object.values(data.symbol_profits);
+                    const symbolColors = symbolProfits.map(p => p >= 0 ? '#10b981' : '#ef4444');
+                    
+                    charts.symbolProfit = new Chart(document.getElementById('symbol-profit-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: symbolLabels,
+                            datasets: [{
+                                label: 'Profit ($)',
+                                data: symbolProfits,
+                                backgroundColor: symbolColors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false },
+                                title: {
+                                    display: true,
+                                    text: `Profit by Symbol (${rangeLabel})`,
+                                    color: '#94a3b8'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Win/Loss by Symbol
+                    const winLossLabels = Object.keys(data.symbol_wins);
+                    const wins = Object.values(data.symbol_wins);
+                    const losses = Object.values(data.symbol_losses);
+                    
+                    charts.symbolWinLoss = new Chart(document.getElementById('symbol-winloss-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: winLossLabels,
+                            datasets: [
+                                {
+                                    label: 'Wins',
+                                    data: wins,
+                                    backgroundColor: '#10b981'
+                                },
+                                {
+                                    label: 'Losses',
+                                    data: losses,
+                                    backgroundColor: '#ef4444'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Win/Loss by Symbol (${rangeLabel})`,
+                                    color: '#94a3b8'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Daily Profit Trend
+                    charts.dailyProfit = new Chart(document.getElementById('daily-profit-chart'), {
+                        type: 'line',
+                        data: {
+                            labels: data.daily_labels,
+                            datasets: [{
+                                label: 'Daily Profit ($)',
+                                data: data.daily_values,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Daily Profit Trend (${rangeLabel})`,
+                                    color: '#94a3b8'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Hourly Performance
+                    const hourlyLabels = Object.keys(data.hourly_profits).map(h => h + ':00');
+                    const hourlyProfits = Object.values(data.hourly_profits);
+                    const hourlyColors = hourlyProfits.map(p => p >= 0 ? '#10b981' : '#ef4444');
+                    
+                    charts.hourlyProfit = new Chart(document.getElementById('hourly-profit-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: hourlyLabels,
+                            datasets: [{
+                                label: 'Profit ($)',
+                                data: hourlyProfits,
+                                backgroundColor: hourlyColors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false },
+                                title: {
+                                    display: true,
+                                    text: `Hourly Performance (${rangeLabel})`,
+                                    color: '#94a3b8'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Trade Distribution (Doughnut)
+                    const tradeLabels = Object.keys(data.symbol_trades);
+                    const tradeCounts = Object.values(data.symbol_trades);
+                    
+                    charts.tradeDistribution = new Chart(document.getElementById('trade-distribution-chart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: tradeLabels,
+                            datasets: [{
+                                data: tradeCounts,
+                                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: { color: '#94a3b8' }
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Trade Distribution (${rangeLabel})`,
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Restore opacity
+                    chartContainers.forEach(canvas => {
+                        canvas.style.opacity = '1';
+                    });
+                    
+                    // Show success toast
+                    showToast(`Charts updated for ${rangeLabel}`, 'success');
+                })
+                .catch(err => {
+                    console.error('Failed to load chart data:', err);
+                    showToast('Failed to update charts', 'error');
+                    
+                    // Restore opacity
+                    chartContainers.forEach(canvas => {
+                        canvas.style.opacity = '1';
                     });
                 });
         }
