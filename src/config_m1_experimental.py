@@ -24,18 +24,18 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'XAGUSD']
+SYMBOLS = ['XAUUSD', 'XAGUSD']  # Gold and Silver (best for trending)
 
 # ==============================================================================
 # TIMEFRAME - H1 FOR QUALITY TRADES
 # ==============================================================================
-TIMEFRAME = 16385
+TIMEFRAME = mt5.TIMEFRAME_H1  # 1-hour charts
 
 # ==============================================================================
 # RISK MANAGEMENT - CONSERVATIVE
 # ==============================================================================
-RISK_PERCENT = 0.4
-REWARD_RATIO = 2
+RISK_PERCENT = 0.5              # 0.5% per trade (safe)
+REWARD_RATIO = 2.0              # 1:2 risk/reward minimum
 DEFAULT_LOT_SIZE = 0.01
 
 USE_DYNAMIC_SIZING = True
@@ -49,7 +49,7 @@ USE_SPLIT_ORDERS = True
 NUM_POSITIONS = 3
 
 # Conservative TP levels
-TP_LEVELS = [1.5, 2.5, 4]
+TP_LEVELS = [1.5, 2.5, 4.0]     # 1.5R, 2.5R, 4.0R
 PARTIAL_CLOSE_PERCENT = [40, 30, 30]
 MAX_LOT_PER_ORDER = 0.3
 
@@ -67,7 +67,7 @@ TREND_CONSISTENCY_HIGH = 70     # High consistency required
 VOLATILITY_HIGH = 1.5
 
 # HIGH confidence threshold
-MIN_TRADE_CONFIDENCE = 0.7
+MIN_TRADE_CONFIDENCE = 0.70     # 70% minimum (high quality)
 
 MAX_RISK_MULTIPLIER = 1.5
 MIN_RISK_MULTIPLIER = 0.5
@@ -75,8 +75,8 @@ MIN_RISK_MULTIPLIER = 0.5
 # ==============================================================================
 # MOVING AVERAGES - INDUSTRY STANDARD
 # ==============================================================================
-FAST_MA_PERIOD = 20
-SLOW_MA_PERIOD = 50
+FAST_MA_PERIOD = 20             # 20 EMA (proven effective)
+SLOW_MA_PERIOD = 50             # 50 EMA (trend line)
 MA_TYPE = 'EMA'                 # Exponential MA
 
 WAIT_FOR_CONFIRMATION = True
@@ -87,25 +87,25 @@ MIN_MA_SEPARATION = 0.0005      # Require clear separation
 # ==============================================================================
 USE_RSI = True
 RSI_PERIOD = 14
-RSI_OVERBOUGHT = 70
-RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 70             # Don't buy above 70
+RSI_OVERSOLD = 30               # Don't sell below 30
 
 # ==============================================================================
 # MACD - MOMENTUM CONFIRMATION
 # ==============================================================================
 USE_MACD = True
-MACD_FAST = 12
+MACD_FAST = 12                  # Standard settings
 MACD_SLOW = 26
 MACD_SIGNAL = 9
 
-MACD_MIN_HISTOGRAM = 0.5
+MACD_MIN_HISTOGRAM = 0.5        # Require strong momentum
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
 # ATR-BASED STOPS - WIDER FOR H1
 # ==============================================================================
 ATR_PERIOD = 14
-ATR_MULTIPLIER_SL = 2
+ATR_MULTIPLIER_SL = 2.0         # 2x ATR (let trades breathe)
 
 MIN_ATR_VALUE = 0.0001
 MAX_ATR_VALUE = 999999
@@ -115,8 +115,8 @@ MAX_ATR_VALUE = 999999
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-TRAIL_ACTIVATION_ATR = 1.5
-TRAIL_DISTANCE_ATR = 1
+TRAIL_ACTIVATION_ATR = 1.5      # After 1.5R profit
+TRAIL_DISTANCE_ATR = 1.0        # 1x ATR distance
 TRAIL_TYPE = 'atr'
 
 TRAIL_PERCENT = 2.0
@@ -136,16 +136,16 @@ TRAILING_TP_RATIO = 0.5
 MAGIC_NUMBER = 234001
 
 # Limit trades (quality over quantity)
-MAX_TRADES_TOTAL = 10
-MAX_TRADES_PER_SYMBOL = 3
+MAX_TRADES_TOTAL = 10           # Max 10 open trades
+MAX_TRADES_PER_SYMBOL = 3       # Max 3 per symbol
 ALLOW_HEDGING = False
 
 # ==============================================================================
 # TRADING HOURS - BEST TIMES ONLY
 # ==============================================================================
 ENABLE_TRADING_HOURS = True
-TRADING_START_HOUR = 8
-TRADING_END_HOUR = 16
+TRADING_START_HOUR = 8          # 8 AM (London open)
+TRADING_END_HOUR = 16           # 4 PM (before NY close)
 
 TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 
@@ -154,7 +154,7 @@ TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 # ==============================================================================
 USE_TREND_FILTER = True
 TREND_TIMEFRAME = mt5.TIMEFRAME_H4  # H4 for major trend
-TREND_MA_PERIOD = 100
+TREND_MA_PERIOD = 100               # 100 EMA for trend direction
 
 # ==============================================================================
 # ADDITIONAL FILTERS
@@ -163,7 +163,7 @@ USE_VOLUME_FILTER = True
 MIN_VOLUME_MA = 1.2             # Require above-average volume
 
 AVOID_NEWS_TRADING = True
-NEWS_BUFFER_MINUTES = 60
+NEWS_BUFFER_MINUTES = 60        # Avoid 1 hour before/after news
 
 # ==============================================================================
 # BOLLINGER BANDS - VOLATILITY FILTER
@@ -178,7 +178,7 @@ BB_SQUEEZE_THRESHOLD = 0.5      # Avoid low volatility
 # ==============================================================================
 USE_ADX = True
 ADX_PERIOD = 14
-ADX_MIN_STRENGTH = 25
+ADX_MIN_STRENGTH = 25           # Only trade when ADX > 25
 
 # ==============================================================================
 # SUPPORT/RESISTANCE LEVELS
@@ -222,11 +222,11 @@ EMAIL_PASSWORD = ''
 # ==============================================================================
 # SAFETY LIMITS
 # ==============================================================================
-MAX_DAILY_LOSS = 3
-MAX_DAILY_TRADES = 20
+MAX_DAILY_LOSS = 200.0          # $200 max daily loss
+MAX_DAILY_TRADES = 20           # Max 20 trades per day
 MAX_DAILY_LOSS_PERCENT = 3.0    # Stop at 3% daily loss
 
-MAX_DRAWDOWN_PERCENT = 10
+MAX_DRAWDOWN_PERCENT = 10.0
 MIN_ACCOUNT_BALANCE = 100.0
 
 # ==============================================================================

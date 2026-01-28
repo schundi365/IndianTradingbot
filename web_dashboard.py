@@ -52,19 +52,85 @@ def config_api():
         
         # Validate configuration
         try:
+            # Validate risk
             risk = new_config.get('risk_percent', 0)
             if risk < 0.1 or risk > 5:
                 return jsonify({'status': 'error', 'message': 'Risk must be between 0.1% and 5%'})
             
+            # Validate confidence
             confidence = new_config.get('min_confidence', 0)
-            if confidence < 0.2 or confidence > 0.8:
-                return jsonify({'status': 'error', 'message': 'Confidence must be between 20% and 80%'})
+            if confidence < 0.2 or confidence > 0.9:
+                return jsonify({'status': 'error', 'message': 'Confidence must be between 20% and 90%'})
+            
+            # Validate symbols
+            symbols = new_config.get('symbols', [])
+            if not symbols or len(symbols) == 0:
+                return jsonify({'status': 'error', 'message': 'At least one symbol must be selected'})
+            
+            # Validate timeframe
+            timeframe = new_config.get('timeframe')
+            valid_timeframes = [1, 5, 15, 30, 16385, 16388, 16408]
+            if timeframe not in valid_timeframes:
+                return jsonify({'status': 'error', 'message': 'Invalid timeframe selected'})
+            
+            # Validate reward ratio
+            reward_ratio = new_config.get('reward_ratio', 1.0)
+            if reward_ratio < 1.0 or reward_ratio > 5.0:
+                return jsonify({'status': 'error', 'message': 'Reward ratio must be between 1.0 and 5.0'})
+            
+            # Validate max daily loss
+            max_daily_loss = new_config.get('max_daily_loss', 0)
+            if max_daily_loss < 1 or max_daily_loss > 20:
+                return jsonify({'status': 'error', 'message': 'Max daily loss must be between 1% and 20%'})
+            
+            # Validate indicator periods
+            fast_ma = new_config.get('fast_ma_period', 20)
+            slow_ma = new_config.get('slow_ma_period', 50)
+            if fast_ma >= slow_ma:
+                return jsonify({'status': 'error', 'message': 'Fast MA must be less than Slow MA'})
+            
+            # Validate RSI
+            rsi_overbought = new_config.get('rsi_overbought', 70)
+            rsi_oversold = new_config.get('rsi_oversold', 30)
+            if rsi_oversold >= rsi_overbought:
+                return jsonify({'status': 'error', 'message': 'RSI oversold must be less than overbought'})
+            
+            # Validate MACD
+            macd_fast = new_config.get('macd_fast', 12)
+            macd_slow = new_config.get('macd_slow', 26)
+            if macd_fast >= macd_slow:
+                return jsonify({'status': 'error', 'message': 'MACD fast must be less than slow'})
+            
+            # Validate trading hours
+            if new_config.get('enable_trading_hours', False):
+                start_hour = new_config.get('trading_start_hour', 0)
+                end_hour = new_config.get('trading_end_hour', 23)
+                if start_hour < 0 or start_hour > 23 or end_hour < 0 or end_hour > 23:
+                    return jsonify({'status': 'error', 'message': 'Trading hours must be between 0 and 23'})
+            
+            # Validate position management
+            num_positions = new_config.get('num_positions', 1)
+            if num_positions < 1 or num_positions > 5:
+                return jsonify({'status': 'error', 'message': 'Number of positions must be between 1 and 5'})
+            
+            # Validate TP levels
+            tp1 = new_config.get('tp_level_1', 1.0)
+            tp2 = new_config.get('tp_level_2', 2.0)
+            tp3 = new_config.get('tp_level_3', 3.0)
+            if not (tp1 < tp2 < tp3):
+                return jsonify({'status': 'error', 'message': 'TP levels must be in ascending order'})
+            
+            # Validate risk multipliers
+            max_risk_mult = new_config.get('max_risk_multiplier', 1.5)
+            min_risk_mult = new_config.get('min_risk_multiplier', 0.5)
+            if min_risk_mult >= max_risk_mult:
+                return jsonify({'status': 'error', 'message': 'Min risk multiplier must be less than max'})
             
             # Update config file
             update_config_file(new_config)
             current_config = new_config
             
-            logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%")
+            logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
             return jsonify({'status': 'success', 'message': 'Configuration updated successfully'})
         
         except Exception as e:
@@ -116,19 +182,11 @@ def stop_bot():
 def bot_status():
     """Get bot status"""
     try:
-        # Check if bot is running by looking for recent activity
+        # Check if bot is running
         global bot_running
         
-        # Try to detect if bot is running independently
-        if not bot_running and os.path.exists('trading_bot.log'):
-            try:
-                # Check if log file was modified in last 30 seconds
-                log_mtime = os.path.getmtime('trading_bot.log')
-                if time.time() - log_mtime < 30:
-                    # Bot is likely running (log updated recently)
-                    bot_running = True
-            except:
-                pass
+        # Don't auto-detect running status from log file
+        # Only trust the bot_running flag set by start/stop buttons
         
         if not mt5.initialize():
             logger.warning("MT5 not connected for status check")
@@ -249,19 +307,54 @@ def trades_history():
         mt5.shutdown()
         return jsonify({'trades': []})
     
-    # Convert to list of dicts
-    trades_list = []
+    # Group deals by position to match entry and exit
+    positions_dict = {}
     for deal in deals:
-        if deal.entry in [mt5.DEAL_ENTRY_OUT]:  # Only closed trades
+        position_id = deal.position_id
+        if position_id not in positions_dict:
+            positions_dict[position_id] = {'entry': None, 'exit': None}
+        
+        if deal.entry == mt5.DEAL_ENTRY_IN:
+            positions_dict[position_id]['entry'] = deal
+        elif deal.entry == mt5.DEAL_ENTRY_OUT:
+            positions_dict[position_id]['exit'] = deal
+    
+    # Convert to list of completed trades
+    trades_list = []
+    for position_id, deals_pair in positions_dict.items():
+        entry_deal = deals_pair['entry']
+        exit_deal = deals_pair['exit']
+        
+        # Only include completed trades (have both entry and exit)
+        if entry_deal and exit_deal:
+            symbol = exit_deal.symbol
+            price_diff = abs(exit_deal.price - entry_deal.price)
+            
+            # Calculate pips based on instrument type
+            if 'XAU' in symbol or 'GOLD' in symbol:
+                # Gold: 1 pip = 0.01
+                pips = price_diff * 100
+            elif 'XAG' in symbol or 'SILVER' in symbol:
+                # Silver: 1 pip = 0.001
+                pips = price_diff * 1000
+            elif 'JPY' in symbol:
+                # JPY pairs: 1 pip = 0.01
+                pips = price_diff * 100
+            else:
+                # Standard forex pairs: 1 pip = 0.0001
+                pips = price_diff * 10000
+            
             trades_list.append({
-                'time': datetime.fromtimestamp(deal.time).strftime('%Y-%m-%d %H:%M:%S'),
-                'timestamp': deal.time,
-                'symbol': deal.symbol,
-                'type': 'BUY' if deal.type == mt5.ORDER_TYPE_BUY else 'SELL',
-                'volume': deal.volume,
-                'price': deal.price,
-                'profit': deal.profit,
-                'commission': deal.commission,
+                'time': datetime.fromtimestamp(exit_deal.time).strftime('%Y-%m-%d %H:%M:%S'),
+                'timestamp': exit_deal.time,
+                'symbol': symbol,
+                'type': 'BUY' if entry_deal.type == mt5.ORDER_TYPE_BUY else 'SELL',
+                'volume': exit_deal.volume,
+                'price_open': entry_deal.price,  # Entry price
+                'price_close': exit_deal.price,  # Exit price
+                'profit': exit_deal.profit,
+                'commission': exit_deal.commission,
+                'pips': pips,
             })
     
     # Sort by timestamp descending (latest first)
@@ -558,20 +651,99 @@ def update_config_file(new_config):
     with open(config_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     
+    # Mapping of config keys to file variable names
+    config_mapping = {
+        'symbols': 'SYMBOLS',
+        'timeframe': 'TIMEFRAME',
+        'risk_percent': 'RISK_PERCENT',
+        'reward_ratio': 'REWARD_RATIO',
+        'min_confidence': 'MIN_TRADE_CONFIDENCE',
+        'max_daily_loss': 'MAX_DAILY_LOSS',
+        'fast_ma_period': 'FAST_MA_PERIOD',
+        'slow_ma_period': 'SLOW_MA_PERIOD',
+        'rsi_period': 'RSI_PERIOD',
+        'rsi_overbought': 'RSI_OVERBOUGHT',
+        'rsi_oversold': 'RSI_OVERSOLD',
+        'macd_fast': 'MACD_FAST',
+        'macd_slow': 'MACD_SLOW',
+        'macd_signal': 'MACD_SIGNAL',
+        'macd_min_histogram': 'MACD_MIN_HISTOGRAM',
+        'atr_period': 'ATR_PERIOD',
+        'atr_multiplier': 'ATR_MULTIPLIER_SL',
+        'adx_min_strength': 'ADX_MIN_STRENGTH',
+        'use_rsi': 'USE_RSI',
+        'use_macd': 'USE_MACD',
+        'use_adx': 'USE_ADX',
+        'use_trend_filter': 'USE_TREND_FILTER',
+        'trend_ma_period': 'TREND_MA_PERIOD',
+        'enable_trading_hours': 'ENABLE_TRADING_HOURS',
+        'trading_start_hour': 'TRADING_START_HOUR',
+        'trading_end_hour': 'TRADING_END_HOUR',
+        'avoid_news_trading': 'AVOID_NEWS_TRADING',
+        'news_buffer_minutes': 'NEWS_BUFFER_MINUTES',
+        'use_split_orders': 'USE_SPLIT_ORDERS',
+        'num_positions': 'NUM_POSITIONS',
+        'max_trades_total': 'MAX_TRADES_TOTAL',
+        'max_trades_per_symbol': 'MAX_TRADES_PER_SYMBOL',
+        'enable_trailing_stop': 'ENABLE_TRAILING_STOP',
+        'trail_activation': 'TRAIL_ACTIVATION_ATR',
+        'trail_distance': 'TRAIL_DISTANCE_ATR',
+        'use_adaptive_risk': 'USE_ADAPTIVE_RISK',
+        'max_risk_multiplier': 'MAX_RISK_MULTIPLIER',
+        'min_risk_multiplier': 'MIN_RISK_MULTIPLIER',
+        'max_drawdown_percent': 'MAX_DRAWDOWN_PERCENT',
+        'max_daily_trades': 'MAX_DAILY_TRADES'
+    }
+    
     # Update values
     updated_lines = []
     for line in lines:
-        # Update symbols
-        if line.startswith('SYMBOLS = '):
-            updated_lines.append(f"SYMBOLS = {new_config['symbols']}\n")
-        # Update timeframe
-        elif line.startswith('TIMEFRAME = '):
-            updated_lines.append(f"TIMEFRAME = {new_config['timeframe']}\n")
-        # Update risk
-        elif line.startswith('RISK_PERCENT = '):
-            updated_lines.append(f"RISK_PERCENT = {new_config['risk_percent']}\n")
-        # Add more as needed
-        else:
+        updated = False
+        
+        for config_key, var_name in config_mapping.items():
+            if config_key in new_config and line.startswith(f'{var_name} = '):
+                value = new_config[config_key]
+                
+                # Format value based on type
+                if isinstance(value, bool):
+                    formatted_value = 'True' if value else 'False'
+                elif isinstance(value, str):
+                    formatted_value = f"'{value}'"
+                elif isinstance(value, list):
+                    formatted_value = str(value)
+                else:
+                    formatted_value = str(value)
+                
+                updated_lines.append(f"{var_name} = {formatted_value}\n")
+                updated = True
+                break
+        
+        # Handle TP_LEVELS specially (array of 3 values)
+        if not updated and line.startswith('TP_LEVELS = '):
+            if 'tp_level_1' in new_config and 'tp_level_2' in new_config and 'tp_level_3' in new_config:
+                tp_levels = [new_config['tp_level_1'], new_config['tp_level_2'], new_config['tp_level_3']]
+                updated_lines.append(f"TP_LEVELS = {tp_levels}\n")
+                updated = True
+        
+        # Handle TIMEFRAME specially (needs mt5.TIMEFRAME_ prefix)
+        if not updated and line.startswith('TIMEFRAME = '):
+            if 'timeframe' in new_config:
+                timeframe_value = new_config['timeframe']
+                # Map numeric values to MT5 constants
+                timeframe_map = {
+                    1: 'mt5.TIMEFRAME_M1',
+                    5: 'mt5.TIMEFRAME_M5',
+                    15: 'mt5.TIMEFRAME_M15',
+                    30: 'mt5.TIMEFRAME_M30',
+                    16385: 'mt5.TIMEFRAME_H1',
+                    16388: 'mt5.TIMEFRAME_H4',
+                    16408: 'mt5.TIMEFRAME_D1'
+                }
+                formatted_timeframe = timeframe_map.get(timeframe_value, f'mt5.TIMEFRAME_H1')
+                updated_lines.append(f"TIMEFRAME = {formatted_timeframe}  # {timeframe_value}\n")
+                updated = True
+        
+        if not updated:
             updated_lines.append(line)
     
     # Write back with UTF-8 encoding

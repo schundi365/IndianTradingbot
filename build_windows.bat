@@ -90,50 +90,147 @@ echo.
 echo Step 4: Creating distribution package...
 
 if not exist "dist\GEM_Trading_Bot_Windows" mkdir "dist\GEM_Trading_Bot_Windows"
+if not exist "dist\GEM_Trading_Bot_Windows\docs" mkdir "dist\GEM_Trading_Bot_Windows\docs"
 
+REM Copy executable
 copy "dist\GEM_Trading_Bot.exe" "dist\GEM_Trading_Bot_Windows\" >nul
+
+REM Copy essential documentation
 copy "USER_GUIDE.md" "dist\GEM_Trading_Bot_Windows\" >nul
-copy "QUICK_START_CARD.md" "dist\GEM_Trading_Bot_Windows\" >nul
-copy "INSTALLATION_GUIDE_FOR_USERS.md" "dist\GEM_Trading_Bot_Windows\" >nul
+copy "QUICK_START.md" "dist\GEM_Trading_Bot_Windows\" >nul
+copy "QUICK_REFERENCE_CARD.md" "dist\GEM_Trading_Bot_Windows\" >nul
 copy "TROUBLESHOOTING.md" "dist\GEM_Trading_Bot_Windows\" >nul
 copy "README.md" "dist\GEM_Trading_Bot_Windows\" >nul
+copy "CHANGELOG.md" "dist\GEM_Trading_Bot_Windows\" >nul
+copy "WINDOWS_INSTALLATION_GUIDE.md" "dist\GEM_Trading_Bot_Windows\" >nul
+copy "FEATURES_GUIDE.md" "dist\GEM_Trading_Bot_Windows\" >nul
 
-REM Create README for distribution
-echo Creating distribution README...
+REM Copy user guides from docs
+copy "docs\INSTALLATION_GUIDE_FOR_USERS.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
+copy "docs\DASHBOARD_CONFIGURATION_GUIDE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
+copy "docs\PROFITABLE_STRATEGY_GUIDE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
+copy "docs\WEB_DASHBOARD_GUIDE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
+copy "docs\CONFIGURATION_QUICK_REFERENCE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
+
+REM Create START_HERE.txt for distribution
+echo Creating START_HERE.txt...
 (
-echo # GEM Trading Bot - Windows Edition
+echo ================================================================================
+echo    GEM TRADING BOT - WINDOWS EDITION
+echo ================================================================================
 echo.
-echo ## Quick Start
+echo Thank you for downloading GEM Trading Bot!
 echo.
-echo 1. Make sure MT5 is installed and running
-echo 2. Double-click GEM_Trading_Bot.exe
-echo 3. Open browser to http://localhost:5000
-echo 4. Configure and start trading!
+echo ================================================================================
+echo    QUICK START - 3 STEPS
+echo ================================================================================
 echo.
-echo ## Documentation
+echo STEP 1: Install MetaTrader 5
+echo    - Download MT5 from your broker's website
+echo    - Install and login to your account
+echo    - Enable Algo Trading: Tools ^> Options ^> Expert Advisors
+echo    - Check "Allow algorithmic trading"
+echo    - Keep MT5 running!
 echo.
-echo - USER_GUIDE.md - Complete user manual
-echo - QUICK_START_CARD.md - Quick reference
-echo - INSTALLATION_GUIDE_FOR_USERS.md - Setup instructions
-echo - TROUBLESHOOTING.md - Common issues and solutions
+echo STEP 2: Run the Bot
+echo    - Double-click: GEM_Trading_Bot.exe
+echo    - Wait 30 seconds for dashboard to open
+echo    - Browser opens automatically to http://localhost:5000
 echo.
-echo ## System Requirements
+echo STEP 3: Configure and Start
+echo    - Click "Configuration" tab
+echo    - Select symbols (XAUUSD, GBPUSD recommended^)
+echo    - Choose timeframe (M5 recommended^)
+echo    - Enable "Auto" for all settings
+echo    - Click "Save Configuration"
+echo    - Click "Start Bot"
+echo    - Monitor your trades!
 echo.
-echo - Windows 10 or higher
-echo - MT5 installed
-echo - 4GB RAM minimum
-echo - Internet connection
+echo ================================================================================
+echo    SYSTEM REQUIREMENTS
+echo ================================================================================
 echo.
-echo ## Support
+echo    - Windows 10 or 11 (64-bit^)
+echo    - MetaTrader 5 installed
+echo    - 4GB RAM minimum
+echo    - Internet connection
+echo    - 500MB free disk space
 echo.
-echo For help, check TROUBLESHOOTING.md or contact support.
+echo ================================================================================
+echo    DOCUMENTATION
+echo ================================================================================
 echo.
-echo ## Version
+echo    README.md - Project overview
+echo    USER_GUIDE.md - Complete user manual (READ THIS FIRST!^)
+echo    QUICK_START.md - 5-minute getting started
+echo    TROUBLESHOOTING.md - Common issues and solutions
+echo    CHANGELOG.md - Version history
 echo.
-echo Version: 2.0
-echo Build Date: %date%
+echo    docs\ folder:
+echo    - INSTALLATION_GUIDE_FOR_USERS.md - Detailed setup
+echo    - DASHBOARD_CONFIGURATION_GUIDE.md - All settings explained
+echo    - PROFITABLE_STRATEGY_GUIDE.md - Trading strategy details
+echo    - WEB_DASHBOARD_GUIDE.md - Dashboard features
+echo    - CONFIGURATION_QUICK_REFERENCE.md - Quick settings guide
 echo.
-) > "dist\GEM_Trading_Bot_Windows\README.txt"
+echo ================================================================================
+echo    IMPORTANT NOTES
+echo ================================================================================
+echo.
+echo    WARNING: Trading involves risk. Use at your own risk.
+echo.
+echo    - Test on DEMO account first (at least 1 week^)
+echo    - Start with low risk (0.3%% per trade^)
+echo    - Monitor regularly
+echo    - Keep MT5 running while bot is active
+echo    - Read USER_GUIDE.md before trading
+echo.
+echo ================================================================================
+echo    TROUBLESHOOTING
+echo ================================================================================
+echo.
+echo    Dashboard won't open?
+echo    - Wait 30 seconds on first run
+echo    - Try manually: http://localhost:5000
+echo    - Check Windows Firewall (allow access^)
+echo.
+echo    Bot won't start?
+echo    - Make sure MT5 is running
+echo    - Verify MT5 is logged in
+echo    - Check algo trading is enabled
+echo.
+echo    No trades executing?
+echo    - Lower confidence level to 40%%
+echo    - Check symbols are selected
+echo    - Verify account has sufficient balance
+echo.
+echo    For more help, see TROUBLESHOOTING.md
+echo.
+echo ================================================================================
+echo    SUPPORT
+echo ================================================================================
+echo.
+echo    - Read USER_GUIDE.md for detailed instructions
+echo    - Check TROUBLESHOOTING.md for common issues
+echo    - Review documentation in docs\ folder
+echo.
+echo ================================================================================
+echo    VERSION INFORMATION
+echo ================================================================================
+echo.
+echo    Version: 2.1.0
+echo    Build Date: %date%
+echo    Platform: Windows 64-bit
+echo    Python: Embedded (no installation needed^)
+echo.
+echo ================================================================================
+echo.
+echo Ready to start? Double-click GEM_Trading_Bot.exe!
+echo.
+echo Happy Trading! 💎🚀
+echo.
+echo ================================================================================
+) > "dist\GEM_Trading_Bot_Windows\START_HERE.txt"
 
 REM Get file size
 echo.

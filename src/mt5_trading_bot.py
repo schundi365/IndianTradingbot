@@ -848,7 +848,7 @@ class MT5TradingBot:
                     # Dynamic Stop Loss adjustment
                     if self.config.get('use_dynamic_sl', False):
                         try:
-                            from dynamic_sl_manager import integrate_dynamic_sl
+                            from src.dynamic_sl_manager import integrate_dynamic_sl
                             integrate_dynamic_sl(self, position, df, market_condition)
                         except Exception as e:
                             logging.debug(f"Dynamic SL not available: {str(e)}")
@@ -856,7 +856,7 @@ class MT5TradingBot:
                     # Dynamic Take Profit extension
                     if self.config.get('use_dynamic_tp', False) and position.profit > 0:
                         try:
-                            from dynamic_tp_manager import integrate_dynamic_tp
+                            from src.dynamic_tp_manager import integrate_dynamic_tp
                             integrate_dynamic_tp(self, position, df, market_condition)
                         except Exception as e:
                             logging.debug(f"Dynamic TP not available: {str(e)}")

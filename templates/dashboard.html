@@ -425,6 +425,54 @@
             margin-top: 5px;
             display: none;
         }
+        
+        /* Accordion Styles */
+        .accordion-header {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 1px solid #334155;
+        }
+        
+        .accordion-header:hover {
+            background: #1e293b;
+            border-color: #60a5fa;
+        }
+        
+        .accordion-header span:first-child {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .accordion-icon {
+            transition: transform 0.3s;
+            font-size: 0.8em;
+        }
+        
+        .accordion-header.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 15px;
+        }
+        
+        .accordion-content.active {
+            max-height: 2000px;
+            padding: 20px 15px;
+        }
+        
+        .config-section {
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -526,96 +574,345 @@
             <!-- Configuration Tab -->
             <div id="config-tab" class="tab-content active">
                 <h2>Bot Configuration</h2>
+                
+                <!-- Configuration Preset Selector -->
+                <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px;">
+                    <label style="color: white; font-weight: 600; margin-bottom: 10px; display: block;">📋 Configuration Preset</label>
+                    <select id="config-preset" style="width: 100%; padding: 10px; border-radius: 5px; border: none;" onchange="loadPreset()">
+                        <option value="profitable">✅ Profitable Balanced (H1) - Recommended</option>
+                        <option value="conservative">🛡️ Conservative (H4) - Safest</option>
+                        <option value="aggressive">⚡ Aggressive (M30) - Experienced</option>
+                        <option value="custom">🎨 Custom - Manual Settings</option>
+                    </select>
+                    <small style="color: rgba(255,255,255,0.9); display: block; margin-top: 8px;">
+                        Select a preset or customize individual settings below
+                    </small>
+                </div>
+                
                 <form id="config-form">
-                    <div class="grid">
-                        <div class="form-group">
-                            <label>Trading Symbols</label>
-                            <select id="symbols" multiple style="height: 100px;">
-                                <option value="XAUUSD" selected>XAUUSD (Gold)</option>
-                                <option value="GBPUSD" selected>GBPUSD</option>
-                                <option value="XAGUSD">XAGUSD (Silver)</option>
-                                <option value="EURUSD">EURUSD</option>
-                                <option value="USDJPY">USDJPY</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Timeframe</label>
-                            <select id="timeframe">
-                                <option value="1">M1 (1 minute)</option>
-                                <option value="5">M5 (5 minutes)</option>
-                                <option value="15">M15 (15 minutes)</option>
-                                <option value="30">M30 (30 minutes)</option>
-                                <option value="60">H1 (1 hour)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                Risk Per Trade (%)
-                                <input type="checkbox" id="auto-risk" onchange="toggleAuto('risk')" style="width: auto; margin-left: 10px;">
-                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
-                            </label>
-                            <input type="number" id="risk-percent" value="0.3" step="0.1" min="0.1" max="5" onchange="validateRisk()">
-                            <div class="validation-warning" id="risk-warning">⚠️ Risk above 1% is aggressive</div>
-                            <div class="validation-error" id="risk-error">❌ Risk must be between 0.1% and 5%</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                ATR Multiplier (Stop Loss)
-                                <input type="checkbox" id="auto-atr" onchange="toggleAuto('atr')" style="width: auto; margin-left: 10px;">
-                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
-                            </label>
-                            <input type="number" id="atr-multiplier" value="0.8" step="0.1" min="0.5" max="3">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                Min Trade Confidence (%)
-                                <input type="checkbox" id="auto-confidence" onchange="toggleAuto('confidence')" style="width: auto; margin-left: 10px;">
-                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
-                            </label>
-                            <input type="number" id="min-confidence" value="40" step="5" min="20" max="80" onchange="validateConfidence()">
-                            <div class="validation-warning" id="confidence-warning">⚠️ Confidence below 30% may result in poor trades</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Max Daily Loss (%)</label>
-                            <input type="number" id="max-daily-loss" value="5" step="1" min="1" max="10" onchange="validateDailyLoss()">
-                            <div class="validation-warning" id="daily-loss-warning">⚠️ Daily loss above 10% is very risky</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                Scalping Max Hold (minutes)
-                                <input type="checkbox" id="auto-scalp" onchange="toggleAuto('scalp')" style="width: auto; margin-left: 10px;">
-                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
-                            </label>
-                            <input type="number" id="scalp-max-hold" value="20" step="5" min="10" max="60">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Enable Adaptive Risk</label>
-                            <select id="enable-adaptive-risk">
-                                <option value="true" selected>Yes (Recommended)</option>
-                                <option value="false">No (Fixed Risk)</option>
-                            </select>
-                            <small style="color: #94a3b8; font-size: 0.85em; display: block; margin-top: 5px;">
-                                Adaptive risk adjusts position size based on market conditions
-                            </small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Enable Trading Hours</label>
-                            <select id="enable-trading-hours">
-                                <option value="false" selected>No (24/7)</option>
-                                <option value="true">Yes</option>
-                            </select>
+                    <!-- Basic Settings -->
+                    <div class="config-section">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">⚙️ Basic Settings</h3>
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>Trading Symbols</label>
+                                <select id="symbols" multiple style="height: 100px;">
+                                    <option value="XAUUSD" selected>XAUUSD (Gold)</option>
+                                    <option value="XAGUSD" selected>XAGUSD (Silver)</option>
+                                    <option value="GBPUSD">GBPUSD</option>
+                                    <option value="EURUSD">EURUSD</option>
+                                    <option value="USDJPY">USDJPY</option>
+                                </select>
+                                <small style="color: #94a3b8;">Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Timeframe</label>
+                                <select id="timeframe">
+                                    <option value="1">M1 (1 minute) - Not Recommended</option>
+                                    <option value="5">M5 (5 minutes)</option>
+                                    <option value="15">M15 (15 minutes)</option>
+                                    <option value="30">M30 (30 minutes)</option>
+                                    <option value="16385" selected>H1 (1 hour) - Recommended</option>
+                                    <option value="16388">H4 (4 hours)</option>
+                                    <option value="16408">D1 (Daily)</option>
+                                </select>
+                                <small style="color: #94a3b8;">Higher timeframes = better signals</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Risk Per Trade (%)</label>
+                                <input type="number" id="risk-percent" value="0.5" step="0.1" min="0.1" max="5" onchange="validateRisk()">
+                                <div class="validation-warning" id="risk-warning">⚠️ Risk above 1% is aggressive</div>
+                                <div class="validation-error" id="risk-error">❌ Risk must be between 0.1% and 5%</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Risk/Reward Ratio</label>
+                                <input type="number" id="reward-ratio" value="2.0" step="0.1" min="1.0" max="5.0">
+                                <small style="color: #94a3b8;">Minimum 1:2 recommended</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Min Trade Confidence (%)</label>
+                                <input type="number" id="min-confidence" value="70" step="5" min="20" max="90" onchange="validateConfidence()">
+                                <div class="validation-warning" id="confidence-warning">⚠️ Confidence below 50% may result in poor trades</div>
+                                <small style="color: #94a3b8;">Higher = fewer but better trades</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Max Daily Loss (%)</label>
+                                <input type="number" id="max-daily-loss" value="3" step="0.5" min="1" max="10" onchange="validateDailyLoss()">
+                                <div class="validation-warning" id="daily-loss-warning">⚠️ Daily loss above 5% is very risky</div>
+                            </div>
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-secondary" id="save-config-btn">Save Configuration</button>
+                    <!-- Advanced Settings - Collapsible -->
+                    <div class="config-section" style="margin-top: 20px;">
+                        <div class="accordion-header" onclick="toggleAccordion('indicators')">
+                            <span>📊 Indicator Settings</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="indicators-content" class="accordion-content">
+                            <div class="grid">
+                                <!-- Moving Averages -->
+                                <div class="form-group">
+                                    <label>Fast MA Period</label>
+                                    <input type="number" id="fast-ma" value="20" min="5" max="100">
+                                    <small style="color: #94a3b8;">Standard: 20</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Slow MA Period</label>
+                                    <input type="number" id="slow-ma" value="50" min="20" max="200">
+                                    <small style="color: #94a3b8;">Standard: 50</small>
+                                </div>
+                                
+                                <!-- RSI -->
+                                <div class="form-group">
+                                    <label>RSI Period</label>
+                                    <input type="number" id="rsi-period" value="14" min="7" max="28">
+                                    <small style="color: #94a3b8;">Standard: 14</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>RSI Overbought</label>
+                                    <input type="number" id="rsi-overbought" value="70" min="60" max="90">
+                                    <small style="color: #94a3b8;">Don't buy above this</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>RSI Oversold</label>
+                                    <input type="number" id="rsi-oversold" value="30" min="10" max="40">
+                                    <small style="color: #94a3b8;">Don't sell below this</small>
+                                </div>
+                                
+                                <!-- MACD -->
+                                <div class="form-group">
+                                    <label>MACD Fast</label>
+                                    <input type="number" id="macd-fast" value="12" min="5" max="20">
+                                    <small style="color: #94a3b8;">Standard: 12</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>MACD Slow</label>
+                                    <input type="number" id="macd-slow" value="26" min="20" max="40">
+                                    <small style="color: #94a3b8;">Standard: 26</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>MACD Signal</label>
+                                    <input type="number" id="macd-signal" value="9" min="5" max="15">
+                                    <small style="color: #94a3b8;">Standard: 9</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>MACD Min Histogram</label>
+                                    <input type="number" id="macd-min-histogram" value="0.5" step="0.1" min="0" max="2">
+                                    <small style="color: #94a3b8;">Minimum momentum strength</small>
+                                </div>
+                                
+                                <!-- ATR -->
+                                <div class="form-group">
+                                    <label>ATR Period</label>
+                                    <input type="number" id="atr-period" value="14" min="7" max="28">
+                                    <small style="color: #94a3b8;">Standard: 14</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>ATR Multiplier (Stop Loss)</label>
+                                    <input type="number" id="atr-multiplier" value="2.0" step="0.1" min="0.5" max="4">
+                                    <small style="color: #94a3b8;">Higher = wider stops</small>
+                                </div>
+                                
+                                <!-- ADX -->
+                                <div class="form-group">
+                                    <label>ADX Min Strength</label>
+                                    <input type="number" id="adx-min" value="25" min="15" max="40">
+                                    <small style="color: #94a3b8;">Only trade when ADX > this</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filters Section -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('filters')">
+                            <span>🛡️ Trade Filters</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="filters-content" class="accordion-content">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Enable RSI Filter</label>
+                                    <select id="use-rsi">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable MACD Filter</label>
+                                    <select id="use-macd">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable ADX Filter</label>
+                                    <select id="use-adx">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable Trend Filter</label>
+                                    <select id="use-trend-filter">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Uses H4 timeframe for trend</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Trend MA Period</label>
+                                    <input type="number" id="trend-ma-period" value="100" min="50" max="200">
+                                    <small style="color: #94a3b8;">For H4 trend filter</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable Trading Hours</label>
+                                    <select id="enable-trading-hours">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No (24/7)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Trading Start Hour (UTC)</label>
+                                    <input type="number" id="trading-start-hour" value="8" min="0" max="23">
+                                    <small style="color: #94a3b8;">8 AM = London open</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Trading End Hour (UTC)</label>
+                                    <input type="number" id="trading-end-hour" value="16" min="0" max="23">
+                                    <small style="color: #94a3b8;">4 PM = Before NY close</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Avoid News Trading</label>
+                                    <select id="avoid-news">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>News Buffer (minutes)</label>
+                                    <input type="number" id="news-buffer" value="60" min="15" max="120" step="15">
+                                    <small style="color: #94a3b8;">Avoid trading X min before/after news</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Position Management -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('position')">
+                            <span>💼 Position Management</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="position-content" class="accordion-content">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Use Split Orders</label>
+                                    <select id="use-split-orders">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No (Single TP)</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Multiple TP levels</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Number of Positions</label>
+                                    <input type="number" id="num-positions" value="3" min="1" max="5">
+                                    <small style="color: #94a3b8;">Split into X positions</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>TP Level 1 (R:R)</label>
+                                    <input type="number" id="tp-level-1" value="1.5" step="0.1" min="0.5" max="5">
+                                </div>
+                                <div class="form-group">
+                                    <label>TP Level 2 (R:R)</label>
+                                    <input type="number" id="tp-level-2" value="2.5" step="0.1" min="1" max="8">
+                                </div>
+                                <div class="form-group">
+                                    <label>TP Level 3 (R:R)</label>
+                                    <input type="number" id="tp-level-3" value="4.0" step="0.1" min="2" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Trades Total</label>
+                                    <input type="number" id="max-trades-total" value="10" min="1" max="50">
+                                    <small style="color: #94a3b8;">Max open trades</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Trades Per Symbol</label>
+                                    <input type="number" id="max-trades-per-symbol" value="3" min="1" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable Trailing Stop</label>
+                                    <select id="enable-trailing">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Trail Activation (ATR)</label>
+                                    <input type="number" id="trail-activation" value="1.5" step="0.1" min="0.5" max="3">
+                                    <small style="color: #94a3b8;">Start trailing after X*ATR profit</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Trail Distance (ATR)</label>
+                                    <input type="number" id="trail-distance" value="1.0" step="0.1" min="0.3" max="2">
+                                    <small style="color: #94a3b8;">Trail X*ATR behind price</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Risk Management -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('risk')">
+                            <span>⚠️ Risk Management</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="risk-content" class="accordion-content">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Enable Adaptive Risk</label>
+                                    <select id="enable-adaptive-risk">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No (Fixed Risk)</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Adjusts risk based on market conditions</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Risk Multiplier</label>
+                                    <input type="number" id="max-risk-multiplier" value="1.5" step="0.1" min="1" max="3">
+                                    <small style="color: #94a3b8;">Max risk increase in good conditions</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Min Risk Multiplier</label>
+                                    <input type="number" id="min-risk-multiplier" value="0.5" step="0.1" min="0.1" max="1">
+                                    <small style="color: #94a3b8;">Min risk in bad conditions</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Drawdown (%)</label>
+                                    <input type="number" id="max-drawdown" value="10" min="5" max="30">
+                                    <small style="color: #94a3b8;">Stop trading if drawdown exceeds</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Daily Trades</label>
+                                    <input type="number" id="max-daily-trades" value="20" min="5" max="100">
+                                    <small style="color: #94a3b8;">Limit trades per day</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea;">💡 Tip:</strong> 
+                        <span style="color: #64748b;">Start with the "Profitable Balanced" preset and adjust gradually. Test changes on demo account first!</span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-secondary" id="save-config-btn" style="margin-top: 20px;">💾 Save Configuration</button>
                 </form>
             </div>
             
@@ -705,12 +1002,14 @@
                                 <th>Symbol</th>
                                 <th>Type</th>
                                 <th>Volume</th>
-                                <th>Price</th>
+                                <th>Open Price</th>
+                                <th>Close Price</th>
+                                <th>Pips</th>
                                 <th>Profit</th>
                             </tr>
                         </thead>
                         <tbody id="trades-body">
-                            <tr><td colspan="6" class="loading">Loading...</td></tr>
+                            <tr><td colspan="8" class="loading">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1049,10 +1348,16 @@
             event.target.classList.add('active');
             document.getElementById(tabName + '-tab').classList.add('active');
             
+            // Stop positions auto-refresh when leaving positions tab
+            stopPositionsAutoRefresh();
+            
             // Load data for the tab
             if (tabName === 'charts') loadCharts();
             if (tabName === 'trades') loadTrades();
-            if (tabName === 'positions') loadPositions();
+            if (tabName === 'positions') {
+                // Start auto-refresh for positions tab
+                startPositionsAutoRefresh();
+            }
             if (tabName === 'analysis') loadRecommendations();
             if (tabName === 'logs') loadLogs();
         }
@@ -1344,7 +1649,7 @@
             tbody.innerHTML = '';
             
             if (trades.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="loading">No trades found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">No trades found</td></tr>';
                 return;
             }
             
@@ -1352,12 +1657,19 @@
             
             trades.forEach(trade => {
                 const row = tbody.insertRow();
+                
+                // Calculate pips display
+                const pips = trade.pips ? trade.pips.toFixed(1) : 'N/A';
+                const pipsClass = trade.profit >= 0 ? 'positive' : 'negative';
+                
                 row.innerHTML = `
                     <td>${trade.time}</td>
                     <td>${trade.symbol}</td>
                     <td><span class="badge ${trade.type === 'BUY' ? 'badge-success' : 'badge-danger'}">${trade.type}</span></td>
                     <td>${trade.volume}</td>
-                    <td>${trade.price.toFixed(5)}</td>
+                    <td>${trade.price_open ? trade.price_open.toFixed(5) : 'N/A'}</td>
+                    <td>${trade.price_close ? trade.price_close.toFixed(5) : 'N/A'}</td>
+                    <td class="${pipsClass}">${pips}</td>
                     <td class="${trade.profit >= 0 ? 'positive' : 'negative'}">${currencySymbol}${trade.profit.toFixed(2)}</td>
                 `;
             });
@@ -1381,6 +1693,9 @@
                     applySortFilter();
                 });
         }
+        
+        // Auto-refresh interval for positions
+        let positionsRefreshInterval = null;
         
         function loadPositions() {
             fetch('/api/trades/open')
@@ -1410,7 +1725,30 @@
                             <td class="${pos.profit >= 0 ? 'positive' : 'negative'}">${currencySymbol}${pos.profit.toFixed(2)}</td>
                         `;
                     });
+                })
+                .catch(err => {
+                    console.error('Failed to load positions:', err);
                 });
+        }
+        
+        function startPositionsAutoRefresh() {
+            // Clear any existing interval
+            if (positionsRefreshInterval) {
+                clearInterval(positionsRefreshInterval);
+            }
+            
+            // Load immediately
+            loadPositions();
+            
+            // Then refresh every 2 seconds
+            positionsRefreshInterval = setInterval(loadPositions, 2000);
+        }
+        
+        function stopPositionsAutoRefresh() {
+            if (positionsRefreshInterval) {
+                clearInterval(positionsRefreshInterval);
+                positionsRefreshInterval = null;
+            }
         }
         
         function loadRecommendations() {
@@ -1622,6 +1960,229 @@
                 });
         }
         
+        // Accordion toggle functionality
+        function toggleAccordion(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const header = event.currentTarget;
+            
+            header.classList.toggle('active');
+            content.classList.toggle('active');
+        }
+        
+        // Configuration presets
+        const configPresets = {
+            profitable: {
+                timeframe: '16385', // H1
+                risk_percent: 0.5,
+                reward_ratio: 2.0,
+                min_confidence: 70,
+                max_daily_loss: 3,
+                fast_ma: 20,
+                slow_ma: 50,
+                rsi_period: 14,
+                rsi_overbought: 70,
+                rsi_oversold: 30,
+                macd_fast: 12,
+                macd_slow: 26,
+                macd_signal: 9,
+                macd_min_histogram: 0.5,
+                atr_period: 14,
+                atr_multiplier: 2.0,
+                adx_min: 25,
+                use_rsi: 'true',
+                use_macd: 'true',
+                use_adx: 'true',
+                use_trend_filter: 'true',
+                trend_ma_period: 100,
+                enable_trading_hours: 'true',
+                trading_start_hour: 8,
+                trading_end_hour: 16,
+                avoid_news: 'true',
+                news_buffer: 60,
+                use_split_orders: 'true',
+                num_positions: 3,
+                tp_level_1: 1.5,
+                tp_level_2: 2.5,
+                tp_level_3: 4.0,
+                max_trades_total: 10,
+                max_trades_per_symbol: 3,
+                enable_trailing: 'true',
+                trail_activation: 1.5,
+                trail_distance: 1.0,
+                enable_adaptive_risk: 'true',
+                max_risk_multiplier: 1.5,
+                min_risk_multiplier: 0.5,
+                max_drawdown: 10,
+                max_daily_trades: 20
+            },
+            conservative: {
+                timeframe: '16388', // H4
+                risk_percent: 0.3,
+                reward_ratio: 2.5,
+                min_confidence: 75,
+                max_daily_loss: 2,
+                fast_ma: 20,
+                slow_ma: 50,
+                rsi_period: 14,
+                rsi_overbought: 65,
+                rsi_oversold: 35,
+                macd_fast: 12,
+                macd_slow: 26,
+                macd_signal: 9,
+                macd_min_histogram: 0.8,
+                atr_period: 14,
+                atr_multiplier: 2.5,
+                adx_min: 30,
+                use_rsi: 'true',
+                use_macd: 'true',
+                use_adx: 'true',
+                use_trend_filter: 'true',
+                trend_ma_period: 100,
+                enable_trading_hours: 'true',
+                trading_start_hour: 8,
+                trading_end_hour: 16,
+                avoid_news: 'true',
+                news_buffer: 90,
+                use_split_orders: 'true',
+                num_positions: 3,
+                tp_level_1: 2.0,
+                tp_level_2: 3.0,
+                tp_level_3: 5.0,
+                max_trades_total: 5,
+                max_trades_per_symbol: 2,
+                enable_trailing: 'true',
+                trail_activation: 2.0,
+                trail_distance: 1.2,
+                enable_adaptive_risk: 'true',
+                max_risk_multiplier: 1.2,
+                min_risk_multiplier: 0.3,
+                max_drawdown: 8,
+                max_daily_trades: 10
+            },
+            aggressive: {
+                timeframe: '30', // M30
+                risk_percent: 1.0,
+                reward_ratio: 1.5,
+                min_confidence: 60,
+                max_daily_loss: 5,
+                fast_ma: 10,
+                slow_ma: 30,
+                rsi_period: 14,
+                rsi_overbought: 75,
+                rsi_oversold: 25,
+                macd_fast: 12,
+                macd_slow: 26,
+                macd_signal: 9,
+                macd_min_histogram: 0.3,
+                atr_period: 14,
+                atr_multiplier: 1.5,
+                adx_min: 20,
+                use_rsi: 'true',
+                use_macd: 'true',
+                use_adx: 'true',
+                use_trend_filter: 'false',
+                trend_ma_period: 50,
+                enable_trading_hours: 'false',
+                trading_start_hour: 0,
+                trading_end_hour: 23,
+                avoid_news: 'false',
+                news_buffer: 30,
+                use_split_orders: 'true',
+                num_positions: 3,
+                tp_level_1: 1.0,
+                tp_level_2: 1.5,
+                tp_level_3: 2.5,
+                max_trades_total: 20,
+                max_trades_per_symbol: 5,
+                enable_trailing: 'true',
+                trail_activation: 1.0,
+                trail_distance: 0.8,
+                enable_adaptive_risk: 'true',
+                max_risk_multiplier: 2.0,
+                min_risk_multiplier: 0.5,
+                max_drawdown: 15,
+                max_daily_trades: 50
+            }
+        };
+        
+        // Load preset configuration
+        function loadPreset() {
+            const preset = document.getElementById('config-preset').value;
+            
+            if (preset === 'custom') {
+                showToast('💡 Custom mode: Adjust settings manually', 'info');
+                return;
+            }
+            
+            const config = configPresets[preset];
+            if (!config) return;
+            
+            // Basic settings
+            document.getElementById('timeframe').value = config.timeframe;
+            document.getElementById('risk-percent').value = config.risk_percent;
+            document.getElementById('reward-ratio').value = config.reward_ratio;
+            document.getElementById('min-confidence').value = config.min_confidence;
+            document.getElementById('max-daily-loss').value = config.max_daily_loss;
+            
+            // Indicators
+            document.getElementById('fast-ma').value = config.fast_ma;
+            document.getElementById('slow-ma').value = config.slow_ma;
+            document.getElementById('rsi-period').value = config.rsi_period;
+            document.getElementById('rsi-overbought').value = config.rsi_overbought;
+            document.getElementById('rsi-oversold').value = config.rsi_oversold;
+            document.getElementById('macd-fast').value = config.macd_fast;
+            document.getElementById('macd-slow').value = config.macd_slow;
+            document.getElementById('macd-signal').value = config.macd_signal;
+            document.getElementById('macd-min-histogram').value = config.macd_min_histogram;
+            document.getElementById('atr-period').value = config.atr_period;
+            document.getElementById('atr-multiplier').value = config.atr_multiplier;
+            document.getElementById('adx-min').value = config.adx_min;
+            
+            // Filters
+            document.getElementById('use-rsi').value = config.use_rsi;
+            document.getElementById('use-macd').value = config.use_macd;
+            document.getElementById('use-adx').value = config.use_adx;
+            document.getElementById('use-trend-filter').value = config.use_trend_filter;
+            document.getElementById('trend-ma-period').value = config.trend_ma_period;
+            document.getElementById('enable-trading-hours').value = config.enable_trading_hours;
+            document.getElementById('trading-start-hour').value = config.trading_start_hour;
+            document.getElementById('trading-end-hour').value = config.trading_end_hour;
+            document.getElementById('avoid-news').value = config.avoid_news;
+            document.getElementById('news-buffer').value = config.news_buffer;
+            
+            // Position Management
+            document.getElementById('use-split-orders').value = config.use_split_orders;
+            document.getElementById('num-positions').value = config.num_positions;
+            document.getElementById('tp-level-1').value = config.tp_level_1;
+            document.getElementById('tp-level-2').value = config.tp_level_2;
+            document.getElementById('tp-level-3').value = config.tp_level_3;
+            document.getElementById('max-trades-total').value = config.max_trades_total;
+            document.getElementById('max-trades-per-symbol').value = config.max_trades_per_symbol;
+            document.getElementById('enable-trailing').value = config.enable_trailing;
+            document.getElementById('trail-activation').value = config.trail_activation;
+            document.getElementById('trail-distance').value = config.trail_distance;
+            
+            // Risk Management
+            document.getElementById('enable-adaptive-risk').value = config.enable_adaptive_risk;
+            document.getElementById('max-risk-multiplier').value = config.max_risk_multiplier;
+            document.getElementById('min-risk-multiplier').value = config.min_risk_multiplier;
+            document.getElementById('max-drawdown').value = config.max_drawdown;
+            document.getElementById('max-daily-trades').value = config.max_daily_trades;
+            
+            // Validate after loading
+            validateRisk();
+            validateConfidence();
+            validateDailyLoss();
+            
+            const presetNames = {
+                profitable: 'Profitable Balanced',
+                conservative: 'Conservative',
+                aggressive: 'Aggressive'
+            };
+            
+            showToast(`✅ Loaded ${presetNames[preset]} preset`, 'success');
+        }
+        
         // Save configuration
         document.getElementById('config-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1636,16 +2197,60 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Saving...';
             
+            // Collect all configuration values
             const config = {
+                // Basic settings
                 symbols: Array.from(document.getElementById('symbols').selectedOptions).map(o => o.value),
-                timeframe: document.getElementById('timeframe').value,
+                timeframe: parseInt(document.getElementById('timeframe').value),
                 risk_percent: parseFloat(document.getElementById('risk-percent').value),
-                atr_multiplier: parseFloat(document.getElementById('atr-multiplier').value),
+                reward_ratio: parseFloat(document.getElementById('reward-ratio').value),
                 min_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
                 max_daily_loss: parseFloat(document.getElementById('max-daily-loss').value),
-                scalp_max_hold: parseInt(document.getElementById('scalp-max-hold').value),
-                enable_adaptive_risk: document.getElementById('enable-adaptive-risk').value === 'true',
-                enable_trading_hours: document.getElementById('enable-trading-hours').value === 'true'
+                
+                // Indicators
+                fast_ma_period: parseInt(document.getElementById('fast-ma').value),
+                slow_ma_period: parseInt(document.getElementById('slow-ma').value),
+                rsi_period: parseInt(document.getElementById('rsi-period').value),
+                rsi_overbought: parseInt(document.getElementById('rsi-overbought').value),
+                rsi_oversold: parseInt(document.getElementById('rsi-oversold').value),
+                macd_fast: parseInt(document.getElementById('macd-fast').value),
+                macd_slow: parseInt(document.getElementById('macd-slow').value),
+                macd_signal: parseInt(document.getElementById('macd-signal').value),
+                macd_min_histogram: parseFloat(document.getElementById('macd-min-histogram').value),
+                atr_period: parseInt(document.getElementById('atr-period').value),
+                atr_multiplier: parseFloat(document.getElementById('atr-multiplier').value),
+                adx_min_strength: parseInt(document.getElementById('adx-min').value),
+                
+                // Filters
+                use_rsi: document.getElementById('use-rsi').value === 'true',
+                use_macd: document.getElementById('use-macd').value === 'true',
+                use_adx: document.getElementById('use-adx').value === 'true',
+                use_trend_filter: document.getElementById('use-trend-filter').value === 'true',
+                trend_ma_period: parseInt(document.getElementById('trend-ma-period').value),
+                enable_trading_hours: document.getElementById('enable-trading-hours').value === 'true',
+                trading_start_hour: parseInt(document.getElementById('trading-start-hour').value),
+                trading_end_hour: parseInt(document.getElementById('trading-end-hour').value),
+                avoid_news_trading: document.getElementById('avoid-news').value === 'true',
+                news_buffer_minutes: parseInt(document.getElementById('news-buffer').value),
+                
+                // Position Management
+                use_split_orders: document.getElementById('use-split-orders').value === 'true',
+                num_positions: parseInt(document.getElementById('num-positions').value),
+                tp_level_1: parseFloat(document.getElementById('tp-level-1').value),
+                tp_level_2: parseFloat(document.getElementById('tp-level-2').value),
+                tp_level_3: parseFloat(document.getElementById('tp-level-3').value),
+                max_trades_total: parseInt(document.getElementById('max-trades-total').value),
+                max_trades_per_symbol: parseInt(document.getElementById('max-trades-per-symbol').value),
+                enable_trailing_stop: document.getElementById('enable-trailing').value === 'true',
+                trail_activation: parseFloat(document.getElementById('trail-activation').value),
+                trail_distance: parseFloat(document.getElementById('trail-distance').value),
+                
+                // Risk Management
+                use_adaptive_risk: document.getElementById('enable-adaptive-risk').value === 'true',
+                max_risk_multiplier: parseFloat(document.getElementById('max-risk-multiplier').value),
+                min_risk_multiplier: parseFloat(document.getElementById('min-risk-multiplier').value),
+                max_drawdown_percent: parseFloat(document.getElementById('max-drawdown').value),
+                max_daily_trades: parseInt(document.getElementById('max-daily-trades').value)
             };
             
             fetch('/api/config', {
@@ -1666,7 +2271,7 @@
             })
             .finally(() => {
                 btn.disabled = false;
-                btn.textContent = 'Save Configuration';
+                btn.innerHTML = '💾 Save Configuration';
             });
         });
     </script>

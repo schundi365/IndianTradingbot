@@ -1,22 +1,21 @@
 """
-PROFITABLE BALANCED Configuration for MT5 Trading Bot
-RECOMMENDED FOR MOST TRADERS
+M1 TESTING Configuration for MT5 Trading Bot
+EXTREME HIGH-FREQUENCY TRADING MODE
 
-Strategy: Trend-Following with Multiple Confirmations
-Timeframe: H1 (1-hour)
-Expected: 5-15 quality trades per day
-Win Rate: 55-65%
-Risk/Reward: 1:2 minimum
+⚠️ WARNING: M1 timeframe generates 100-200+ trades per day!
+⚠️ This is for TESTING ONLY with strict daily loss limits
 
-Key Features:
-1. H1 timeframe (clear trends, less noise)
-2. Multiple confirmation indicators
-3. Strong trend filter (H4)
-4. Wider stops (let trades breathe)
-5. High confidence threshold (70%)
-6. Time-based filters
-7. News avoidance
-8. Proper risk management
+Key M1 Settings:
+1. M1 (1-minute) timeframe for maximum trade frequency
+2. Tight stop losses (1.2x ATR) for quick exits
+3. Lower confidence threshold (50%) for more signals
+4. Fast indicators (5/10 MA, 5/13/3 MACD)
+5. Quick trailing stops (0.8/0.6 ATR)
+6. M15 trend filter (faster than H1)
+7. 5% daily loss limit (stops trading when hit)
+8. 0.3% risk per trade
+9. 10-second update interval
+10. Unlimited trades (until 5% daily loss)
 """
 
 import MetaTrader5 as mt5
@@ -24,193 +23,181 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'XAGUSD']
+SYMBOLS = ['XAUUSD', 'GBPUSD', 'XAGUSD']
 
 # ==============================================================================
-# TIMEFRAME - H1 FOR QUALITY TRADES
+# TIMEFRAME SETTINGS - M1 EXTREME HIGH-FREQUENCY MODE
 # ==============================================================================
-TIMEFRAME = 16385
+TIMEFRAME = 5
 
 # ==============================================================================
-# RISK MANAGEMENT - CONSERVATIVE
+# RISK MANAGEMENT - M1 TESTING
 # ==============================================================================
-RISK_PERCENT = 0.4
-REWARD_RATIO = 2
-DEFAULT_LOT_SIZE = 0.01
+RISK_PERCENT = 0.3
+REWARD_RATIO = 1.5          # Risk:Reward ratio 1:1.5
+DEFAULT_LOT_SIZE = 0.01     # Fallback lot size
 
 USE_DYNAMIC_SIZING = True
-MAX_LOT_SIZE = 0.5              # Conservative max
+MAX_LOT_SIZE = 1.0
 MIN_LOT_SIZE = 0.01
 
 # ==============================================================================
-# SPLIT ORDERS - MULTIPLE TP LEVELS
+# SCALPING MODE (M1 TIMEFRAME)
+# ==============================================================================
+USE_SCALPING_MODE = True        # Use dynamic scalping exits instead of fixed TP
+SCALP_MIN_PROFIT_PIPS = 20      # Minimum 20 pips before considering exit
+SCALP_MAX_HOLD_MINUTES = 20     # Maximum 20 minutes hold time (was 30)
+SCALP_TRAIL_AFTER_PIPS = 30     # Start trailing after 30 pips profit
+SCALP_TRAIL_DISTANCE_PIPS = 15  # Trail 15 pips behind price
+
+# Scalping exit triggers
+SCALP_MOMENTUM_EXIT = True      # Exit when momentum weakens
+SCALP_REVERSAL_EXIT = True      # Exit on reversal signals
+SCALP_TIME_EXIT = True          # Exit after max hold time
+
+# ==============================================================================
+# SPLIT ORDERS & PARTIAL PROFIT TAKING
 # ==============================================================================
 USE_SPLIT_ORDERS = True
 NUM_POSITIONS = 3
 
-# Conservative TP levels
-TP_LEVELS = [1.5, 2.5, 4]
+# Aggressive TP levels for M1 (quick profits)
+TP_LEVELS = [1.0, 1.3, 1.8]  # M1 optimized - quick exits
 PARTIAL_CLOSE_PERCENT = [40, 30, 30]
-MAX_LOT_PER_ORDER = 0.3
+MAX_LOT_PER_ORDER = 0.5
 
 # ==============================================================================
-# ADAPTIVE RISK - HIGH QUALITY TRADES ONLY
+# ADAPTIVE RISK MANAGEMENT
 # ==============================================================================
 USE_ADAPTIVE_RISK = True
 
-TREND_STRENGTH_PERIOD = 50      # Longer period for stability
+# M1 optimized periods
+TREND_STRENGTH_PERIOD = 20  # Shorter period for M1
 
-# Strong thresholds (quality over quantity)
-ADX_STRONG_TREND = 25           # Only trade strong trends
-ADX_RANGING = 15                # Avoid ranging markets
-TREND_CONSISTENCY_HIGH = 70     # High consistency required
-VOLATILITY_HIGH = 1.5
+# Relaxed thresholds for M1 (more signals)
+ADX_STRONG_TREND = 15       # Lower threshold for M1 (was 18)
+ADX_RANGING = 10            # Lower threshold (was 12)
+TREND_CONSISTENCY_HIGH = 55 # Lower threshold (was 60)
+VOLATILITY_HIGH = 1.2
 
-# HIGH confidence threshold
-MIN_TRADE_CONFIDENCE = 0.7
+# LOWER confidence for M1 testing (more trades)
+MIN_TRADE_CONFIDENCE = 0.40  # 40% minimum (was 45% - more aggressive)
 
 MAX_RISK_MULTIPLIER = 1.5
-MIN_RISK_MULTIPLIER = 0.5
+MIN_RISK_MULTIPLIER = 0.3
 
 # ==============================================================================
-# MOVING AVERAGES - INDUSTRY STANDARD
+# MOVING AVERAGE STRATEGY - M1 OPTIMIZED
 # ==============================================================================
-FAST_MA_PERIOD = 20
-SLOW_MA_PERIOD = 50
-MA_TYPE = 'EMA'                 # Exponential MA
+FAST_MA_PERIOD = 5          # 5-period EMA (M1 optimized)
+SLOW_MA_PERIOD = 10         # 10-period EMA (M1 optimized)
+MA_TYPE = 'EMA'
 
 WAIT_FOR_CONFIRMATION = True
-MIN_MA_SEPARATION = 0.0005      # Require clear separation
+MIN_MA_SEPARATION = 0.0001
 
 # ==============================================================================
-# RSI - AVOID EXTREMES
+# RSI INDICATOR (ENHANCED - Most Popular Filter)
 # ==============================================================================
 USE_RSI = True
-RSI_PERIOD = 14
-RSI_OVERBOUGHT = 70
-RSI_OVERSOLD = 30
+RSI_PERIOD = 14             # Standard RSI period
+RSI_OVERBOUGHT = 70         # Don't buy above this
+RSI_OVERSOLD = 30           # Don't sell below this
 
 # ==============================================================================
-# MACD - MOMENTUM CONFIRMATION
+# MACD INDICATOR - M1 OPTIMIZED
 # ==============================================================================
 USE_MACD = True
-MACD_FAST = 12
-MACD_SLOW = 26
-MACD_SIGNAL = 9
+MACD_FAST = 5               # Faster for M1
+MACD_SLOW = 13              # Faster for M1
+MACD_SIGNAL = 3             # Faster for M1
 
-MACD_MIN_HISTOGRAM = 0.5
+# Relaxed MACD for M1 (more signals)
+MACD_MIN_HISTOGRAM = 0.0    # No minimum for M1 testing
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
-# ATR-BASED STOPS - WIDER FOR H1
+# ATR-BASED STOP LOSS - M1 OPTIMIZED (TIGHTENED)
 # ==============================================================================
-ATR_PERIOD = 14
-ATR_MULTIPLIER_SL = 2
+# Adjusted for M1 timeframe
+ATR_PERIOD = 14             # Period for ATR calculation (14 periods = 14 minutes)
+ATR_MULTIPLIER_SL = 0.8     # Stop Loss multiplier (TIGHTER for M1 - was 1.2)
 
 MIN_ATR_VALUE = 0.0001
 MAX_ATR_VALUE = 999999
 
 # ==============================================================================
-# TRAILING STOP - PROTECT PROFITS
+# TRAILING STOP SETTINGS - M1 OPTIMIZED
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-TRAIL_ACTIVATION_ATR = 1.5
-TRAIL_DISTANCE_ATR = 1
-TRAIL_TYPE = 'atr'
+# Activation threshold (adjusted for M1)
+TRAIL_ACTIVATION_ATR = 0.8  # Activate trailing very quickly on M1
+# Example: If ATR=10 and this is 0.8, trailing activates after 8 points profit
 
-TRAIL_PERCENT = 2.0
-BREAKEVEN_ACTIVATION_PIPS = 50  # Move to breakeven after 50 pips
-BREAKEVEN_PLUS_PIPS = 10
-TRAIL_START_PIPS = 100
+# Trailing distance (adjusted for M1)
+TRAIL_DISTANCE_ATR = 0.6    # Trail very close on M1
+TRAIL_TYPE = 'atr'          # 'atr', 'percentage', 'swing', 'chandelier', 'breakeven'
+
+TRAIL_PERCENT = 1.5
+BREAKEVEN_ACTIVATION_PIPS = 30  # M1 optimized - faster breakeven
+BREAKEVEN_PLUS_PIPS = 5
+TRAIL_START_PIPS = 50           # M1 optimized - faster trailing
 
 # ==============================================================================
-# TRAILING TAKE PROFIT
+# TRAILING TAKE PROFIT SETTINGS
 # ==============================================================================
-ENABLE_TRAILING_TP = True
+ENABLE_TRAILING_TP = False
 TRAILING_TP_RATIO = 0.5
 
 # ==============================================================================
 # TRADE MANAGEMENT
 # ==============================================================================
-MAGIC_NUMBER = 234001
+MAGIC_NUMBER = 234000
 
-# Limit trades (quality over quantity)
-MAX_TRADES_TOTAL = 10
-MAX_TRADES_PER_SYMBOL = 3
+# Maximum trades (UNLIMITED FOR TESTING)
+MAX_TRADES_TOTAL = 999        # Effectively unlimited
+MAX_TRADES_PER_SYMBOL = 999   # Effectively unlimited
 ALLOW_HEDGING = False
 
-# ==============================================================================
-# TRADING HOURS - BEST TIMES ONLY
-# ==============================================================================
-ENABLE_TRADING_HOURS = True
-TRADING_START_HOUR = 8
-TRADING_END_HOUR = 16
+# TRADING HOURS - AVOID 19:00 HOUR (100% of losses)
+ENABLE_TRADING_HOURS = False   # Enable time filter
+TRADING_START_HOUR = 0        # Start at midnight
+TRADING_END_HOUR = 19         # Stop at 19:00 (avoid 19:00-20:00)
 
 TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
 
 # ==============================================================================
-# TREND FILTER - H4 FOR MAJOR TREND
+# ADDITIONAL FILTERS - STRONGER
 # ==============================================================================
+# FASTER trend filter for M1 (STRENGTHENED)
 USE_TREND_FILTER = True
-TREND_TIMEFRAME = mt5.TIMEFRAME_H4  # H4 for major trend
-TREND_MA_PERIOD = 100
+TREND_TIMEFRAME = mt5.TIMEFRAME_H1  # H1 for stronger trend (was M15)
+TREND_MA_PERIOD = 50                # Longer MA for trend (was 20)
+
+USE_VOLUME_FILTER = False
+MIN_VOLUME_MA = 1.2
+
+AVOID_NEWS_TRADING = False
+NEWS_BUFFER_MINUTES = 30
 
 # ==============================================================================
-# ADDITIONAL FILTERS
+# DYNAMIC RISK MANAGEMENT (NEW!)
 # ==============================================================================
-USE_VOLUME_FILTER = True
-MIN_VOLUME_MA = 1.2             # Require above-average volume
-
-AVOID_NEWS_TRADING = True
-NEWS_BUFFER_MINUTES = 60
-
-# ==============================================================================
-# BOLLINGER BANDS - VOLATILITY FILTER
-# ==============================================================================
-USE_BOLLINGER = True
-BB_PERIOD = 20
-BB_STD_DEV = 2.0
-BB_SQUEEZE_THRESHOLD = 0.5      # Avoid low volatility
-
-# ==============================================================================
-# ADX - TREND STRENGTH FILTER
-# ==============================================================================
-USE_ADX = True
-ADX_PERIOD = 14
-ADX_MIN_STRENGTH = 25
-
-# ==============================================================================
-# SUPPORT/RESISTANCE LEVELS
-# ==============================================================================
-USE_SR_LEVELS = True
-SR_LOOKBACK = 100               # Look back 100 bars
-SR_TOLERANCE = 0.0005           # 5 pips tolerance
-
-# ==============================================================================
-# DYNAMIC RISK MANAGEMENT
-# ==============================================================================
-USE_DYNAMIC_SL = True
-USE_DYNAMIC_TP = True
-DYNAMIC_SL_CHECK_INTERVAL = 300  # Check every 5 minutes
-DYNAMIC_TP_CHECK_INTERVAL = 300
-MAX_TP_EXTENSIONS = 3
-
-# ==============================================================================
-# SCALPING MODE - DISABLED FOR H1
-# ==============================================================================
-USE_SCALPING_MODE = False
+USE_DYNAMIC_SL = True           # Enable dynamic stop loss adjustments
+USE_DYNAMIC_TP = True           # Enable dynamic take profit extensions
+DYNAMIC_SL_CHECK_INTERVAL = 60  # Check SL every 60 seconds
+DYNAMIC_TP_CHECK_INTERVAL = 60  # Check TP every 60 seconds
+MAX_TP_EXTENSIONS = 5           # Maximum TP extensions per position
 
 # ==============================================================================
 # PERFORMANCE & MONITORING
 # ==============================================================================
-UPDATE_INTERVAL = 60            # Check every 60 seconds
+UPDATE_INTERVAL = 15        # Check every 15 seconds (reduced load on MT5)
 LOG_LEVEL = 'INFO'
 SAVE_TRADE_HISTORY = True
 
-# ==============================================================================
-# NOTIFICATIONS
-# ==============================================================================
+# Notifications
 ENABLE_TELEGRAM = False
 TELEGRAM_TOKEN = ''
 TELEGRAM_CHAT_ID = ''
@@ -220,13 +207,13 @@ EMAIL_ADDRESS = ''
 EMAIL_PASSWORD = ''
 
 # ==============================================================================
-# SAFETY LIMITS
+# SAFETY LIMITS (RELAXED FOR TESTING)
 # ==============================================================================
-MAX_DAILY_LOSS = 3
-MAX_DAILY_TRADES = 20
-MAX_DAILY_LOSS_PERCENT = 3.0    # Stop at 3% daily loss
+MAX_DAILY_LOSS = 100.0      # Absolute dollar amount (backup limit)
+MAX_DAILY_TRADES = 999      # Unlimited for testing
+MAX_DAILY_LOSS_PERCENT = 5.0  # Stop trading if daily loss exceeds 5% of equity
 
-MAX_DRAWDOWN_PERCENT = 10
+MAX_DRAWDOWN_PERCENT = 10.0
 MIN_ACCOUNT_BALANCE = 100.0
 
 # ==============================================================================
@@ -307,15 +294,6 @@ def get_config():
         'min_volume_ma': MIN_VOLUME_MA,
         'avoid_news_trading': AVOID_NEWS_TRADING,
         'news_buffer_minutes': NEWS_BUFFER_MINUTES,
-        'use_bollinger': USE_BOLLINGER,
-        'bb_period': BB_PERIOD,
-        'bb_std_dev': BB_STD_DEV,
-        'use_adx': USE_ADX,
-        'adx_period': ADX_PERIOD,
-        'adx_min_strength': ADX_MIN_STRENGTH,
-        'use_sr_levels': USE_SR_LEVELS,
-        'sr_lookback': SR_LOOKBACK,
-        'sr_tolerance': SR_TOLERANCE,
         'update_interval': UPDATE_INTERVAL,
         'log_level': LOG_LEVEL,
         'save_trade_history': SAVE_TRADE_HISTORY,
@@ -330,15 +308,28 @@ def get_config():
         'max_daily_loss_percent': MAX_DAILY_LOSS_PERCENT,
         'max_drawdown_percent': MAX_DRAWDOWN_PERCENT,
         'min_account_balance': MIN_ACCOUNT_BALANCE,
+        
+        # Backtesting
         'backtest_mode': BACKTEST_MODE,
         'backtest_start_date': BACKTEST_START_DATE,
         'backtest_end_date': BACKTEST_END_DATE,
+        
+        # Dynamic Risk Management
         'use_dynamic_sl': USE_DYNAMIC_SL,
         'use_dynamic_tp': USE_DYNAMIC_TP,
         'dynamic_sl_check_interval': DYNAMIC_SL_CHECK_INTERVAL,
         'dynamic_tp_check_interval': DYNAMIC_TP_CHECK_INTERVAL,
         'max_tp_extensions': MAX_TP_EXTENSIONS,
+        
+        # Scalping Mode
         'use_scalping_mode': USE_SCALPING_MODE,
+        'scalp_min_profit_pips': SCALP_MIN_PROFIT_PIPS,
+        'scalp_max_hold_minutes': SCALP_MAX_HOLD_MINUTES,
+        'scalp_trail_after_pips': SCALP_TRAIL_AFTER_PIPS,
+        'scalp_trail_distance_pips': SCALP_TRAIL_DISTANCE_PIPS,
+        'scalp_momentum_exit': SCALP_MOMENTUM_EXIT,
+        'scalp_reversal_exit': SCALP_REVERSAL_EXIT,
+        'scalp_time_exit': SCALP_TIME_EXIT,
     }
 
 
@@ -346,25 +337,22 @@ if __name__ == "__main__":
     import json
     config = get_config()
     print("=" * 80)
-    print("PROFITABLE BALANCED CONFIGURATION")
+    print("M1 TESTING CONFIGURATION - EXTREME HIGH-FREQUENCY MODE")
     print("=" * 80)
     print()
-    print("Strategy: Trend-Following with Multiple Confirmations")
-    print("Timeframe: H1 (1-hour)")
-    print("Expected: 5-15 quality trades per day")
-    print("Win Rate: 55-65%")
-    print("Risk/Reward: 1:2 minimum")
+    print("⚠️  WARNING: Expect 100-200+ trades per day!")
     print()
-    print("Key Features:")
-    print("  ✓ H1 timeframe (clear trends)")
-    print("  ✓ 20/50 EMA (industry standard)")
-    print("  ✓ RSI filter (avoid extremes)")
-    print("  ✓ MACD confirmation (momentum)")
-    print("  ✓ ADX filter (trend strength)")
-    print("  ✓ H4 trend filter (major trend)")
-    print("  ✓ 70% confidence minimum")
-    print("  ✓ 2x ATR stops (wider)")
-    print("  ✓ Trading hours filter")
-    print("  ✓ News avoidance")
+    print("Key M1 Settings:")
+    print("  ✓ M1 (1-minute) timeframe")
+    print("  ✓ Fast indicators (5/10 MA, 5/13/3 MACD)")
+    print("  ✓ Tight stops (1.2x ATR)")
+    print("  ✓ Quick trailing (0.8/0.6 ATR)")
+    print("  ✓ Lower confidence (50%)")
+    print("  ✓ M15 trend filter")
+    print("  ✓ 5% daily loss limit")
+    print("  ✓ 0.3% risk per trade")
+    print("  ✓ 10-second updates")
+    print("  ✓ Unlimited trades (until loss limit)")
     print()
-    print("Configuration loaded successfully!")
+    print("Configuration:")
+    print(json.dumps({k: str(v) for k, v in config.items()}, indent=2))
