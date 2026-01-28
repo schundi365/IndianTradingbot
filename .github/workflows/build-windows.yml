@@ -1,0 +1,188 @@
+name: Build Windows Executable
+
+on:
+  # Trigger on push to main branch
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0, v2.0
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.0.0)'
+        required: false
+        default: '2.0.0'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest  # Free Windows runner
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'  # Use Python 3.11 for compatibility
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      run: |
+        .\build_windows.bat
+      shell: cmd
+      continue-on-error: false
+    
+    - name: Get version
+      id: get_version
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=2.0.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Verify build output
+      shell: bash
+      run: |
+        echo "Checking build output..."
+        if [ -d "dist/GEM_Trading_Bot_Windows" ]; then
+          echo "✅ Build directory found"
+          ls -la dist/GEM_Trading_Bot_Windows
+        else
+          echo "❌ Build directory not found!"
+          echo "Contents of dist/:"
+          ls -la dist/ || echo "dist/ directory doesn't exist"
+          exit 1
+        fi
+    
+    - name: Create ZIP archive
+      shell: bash
+      run: |
+        cd dist
+        if [ -d "GEM_Trading_Bot_Windows" ]; then
+          7z a -tzip "GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip" GEM_Trading_Bot_Windows
+          echo "✅ ZIP created successfully"
+          ls -lh "GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip"
+        else
+          echo "❌ Build directory not found!"
+          exit 1
+        fi
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GEM_Trading_Bot_Windows_v${{ steps.get_version.outputs.VERSION }}
+        path: dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip
+        retention-days: 90
+    
+    - name: Create Release (on tag)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## GEM Trading Bot v${{ steps.get_version.outputs.VERSION }} - Windows
+          
+          ### 📥 Download
+          
+          **Windows Executable:** `GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip`
+          
+          ### 📋 Installation
+          
+          1. Download the ZIP file
+          2. Extract to a folder (e.g., `C:\GEM_Trading_Bot`)
+          3. Run `GEM_Trading_Bot.exe`
+          4. Dashboard opens at http://localhost:5000
+          
+          ### ✅ Requirements
+          
+          - Windows 10 or higher (64-bit)
+          - MetaTrader 5 installed and running
+          - Internet connection
+          - 4GB RAM minimum
+          
+          ### 📖 Documentation
+          
+          Included in the ZIP:
+          - `USER_GUIDE.md` - Complete user manual
+          - `QUICK_START_CARD.md` - Quick reference
+          - `INSTALLATION_GUIDE_FOR_USERS.md` - Setup instructions
+          - `TROUBLESHOOTING.md` - Common issues and solutions
+          
+          ### 🚀 Quick Start
+          
+          1. Make sure MT5 is running
+          2. Double-click `GEM_Trading_Bot.exe`
+          3. Browser opens automatically to dashboard
+          4. Configure your settings
+          5. Click "Start Bot"
+          
+          ### 🆘 Support
+          
+          - Check `TROUBLESHOOTING.md` for common issues
+          - Review `USER_GUIDE.md` for detailed instructions
+          - Open an issue on GitHub for help
+          
+          ### 📊 What's Included
+          
+          - Trading bot executable
+          - Web dashboard
+          - Configuration interface
+          - Real-time monitoring
+          - Trade history analysis
+          - Performance metrics
+          - Complete documentation
+          
+          ### ⚠️ Important Notes
+          
+          - This is trading software - use at your own risk
+          - Test on demo account first
+          - Review all settings before live trading
+          - Keep MT5 running while bot is active
+          
+          ---
+          
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+          **Commit:** ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build summary
+      shell: bash
+      run: |
+        echo "## 🎉 Windows Build Complete!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Information" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platform:** Windows (64-bit)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Python:** $(python --version)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Artifact" >> $GITHUB_STEP_SUMMARY
+        echo "Download the Windows executable from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f "dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip" ]; then
+          SIZE=$(ls -lh "dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip" | awk '{print $5}')
+          echo "- **File:** GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size:** $SIZE" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download the ZIP file from Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "2. Extract to a folder" >> $GITHUB_STEP_SUMMARY
+        echo "3. Run GEM_Trading_Bot.exe" >> $GITHUB_STEP_SUMMARY
+        echo "4. Test on demo account first" >> $GITHUB_STEP_SUMMARY
