@@ -11,7 +11,7 @@ import os
 import threading
 import time
 import logging
-from src.config import get_config
+from src.config_manager import get_config_manager, get_config
 
 app = Flask(__name__)
 
@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 # Global state
 bot_running = False
 bot_thread = None
-current_config = get_config()
+config_manager = get_config_manager()
+current_config = config_manager.get_config()
 
 
 @app.route('/')
@@ -126,12 +127,18 @@ def config_api():
             if min_risk_mult >= max_risk_mult:
                 return jsonify({'status': 'error', 'message': 'Min risk multiplier must be less than max'})
             
-            # Update config file
-            update_config_file(new_config)
-            current_config = new_config
-            
-            logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
-            return jsonify({'status': 'success', 'message': 'Configuration updated successfully'})
+            # Update configuration using config manager
+            if config_manager.update_config(new_config):
+                current_config = config_manager.get_config()
+                logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
+                logger.info(f"Configuration saved to: {config_manager.config_file}")
+                return jsonify({
+                    'status': 'success', 
+                    'message': 'Configuration saved successfully',
+                    'config_file': str(config_manager.config_file)
+                })
+            else:
+                return jsonify({'status': 'error', 'message': 'Failed to save configuration'})
         
         except Exception as e:
             logger.error(f"Failed to update configuration: {str(e)}")

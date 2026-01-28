@@ -82,6 +82,8 @@ pyinstaller ^
     --hidden-import=logging ^
     --hidden-import=threading ^
     --hidden-import=datetime ^
+    --hidden-import=pathlib ^
+    --hidden-import=json ^
     --collect-all=flask ^
     --collect-all=werkzeug ^
     --collect-all=jinja2 ^
