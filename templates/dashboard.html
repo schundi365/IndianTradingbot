@@ -484,7 +484,7 @@
         
         <!-- Refresh Button for Dashboard -->
         <div style="margin-bottom: 20px; text-align: right;">
-            <button class="btn btn-secondary" onclick="refreshDashboard()">🔄 Refresh Dashboard</button>
+            <button class="btn btn-secondary" onclick="refreshDashboard()" title="Refresh Dashboard">🔄</button>
         </div>
         
         <!-- Status Cards -->
@@ -580,7 +580,7 @@
             <div id="config-tab" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Bot Configuration</h2>
-                    <button class="btn btn-secondary" onclick="refreshConfig()">🔄 Reload Configuration</button>
+                    <button class="btn btn-secondary" onclick="refreshConfig()" title="Reload Configuration">🔄</button>
                 </div>
                 
                 <!-- Configuration Preset Selector -->
@@ -928,7 +928,7 @@
             <div id="charts-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Charts & Analytics</h2>
-                    <button class="btn btn-secondary" onclick="refreshCharts()">🔄 Refresh Charts</button>
+                    <button class="btn btn-secondary" onclick="refreshCharts()" title="Refresh Charts">🔄</button>
                 </div>
                 
                 <div class="grid" style="margin-bottom: 30px;">
@@ -969,7 +969,7 @@
             <div id="trades-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Trade History (Last 7 Days)</h2>
-                    <button class="btn btn-secondary" onclick="refreshTrades()">🔄 Refresh Trades</button>
+                    <button class="btn btn-secondary" onclick="refreshTrades()" title="Refresh Trades">🔄</button>
                 </div>
                 
                 <!-- Filters and Sorting -->
@@ -1033,7 +1033,7 @@
             <div id="positions-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Open Positions</h2>
-                    <button class="btn btn-secondary" onclick="refreshPositions()">🔄 Refresh Positions</button>
+                    <button class="btn btn-secondary" onclick="refreshPositions()" title="Refresh Positions">🔄</button>
                 </div>
                 <div class="table-container">
                     <table id="positions-table">
@@ -1061,7 +1061,7 @@
             <div id="analysis-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">AI Recommendations</h2>
-                    <button class="btn btn-secondary" onclick="refreshRecommendations()">🔄 Refresh Recommendations</button>
+                    <button class="btn btn-secondary" onclick="refreshRecommendations()" title="Refresh Recommendations">🔄</button>
                 </div>
                 <div id="recommendations-container">
                     <div class="loading">Loading recommendations...</div>
@@ -1446,7 +1446,6 @@
         function refreshDashboard() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
             
             // Refresh all dashboard data
             updateStatus();
@@ -1456,7 +1455,6 @@
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh Dashboard';
                 showToast('✅ Dashboard refreshed', 'success');
             }, 1000);
         }
@@ -1464,13 +1462,11 @@
         function refreshCharts() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
             
             loadCharts();
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh Charts';
                 showToast('✅ Charts refreshed', 'success');
             }, 1000);
         }
@@ -1478,13 +1474,11 @@
         function refreshTrades() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
             
             loadTrades();
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh Trades';
                 showToast('✅ Trade history refreshed', 'success');
             }, 1000);
         }
@@ -1492,13 +1486,11 @@
         function refreshPositions() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
             
             loadPositions();
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh Positions';
                 showToast('✅ Positions refreshed', 'success');
             }, 1000);
         }
@@ -1506,13 +1498,11 @@
         function refreshRecommendations() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
             
             loadRecommendations();
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh Recommendations';
                 showToast('✅ Recommendations refreshed', 'success');
             }, 1000);
         }
@@ -1520,7 +1510,6 @@
         function refreshConfig() {
             const btn = event.target;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Reloading...';
             
             // Reload configuration from server
             fetch('/api/config/get')
