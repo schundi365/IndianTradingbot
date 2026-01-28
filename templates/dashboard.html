@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MT5 Trading Bot Dashboard</title>
+    <title>GEM Trading Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -285,12 +286,151 @@
             padding: 40px;
             color: #94a3b8;
         }
+        
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .toast.success {
+            border-left-color: #10b981;
+        }
+        
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+        
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        
+        .modal-content h2 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+        }
+        
+        .modal-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .modal-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        
+        .modal-content li {
+            margin-bottom: 10px;
+        }
+        
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid #6366f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #334155;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .validation-error {
+            color: #ef4444;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .validation-warning {
+            color: #f59e0b;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤖 MT5 Trading Bot Dashboard</h1>
+            <h1>💎 GEM Trading Dashboard</h1>
             <p class="subtitle">Real-time monitoring and configuration</p>
         </header>
         
@@ -305,9 +445,17 @@
                         Stopped
                     </span>
                 </div>
+                <div class="stat">
+                    <span class="stat-label">MT5 Connection</span>
+                    <span class="stat-value" id="mt5-connection">
+                        <span class="status-indicator stopped"></span>
+                        Not Connected
+                    </span>
+                </div>
                 <div class="controls">
-                    <button class="btn btn-primary" onclick="startBot()">Start Bot</button>
-                    <button class="btn btn-danger" onclick="stopBot()">Stop Bot</button>
+                    <button class="btn btn-primary" id="start-btn" onclick="startBot()">Start Bot</button>
+                    <button class="btn btn-danger" id="stop-btn" onclick="stopBot()">Stop Bot</button>
+                    <button class="btn btn-secondary" onclick="testMT5Connection()">Test MT5</button>
                 </div>
             </div>
             
@@ -322,8 +470,20 @@
                     <span class="stat-value" id="equity">$0.00</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Profit</span>
+                    <span class="stat-label">Floating P&L</span>
                     <span class="stat-value" id="profit">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Today's Profit</span>
+                    <span class="stat-value" id="profit-today">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Month to Date</span>
+                    <span class="stat-value" id="profit-mtd">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Year to Date</span>
+                    <span class="stat-value" id="profit-ytd">$0.00</span>
                 </div>
             </div>
             
@@ -338,6 +498,14 @@
                     <span class="stat-value" id="total-trades">0</span>
                 </div>
                 <div class="stat">
+                    <span class="stat-label">Today's Wins</span>
+                    <span class="stat-value positive" id="today-wins">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Today's Losses</span>
+                    <span class="stat-value negative" id="today-losses">0</span>
+                </div>
+                <div class="stat">
                     <span class="stat-label">Open Positions</span>
                     <span class="stat-value" id="open-positions">0</span>
                 </div>
@@ -348,9 +516,11 @@
         <div class="card">
             <div class="tabs">
                 <div class="tab active" onclick="showTab('config')">Configuration</div>
+                <div class="tab" onclick="showTab('charts')">Charts & Analytics</div>
                 <div class="tab" onclick="showTab('trades')">Trade History</div>
                 <div class="tab" onclick="showTab('positions')">Open Positions</div>
-                <div class="tab" onclick="showTab('analysis')">Analysis & Recommendations</div>
+                <div class="tab" onclick="showTab('analysis')">AI Recommendations</div>
+                <div class="tab" onclick="showTab('logs')">System Logs</div>
             </div>
             
             <!-- Configuration Tab -->
@@ -381,28 +551,59 @@
                         </div>
                         
                         <div class="form-group">
-                            <label>Risk Per Trade (%)</label>
-                            <input type="number" id="risk-percent" value="0.3" step="0.1" min="0.1" max="5">
+                            <label>
+                                Risk Per Trade (%)
+                                <input type="checkbox" id="auto-risk" onchange="toggleAuto('risk')" style="width: auto; margin-left: 10px;">
+                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
+                            </label>
+                            <input type="number" id="risk-percent" value="0.3" step="0.1" min="0.1" max="5" onchange="validateRisk()">
+                            <div class="validation-warning" id="risk-warning">⚠️ Risk above 1% is aggressive</div>
+                            <div class="validation-error" id="risk-error">❌ Risk must be between 0.1% and 5%</div>
                         </div>
                         
                         <div class="form-group">
-                            <label>ATR Multiplier (Stop Loss)</label>
+                            <label>
+                                ATR Multiplier (Stop Loss)
+                                <input type="checkbox" id="auto-atr" onchange="toggleAuto('atr')" style="width: auto; margin-left: 10px;">
+                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
+                            </label>
                             <input type="number" id="atr-multiplier" value="0.8" step="0.1" min="0.5" max="3">
                         </div>
                         
                         <div class="form-group">
-                            <label>Min Trade Confidence (%)</label>
-                            <input type="number" id="min-confidence" value="40" step="5" min="20" max="80">
+                            <label>
+                                Min Trade Confidence (%)
+                                <input type="checkbox" id="auto-confidence" onchange="toggleAuto('confidence')" style="width: auto; margin-left: 10px;">
+                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
+                            </label>
+                            <input type="number" id="min-confidence" value="40" step="5" min="20" max="80" onchange="validateConfidence()">
+                            <div class="validation-warning" id="confidence-warning">⚠️ Confidence below 30% may result in poor trades</div>
                         </div>
                         
                         <div class="form-group">
                             <label>Max Daily Loss (%)</label>
-                            <input type="number" id="max-daily-loss" value="5" step="1" min="1" max="10">
+                            <input type="number" id="max-daily-loss" value="5" step="1" min="1" max="10" onchange="validateDailyLoss()">
+                            <div class="validation-warning" id="daily-loss-warning">⚠️ Daily loss above 10% is very risky</div>
                         </div>
                         
                         <div class="form-group">
-                            <label>Scalping Max Hold (minutes)</label>
+                            <label>
+                                Scalping Max Hold (minutes)
+                                <input type="checkbox" id="auto-scalp" onchange="toggleAuto('scalp')" style="width: auto; margin-left: 10px;">
+                                <span style="font-size: 0.9em; color: #94a3b8;">Auto</span>
+                            </label>
                             <input type="number" id="scalp-max-hold" value="20" step="5" min="10" max="60">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Enable Adaptive Risk</label>
+                            <select id="enable-adaptive-risk">
+                                <option value="true" selected>Yes (Recommended)</option>
+                                <option value="false">No (Fixed Risk)</option>
+                            </select>
+                            <small style="color: #94a3b8; font-size: 0.85em; display: block; margin-top: 5px;">
+                                Adaptive risk adjusts position size based on market conditions
+                            </small>
                         </div>
                         
                         <div class="form-group">
@@ -414,13 +615,88 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-secondary">Save Configuration</button>
+                    <button type="submit" class="btn btn-secondary" id="save-config-btn">Save Configuration</button>
                 </form>
+            </div>
+            
+            <!-- Charts & Analytics Tab -->
+            <div id="charts-tab" class="tab-content">
+                <h2>Charts & Analytics</h2>
+                
+                <div class="grid" style="margin-bottom: 30px;">
+                    <!-- Profit by Symbol Chart -->
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">Profit by Symbol</h3>
+                        <canvas id="symbol-profit-chart" style="max-height: 300px;"></canvas>
+                    </div>
+                    
+                    <!-- Win/Loss by Symbol Chart -->
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">Win/Loss by Symbol</h3>
+                        <canvas id="symbol-winloss-chart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+                
+                <div class="grid" style="margin-bottom: 30px;">
+                    <!-- Daily Profit Trend -->
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">Daily Profit Trend (Last 7 Days)</h3>
+                        <canvas id="daily-profit-chart" style="max-height: 300px;"></canvas>
+                    </div>
+                    
+                    <!-- Hourly Performance -->
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">Hourly Performance</h3>
+                        <canvas id="hourly-profit-chart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Trade Distribution</h3>
+                    <canvas id="trade-distribution-chart" style="max-height: 400px;"></canvas>
+                </div>
             </div>
             
             <!-- Trade History Tab -->
             <div id="trades-tab" class="tab-content">
                 <h2>Trade History (Last 7 Days)</h2>
+                
+                <!-- Filters and Sorting -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                        <label style="margin-bottom: 5px;">Sort By</label>
+                        <select id="sort-by" onchange="applySortFilter()" style="padding: 8px;">
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc">Date (Oldest First)</option>
+                            <option value="profit-desc">Profit (Highest First)</option>
+                            <option value="profit-asc">Profit (Lowest First)</option>
+                            <option value="amount-desc">Amount (Highest First)</option>
+                            <option value="amount-asc">Amount (Lowest First)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                        <label style="margin-bottom: 5px;">Filter</label>
+                        <select id="filter-by" onchange="applySortFilter()" style="padding: 8px;">
+                            <option value="all">All Trades</option>
+                            <option value="wins">Wins Only</option>
+                            <option value="losses">Losses Only</option>
+                            <option value="today">Today Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                        <label style="margin-bottom: 5px;">Symbol</label>
+                        <select id="filter-symbol" onchange="applySortFilter()" style="padding: 8px;">
+                            <option value="all">All Symbols</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-secondary" onclick="applySortFilter()" style="padding: 8px 16px;">Apply</button>
+                    </div>
+                </div>
+                
                 <div class="table-container">
                     <table id="trades-table">
                         <thead>
@@ -472,10 +748,299 @@
                     <div class="loading">Loading recommendations...</div>
                 </div>
             </div>
+            
+            <!-- Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <h2>System Logs</h2>
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="loadLogs()">Refresh Logs</button>
+                    <button class="btn btn-secondary" onclick="downloadLogs()">Download Logs</button>
+                </div>
+                <div style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">
+                    <pre id="logs-content" style="margin: 0; color: #94a3b8;">Loading logs...</pre>
+                </div>
+            </div>
         </div>
     </div>
     
+    <!-- Disclaimer Modal -->
+    <div class="modal" id="disclaimer-modal">
+        <div class="modal-content">
+            <h2>⚠️ Risk Warning & Disclaimer</h2>
+            
+            <div class="warning-box">
+                <strong>IMPORTANT: Trading involves substantial risk of loss</strong>
+            </div>
+            
+            <p>Before using GEM Trading Bot, please read and understand the following:</p>
+            
+            <ul>
+                <li><strong>Risk of Loss:</strong> Trading forex, gold, and other instruments carries a high level of risk and may not be suitable for all investors. You could lose some or all of your invested capital.</li>
+                
+                <li><strong>No Guarantee:</strong> Past performance is not indicative of future results. This bot does not guarantee profits.</li>
+                
+                <li><strong>Automated Trading:</strong> This bot makes automated trading decisions. Always monitor your account and understand the risks.</li>
+                
+                <li><strong>Test First:</strong> Always test on a demo account before using real money.</li>
+                
+                <li><strong>Your Responsibility:</strong> You are solely responsible for your trading decisions and any losses incurred.</li>
+                
+                <li><strong>Market Conditions:</strong> Market conditions can change rapidly. The bot may not perform well in all market conditions.</li>
+            </ul>
+            
+            <div class="info-box">
+                <strong>Recommendations:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>Start with conservative settings (Risk ≤ 0.5%)</li>
+                    <li>Use proper risk management</li>
+                    <li>Never risk more than you can afford to lose</li>
+                    <li>Monitor your account regularly</li>
+                    <li>Test thoroughly on demo first</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 20px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="accept-disclaimer" style="width: auto; margin-right: 10px;">
+                    <span>I understand and accept the risks involved in automated trading</span>
+                </label>
+            </p>
+            
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="acceptDisclaimer()" id="accept-btn" disabled>I Understand - Continue</button>
+                <button class="btn btn-danger" onclick="window.close()">Exit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+    
     <script>
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Disclaimer Modal
+        window.addEventListener('load', function() {
+            const disclaimerAccepted = localStorage.getItem('disclaimerAccepted');
+            if (!disclaimerAccepted) {
+                document.getElementById('disclaimer-modal').classList.add('active');
+            }
+        });
+        
+        document.getElementById('accept-disclaimer').addEventListener('change', function() {
+            document.getElementById('accept-btn').disabled = !this.checked;
+        });
+        
+        function acceptDisclaimer() {
+            localStorage.setItem('disclaimerAccepted', 'true');
+            document.getElementById('disclaimer-modal').classList.remove('active');
+            showToast('Welcome to GEM Trading! Please configure your settings.', 'success');
+        }
+        
+        // Validation Functions
+        function validateRisk() {
+            const risk = parseFloat(document.getElementById('risk-percent').value);
+            const warning = document.getElementById('risk-warning');
+            const error = document.getElementById('risk-error');
+            
+            error.style.display = 'none';
+            warning.style.display = 'none';
+            
+            if (risk < 0.1 || risk > 5) {
+                error.style.display = 'block';
+                return false;
+            } else if (risk > 1) {
+                warning.style.display = 'block';
+            }
+            return true;
+        }
+        
+        function validateConfidence() {
+            const confidence = parseFloat(document.getElementById('min-confidence').value);
+            const warning = document.getElementById('confidence-warning');
+            
+            warning.style.display = 'none';
+            
+            if (confidence < 30) {
+                warning.style.display = 'block';
+            }
+            return true;
+        }
+        
+        function validateDailyLoss() {
+            const loss = parseFloat(document.getElementById('max-daily-loss').value);
+            const warning = document.getElementById('daily-loss-warning');
+            
+            warning.style.display = 'none';
+            
+            if (loss > 10) {
+                warning.style.display = 'block';
+            }
+            return true;
+        }
+        
+        function validateAllInputs() {
+            const riskValid = validateRisk();
+            const confidenceValid = validateConfidence();
+            const lossValid = validateDailyLoss();
+            
+            return riskValid && confidenceValid && lossValid;
+        }
+        
+        // MT5 Connection Test
+        function testMT5Connection() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Testing...';
+            
+            fetch('/api/mt5/test')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.connected) {
+                        showToast(`✅ MT5 Connected: ${data.account_name} (${data.server})`, 'success');
+                        updateMT5Status(true, data);
+                    } else {
+                        showToast('❌ MT5 Not Connected: ' + data.error, 'error');
+                        updateMT5Status(false);
+                    }
+                })
+                .catch(err => {
+                    showToast('❌ Connection test failed: ' + err.message, 'error');
+                    updateMT5Status(false);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Test MT5';
+                });
+        }
+        
+        // Check MT5 connection status (silent, no toast)
+        function checkMT5ConnectionStatus() {
+            fetch('/api/mt5/test')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.connected) {
+                        updateMT5Status(true, data);
+                    } else {
+                        updateMT5Status(false);
+                    }
+                })
+                .catch(err => {
+                    console.log('MT5 connection check failed:', err);
+                    updateMT5Status(false);
+                });
+        }
+        
+        function updateMT5Status(connected, data = null) {
+            const statusEl = document.getElementById('mt5-connection');
+            if (connected) {
+                statusEl.innerHTML = '<span class="status-indicator running"></span>Connected';
+                document.getElementById('start-btn').disabled = false;
+            } else {
+                statusEl.innerHTML = '<span class="status-indicator stopped"></span>Not Connected';
+                document.getElementById('start-btn').disabled = true;
+            }
+        }
+        
+        // Auto-calculate recommended values based on timeframe
+        const autoCalculateValues = {
+            '1': { risk: 0.3, atr: 0.8, confidence: 40, scalp: 20 },
+            '5': { risk: 0.3, atr: 1.0, confidence: 45, scalp: 30 },
+            '15': { risk: 0.4, atr: 1.2, confidence: 50, scalp: 45 },
+            '30': { risk: 0.5, atr: 1.5, confidence: 55, scalp: 60 },
+            '60': { risk: 0.5, atr: 1.8, confidence: 60, scalp: 90 }
+        };
+        
+        // Get currency symbol
+        function getCurrencySymbol(currency) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥',
+                'AUD': 'A$',
+                'CAD': 'C$',
+                'CHF': 'CHF ',
+                'CNY': '¥',
+                'SEK': 'kr',
+                'NZD': 'NZ$'
+            };
+            return symbols[currency] || currency + ' ';
+        }
+        
+        // Toggle auto-calculate for parameters
+        function toggleAuto(param) {
+            const timeframe = document.getElementById('timeframe').value;
+            const autoValues = autoCalculateValues[timeframe];
+            
+            if (param === 'risk') {
+                const checkbox = document.getElementById('auto-risk');
+                const input = document.getElementById('risk-percent');
+                if (checkbox.checked) {
+                    input.value = autoValues.risk;
+                    input.disabled = true;
+                    input.style.opacity = '0.6';
+                } else {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            } else if (param === 'atr') {
+                const checkbox = document.getElementById('auto-atr');
+                const input = document.getElementById('atr-multiplier');
+                if (checkbox.checked) {
+                    input.value = autoValues.atr;
+                    input.disabled = true;
+                    input.style.opacity = '0.6';
+                } else {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            } else if (param === 'confidence') {
+                const checkbox = document.getElementById('auto-confidence');
+                const input = document.getElementById('min-confidence');
+                if (checkbox.checked) {
+                    input.value = autoValues.confidence;
+                    input.disabled = true;
+                    input.style.opacity = '0.6';
+                } else {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            } else if (param === 'scalp') {
+                const checkbox = document.getElementById('auto-scalp');
+                const input = document.getElementById('scalp-max-hold');
+                if (checkbox.checked) {
+                    input.value = autoValues.scalp;
+                    input.disabled = true;
+                    input.style.opacity = '0.6';
+                } else {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            }
+        }
+        
+        // Update auto values when timeframe changes
+        document.getElementById('timeframe').addEventListener('change', function() {
+            if (document.getElementById('auto-risk').checked) toggleAuto('risk');
+            if (document.getElementById('auto-atr').checked) toggleAuto('atr');
+            if (document.getElementById('auto-confidence').checked) toggleAuto('confidence');
+            if (document.getElementById('auto-scalp').checked) toggleAuto('scalp');
+        });
+        
         // Tab switching
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -485,27 +1050,118 @@
             document.getElementById(tabName + '-tab').classList.add('active');
             
             // Load data for the tab
+            if (tabName === 'charts') loadCharts();
             if (tabName === 'trades') loadTrades();
             if (tabName === 'positions') loadPositions();
             if (tabName === 'analysis') loadRecommendations();
+            if (tabName === 'logs') loadLogs();
+        }
+        
+        // Load logs
+        function loadLogs() {
+            const logsContent = document.getElementById('logs-content');
+            logsContent.textContent = 'Loading logs...';
+            
+            fetch('/api/logs?lines=100')
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (data.logs && data.logs.length > 0) {
+                        logsContent.textContent = data.logs.join('');
+                        // Scroll to bottom
+                        logsContent.parentElement.scrollTop = logsContent.parentElement.scrollHeight;
+                    } else if (data.status === 'error') {
+                        logsContent.textContent = 'Error: ' + data.message;
+                    } else {
+                        logsContent.textContent = 'No logs available yet. Start the bot to generate logs.';
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to load logs:', err);
+                    logsContent.textContent = 'Error loading logs: ' + err.message + '\n\nPossible causes:\n- Log file is locked by another process\n- Dashboard server issue\n- Network error\n\nTry:\n1. Refresh the page\n2. Restart the dashboard\n3. Check if bot is running';
+                    showToast('❌ Failed to load logs', 'error');
+                });
+        }
+        
+        // Download logs
+        function downloadLogs() {
+            fetch('/api/logs/download')
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error('Failed to download logs');
+                    }
+                    return r.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'gem_trading_logs.txt';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showToast('✅ Logs downloaded successfully', 'success');
+                })
+                .catch(err => {
+                    console.error('Failed to download logs:', err);
+                    showToast('❌ Failed to download logs: ' + err.message, 'error');
+                });
         }
         
         // Update status every 5 seconds
         setInterval(updateStatus, 5000);
         updateStatus();
         
+        // Check MT5 connection on page load
+        setTimeout(checkMT5ConnectionStatus, 1000);
+        
         function updateStatus() {
             fetch('/api/bot/status')
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('balance').textContent = '$' + data.balance.toFixed(2);
-                    document.getElementById('equity').textContent = '$' + data.equity.toFixed(2);
+                    // Store currency
+                    accountCurrency = data.currency || 'USD';
+                    
+                    // Get currency symbol
+                    const currencySymbol = getCurrencySymbol(accountCurrency);
+                    
+                    // Handle balance data (default to 0 if undefined)
+                    const balance = data.balance || 0;
+                    const equity = data.equity || 0;
+                    const profit = data.profit || 0;
+                    const profitToday = data.profit_today || 0;
+                    const profitMtd = data.profit_mtd || 0;
+                    const profitYtd = data.profit_ytd || 0;
+                    const openPositions = data.open_positions || 0;
+                    
+                    document.getElementById('balance').textContent = currencySymbol + balance.toFixed(2);
+                    document.getElementById('equity').textContent = currencySymbol + equity.toFixed(2);
                     
                     const profitEl = document.getElementById('profit');
-                    profitEl.textContent = '$' + data.profit.toFixed(2);
-                    profitEl.className = 'stat-value ' + (data.profit >= 0 ? 'positive' : 'negative');
+                    profitEl.textContent = currencySymbol + profit.toFixed(2);
+                    profitEl.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
                     
-                    document.getElementById('open-positions').textContent = data.open_positions;
+                    // Today's profit
+                    const profitTodayEl = document.getElementById('profit-today');
+                    profitTodayEl.textContent = currencySymbol + profitToday.toFixed(2);
+                    profitTodayEl.className = 'stat-value ' + (profitToday >= 0 ? 'positive' : 'negative');
+                    
+                    // Month to date
+                    const profitMtdEl = document.getElementById('profit-mtd');
+                    profitMtdEl.textContent = currencySymbol + profitMtd.toFixed(2);
+                    profitMtdEl.className = 'stat-value ' + (profitMtd >= 0 ? 'positive' : 'negative');
+                    
+                    // Year to date
+                    const profitYtdEl = document.getElementById('profit-ytd');
+                    profitYtdEl.textContent = currencySymbol + profitYtd.toFixed(2);
+                    profitYtdEl.className = 'stat-value ' + (profitYtd >= 0 ? 'positive' : 'negative');
+                    
+                    document.getElementById('open-positions').textContent = openPositions;
                     
                     const statusEl = document.getElementById('bot-status');
                     if (data.running) {
@@ -513,52 +1169,216 @@
                     } else {
                         statusEl.innerHTML = '<span class="status-indicator stopped"></span>Stopped';
                     }
+                    
+                    // Show error if present
+                    if (data.error) {
+                        console.warn('Status error:', data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to fetch bot status:', err);
+                    // Don't show toast on every error, just log it
                 });
             
             fetch('/api/analysis/performance')
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('win-rate').textContent = data.win_rate + '%';
-                    document.getElementById('total-trades').textContent = data.total_trades;
+                    // Handle performance data (default to 0 if undefined)
+                    const winRate = data.win_rate || 0;
+                    const totalTrades = data.total_trades || 0;
+                    const todayWins = data.today_wins || 0;
+                    const todayLosses = data.today_losses || 0;
+                    
+                    document.getElementById('win-rate').textContent = winRate + '%';
+                    document.getElementById('total-trades').textContent = totalTrades;
+                    
+                    // Update today's wins (green)
+                    const todayWinsEl = document.getElementById('today-wins');
+                    todayWinsEl.textContent = todayWins;
+                    todayWinsEl.className = 'stat-value positive';
+                    
+                    // Update today's losses (red)
+                    const todayLossesEl = document.getElementById('today-losses');
+                    todayLossesEl.textContent = todayLosses;
+                    todayLossesEl.className = 'stat-value negative';
+                })
+                .catch(err => {
+                    console.error('Failed to fetch performance:', err);
+                    // Set defaults on error
+                    document.getElementById('win-rate').textContent = '0%';
+                    document.getElementById('total-trades').textContent = '0';
+                    document.getElementById('today-wins').textContent = '0';
+                    document.getElementById('today-losses').textContent = '0';
                 });
         }
         
         function startBot() {
+            // Check MT5 connection first
+            const mt5Status = document.getElementById('mt5-connection').textContent;
+            if (mt5Status.includes('Not Connected')) {
+                showToast('❌ Cannot start bot: MT5 not connected. Click "Test MT5" first.', 'error');
+                return;
+            }
+            
+            // Validate configuration
+            if (!validateAllInputs()) {
+                showToast('❌ Cannot start bot: Please fix configuration errors', 'error');
+                return;
+            }
+            
+            // Confirm if risky settings
+            const risk = parseFloat(document.getElementById('risk-percent').value);
+            if (risk > 1) {
+                if (!confirm('⚠️ WARNING: Risk per trade is above 1%. This is aggressive. Continue?')) {
+                    return;
+                }
+            }
+            
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Starting...';
+            
             fetch('/api/bot/start', {method: 'POST'})
                 .then(r => r.json())
                 .then(data => {
-                    alert(data.message);
+                    if (data.status === 'success') {
+                        showToast('✅ ' + data.message, 'success');
+                    } else {
+                        showToast('❌ ' + data.message, 'error');
+                    }
                     updateStatus();
+                })
+                .catch(err => {
+                    showToast('❌ Failed to start bot: ' + err.message, 'error');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Start Bot';
                 });
         }
         
         function stopBot() {
+            if (!confirm('Stop the trading bot? Open positions will remain open.')) {
+                return;
+            }
+            
+            const btn = document.getElementById('stop-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Stopping...';
+            
             fetch('/api/bot/stop', {method: 'POST'})
                 .then(r => r.json())
                 .then(data => {
-                    alert(data.message);
+                    if (data.status === 'success') {
+                        showToast('✅ ' + data.message, 'success');
+                    } else {
+                        showToast('❌ ' + data.message, 'error');
+                    }
                     updateStatus();
+                })
+                .catch(err => {
+                    showToast('❌ Failed to stop bot: ' + err.message, 'error');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Stop Bot';
                 });
+        }
+        // Global variable to store all trades
+        let allTrades = [];
+        let accountCurrency = 'USD'; // Default currency
+        
+        // Apply sort and filter
+        function applySortFilter() {
+            let filteredTrades = [...allTrades];
+            
+            // Apply filter
+            const filterBy = document.getElementById('filter-by').value;
+            const filterSymbol = document.getElementById('filter-symbol').value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (filterBy === 'wins') {
+                filteredTrades = filteredTrades.filter(t => t.profit > 0);
+            } else if (filterBy === 'losses') {
+                filteredTrades = filteredTrades.filter(t => t.profit < 0);
+            } else if (filterBy === 'today') {
+                filteredTrades = filteredTrades.filter(t => t.time.startsWith(today));
+            }
+            
+            if (filterSymbol !== 'all') {
+                filteredTrades = filteredTrades.filter(t => t.symbol === filterSymbol);
+            }
+            
+            // Apply sort
+            const sortBy = document.getElementById('sort-by').value;
+            
+            if (sortBy === 'date-desc') {
+                filteredTrades.sort((a, b) => b.timestamp - a.timestamp);
+            } else if (sortBy === 'date-asc') {
+                filteredTrades.sort((a, b) => a.timestamp - b.timestamp);
+            } else if (sortBy === 'profit-desc') {
+                filteredTrades.sort((a, b) => b.profit - a.profit);
+            } else if (sortBy === 'profit-asc') {
+                filteredTrades.sort((a, b) => a.profit - b.profit);
+            } else if (sortBy === 'amount-desc') {
+                filteredTrades.sort((a, b) => Math.abs(b.profit) - Math.abs(a.profit));
+            } else if (sortBy === 'amount-asc') {
+                filteredTrades.sort((a, b) => Math.abs(a.profit) - Math.abs(b.profit));
+            }
+            
+            // Display filtered and sorted trades
+            displayTrades(filteredTrades);
+        }
+        
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('sort-by').value = 'date-desc';
+            document.getElementById('filter-by').value = 'all';
+            document.getElementById('filter-symbol').value = 'all';
+            applySortFilter();
+        }
+        
+        // Display trades in table
+        function displayTrades(trades) {
+            const tbody = document.getElementById('trades-body');
+            tbody.innerHTML = '';
+            
+            if (trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">No trades found</td></tr>';
+                return;
+            }
+            
+            const currencySymbol = getCurrencySymbol(accountCurrency);
+            
+            trades.forEach(trade => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${trade.time}</td>
+                    <td>${trade.symbol}</td>
+                    <td><span class="badge ${trade.type === 'BUY' ? 'badge-success' : 'badge-danger'}">${trade.type}</span></td>
+                    <td>${trade.volume}</td>
+                    <td>${trade.price.toFixed(5)}</td>
+                    <td class="${trade.profit >= 0 ? 'positive' : 'negative'}">${currencySymbol}${trade.profit.toFixed(2)}</td>
+                `;
+            });
         }
         
         function loadTrades() {
             fetch('/api/trades/history')
                 .then(r => r.json())
                 .then(data => {
-                    const tbody = document.getElementById('trades-body');
-                    tbody.innerHTML = '';
+                    allTrades = data.trades;
                     
-                    data.trades.forEach(trade => {
-                        const row = tbody.insertRow();
-                        row.innerHTML = `
-                            <td>${trade.time}</td>
-                            <td>${trade.symbol}</td>
-                            <td><span class="badge ${trade.type === 'BUY' ? 'badge-success' : 'badge-danger'}">${trade.type}</span></td>
-                            <td>${trade.volume}</td>
-                            <td>${trade.price.toFixed(5)}</td>
-                            <td class="${trade.profit >= 0 ? 'positive' : 'negative'}">$${trade.profit.toFixed(2)}</td>
-                        `;
+                    // Populate symbol filter
+                    const symbols = [...new Set(allTrades.map(t => t.symbol))];
+                    const symbolFilter = document.getElementById('filter-symbol');
+                    symbolFilter.innerHTML = '<option value="all">All Symbols</option>';
+                    symbols.forEach(symbol => {
+                        symbolFilter.innerHTML += `<option value="${symbol}">${symbol}</option>`;
                     });
+                    
+                    // Apply initial sort/filter
+                    applySortFilter();
                 });
         }
         
@@ -574,6 +1394,8 @@
                         return;
                     }
                     
+                    const currencySymbol = getCurrencySymbol(accountCurrency);
+                    
                     data.positions.forEach(pos => {
                         const row = tbody.insertRow();
                         row.innerHTML = `
@@ -585,7 +1407,7 @@
                             <td>${pos.price_current.toFixed(5)}</td>
                             <td>${pos.sl.toFixed(5)}</td>
                             <td>${pos.tp.toFixed(5)}</td>
-                            <td class="${pos.profit >= 0 ? 'positive' : 'negative'}">$${pos.profit.toFixed(2)}</td>
+                            <td class="${pos.profit >= 0 ? 'positive' : 'negative'}">${currencySymbol}${pos.profit.toFixed(2)}</td>
                         `;
                     });
                 });
@@ -612,9 +1434,207 @@
                 });
         }
         
+        // Load charts
+        let charts = {};
+        
+        function loadCharts() {
+            fetch('/api/charts/data')
+                .then(r => r.json())
+                .then(data => {
+                    // Destroy existing charts
+                    Object.values(charts).forEach(chart => chart.destroy());
+                    charts = {};
+                    
+                    // Profit by Symbol
+                    const symbolLabels = Object.keys(data.symbol_profits);
+                    const symbolProfits = Object.values(data.symbol_profits);
+                    const symbolColors = symbolProfits.map(p => p >= 0 ? '#10b981' : '#ef4444');
+                    
+                    charts.symbolProfit = new Chart(document.getElementById('symbol-profit-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: symbolLabels,
+                            datasets: [{
+                                label: 'Profit ($)',
+                                data: symbolProfits,
+                                backgroundColor: symbolColors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Win/Loss by Symbol
+                    const winLossLabels = Object.keys(data.symbol_wins);
+                    const wins = Object.values(data.symbol_wins);
+                    const losses = Object.values(data.symbol_losses);
+                    
+                    charts.symbolWinLoss = new Chart(document.getElementById('symbol-winloss-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: winLossLabels,
+                            datasets: [
+                                {
+                                    label: 'Wins',
+                                    data: wins,
+                                    backgroundColor: '#10b981'
+                                },
+                                {
+                                    label: 'Losses',
+                                    data: losses,
+                                    backgroundColor: '#ef4444'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Daily Profit Trend
+                    charts.dailyProfit = new Chart(document.getElementById('daily-profit-chart'), {
+                        type: 'line',
+                        data: {
+                            labels: data.daily_labels,
+                            datasets: [{
+                                label: 'Daily Profit ($)',
+                                data: data.daily_values,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    labels: { color: '#94a3b8' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Hourly Performance
+                    const hourlyLabels = Object.keys(data.hourly_profits).map(h => h + ':00');
+                    const hourlyProfits = Object.values(data.hourly_profits);
+                    const hourlyColors = hourlyProfits.map(p => p >= 0 ? '#10b981' : '#ef4444');
+                    
+                    charts.hourlyProfit = new Chart(document.getElementById('hourly-profit-chart'), {
+                        type: 'bar',
+                        data: {
+                            labels: hourlyLabels,
+                            datasets: [{
+                                label: 'Profit ($)',
+                                data: hourlyProfits,
+                                backgroundColor: hourlyColors
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { color: '#94a3b8' },
+                                    grid: { color: '#334155' }
+                                },
+                                x: {
+                                    ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 },
+                                    grid: { color: '#334155' }
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Trade Distribution (Doughnut)
+                    const tradeLabels = Object.keys(data.symbol_trades);
+                    const tradeCounts = Object.values(data.symbol_trades);
+                    
+                    charts.tradeDistribution = new Chart(document.getElementById('trade-distribution-chart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: tradeLabels,
+                            datasets: [{
+                                data: tradeCounts,
+                                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: { color: '#94a3b8' }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+        
         // Save configuration
         document.getElementById('config-form').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Validate all inputs
+            if (!validateAllInputs()) {
+                showToast('❌ Please fix validation errors before saving', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('save-config-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Saving...';
             
             const config = {
                 symbols: Array.from(document.getElementById('symbols').selectedOptions).map(o => o.value),
@@ -624,6 +1644,7 @@
                 min_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
                 max_daily_loss: parseFloat(document.getElementById('max-daily-loss').value),
                 scalp_max_hold: parseInt(document.getElementById('scalp-max-hold').value),
+                enable_adaptive_risk: document.getElementById('enable-adaptive-risk').value === 'true',
                 enable_trading_hours: document.getElementById('enable-trading-hours').value === 'true'
             };
             
@@ -634,7 +1655,18 @@
             })
             .then(r => r.json())
             .then(data => {
-                alert(data.message);
+                if (data.status === 'success') {
+                    showToast('✅ Configuration saved successfully!', 'success');
+                } else {
+                    showToast('❌ Failed to save: ' + data.message, 'error');
+                }
+            })
+            .catch(err => {
+                showToast('❌ Error saving configuration: ' + err.message, 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'Save Configuration';
             });
         });
     </script>

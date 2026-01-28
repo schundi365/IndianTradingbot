@@ -1,0 +1,186 @@
+name: Build All Platforms
+
+on:
+  # Trigger on release tags
+  push:
+    tags:
+      - 'v*'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.0.0)'
+        required: true
+        default: '2.0.0'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      run: |
+        .\build_windows.bat
+      shell: cmd
+    
+    - name: Get version
+      id: get_version
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create ZIP archive
+      shell: bash
+      run: |
+        cd dist
+        if [ -d "GEM_Trading_Bot_Windows" ]; then
+          7z a -tzip "GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip" GEM_Trading_Bot_Windows
+        else
+          echo "Build directory not found!"
+          exit 1
+        fi
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GEM_Trading_Bot_Windows_v${{ steps.get_version.outputs.VERSION }}
+        path: dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip
+        retention-days: 90
+
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build macOS executable
+      run: |
+        chmod +x build_mac.sh
+        ./build_mac.sh
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create ZIP archive
+      run: |
+        cd dist
+        if [ -d "GEM_Trading_Bot_macOS" ]; then
+          zip -r "GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_macOS.zip" GEM_Trading_Bot_macOS
+        else
+          echo "Build directory not found!"
+          exit 1
+        fi
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GEM_Trading_Bot_macOS_v${{ steps.get_version.outputs.VERSION }}
+        path: dist/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_macOS.zip
+        retention-days: 90
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: GEM_Trading_Bot_Windows_v${{ steps.get_version.outputs.VERSION }}
+        path: ./artifacts
+    
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: GEM_Trading_Bot_macOS_v${{ steps.get_version.outputs.VERSION }}
+        path: ./artifacts
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./artifacts/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip
+          ./artifacts/GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_macOS.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## GEM Trading Bot v${{ steps.get_version.outputs.VERSION }}
+          
+          ### Downloads
+          
+          - **Windows:** `GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_Windows.zip`
+          - **macOS:** `GEM_Trading_Bot_v${{ steps.get_version.outputs.VERSION }}_macOS.zip`
+          
+          ### Installation
+          
+          1. Download the appropriate file for your platform
+          2. Extract the ZIP file
+          3. Follow the instructions in the included README
+          
+          ### Requirements
+          
+          - **Windows:** Windows 10 or higher, MT5 installed
+          - **macOS:** macOS 10.14 or higher, MT5 via Wine
+          
+          ### Documentation
+          
+          - User Guide: See `USER_GUIDE.md`
+          - Quick Start: See `QUICK_START_CARD.md`
+          - Troubleshooting: See `TROUBLESHOOTING.md`
+          
+          ### Support
+          
+          For issues, check the documentation or open an issue on GitHub.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

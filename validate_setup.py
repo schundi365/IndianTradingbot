@@ -41,11 +41,11 @@ def check_dependencies():
 def check_file_structure():
     """Check if all required files exist"""
     required_files = [
-        'src/mt5_trading_bot.py',
-        'src/config.py',
-        'src/adaptive_risk_manager.py',
-        'src/split_order_calculator.py',
-        'src/trailing_strategies.py',
+        os.path.join('src', 'mt5_trading_bot.py'),
+        os.path.join('src', 'config.py'),
+        os.path.join('src', 'adaptive_risk_manager.py'),
+        os.path.join('src', 'split_order_calculator.py'),
+        os.path.join('src', 'trailing_strategies.py'),
         'run_bot.py',
         'test_connection.py',
         'requirements.txt'

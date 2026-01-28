@@ -4,6 +4,7 @@ Backs up current config and applies optimized settings
 """
 
 import shutil
+import os
 from datetime import datetime
 
 def apply_optimized_config():
@@ -16,16 +17,18 @@ def apply_optimized_config():
     
     # Backup current config
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_file = f"src/config_backup_{timestamp}.py"
+    backup_file = os.path.join('src', f"config_backup_{timestamp}.py")
+    config_file = os.path.join('src', 'config.py')
+    optimized_file = os.path.join('src', 'config_optimized.py')
     
     print(f"1. Backing up current config to: {backup_file}")
-    shutil.copy("src/config.py", backup_file)
+    shutil.copy(config_file, backup_file)
     print("   ✓ Backup created")
     print()
     
     # Copy optimized config
     print("2. Applying optimized configuration...")
-    shutil.copy("src/config_optimized.py", "src/config.py")
+    shutil.copy(optimized_file, config_file)
     print("   ✓ Optimized config applied")
     print()
     

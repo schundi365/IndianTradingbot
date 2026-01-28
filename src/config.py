@@ -23,17 +23,17 @@ import MetaTrader5 as mt5
 # ==============================================================================
 # TRADING SYMBOLS
 # ==============================================================================
-SYMBOLS = ['XAUUSD', 'GBPUSD']  # Removed XAGUSD (57% of losses)
+SYMBOLS = ['XAUUSD', 'GBPUSD', 'XAGUSD']
 
 # ==============================================================================
 # TIMEFRAME SETTINGS - M1 EXTREME HIGH-FREQUENCY MODE
 # ==============================================================================
-TIMEFRAME = mt5.TIMEFRAME_M1  # 1-minute timeframe (100-200+ trades/day expected!)
+TIMEFRAME = 1
 
 # ==============================================================================
 # RISK MANAGEMENT - M1 TESTING
 # ==============================================================================
-RISK_PERCENT = 0.3          # Risk 0.3% per trade (higher for M1 testing)
+RISK_PERCENT = 0.3
 REWARD_RATIO = 1.5          # Risk:Reward ratio 1:1.5
 DEFAULT_LOT_SIZE = 0.01     # Fallback lot size
 

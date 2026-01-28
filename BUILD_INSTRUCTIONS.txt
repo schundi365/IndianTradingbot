@@ -1,0 +1,106 @@
+================================================================
+GEM TRADING BOT - BUILD INSTRUCTIONS
+================================================================
+
+QUICK START - Choose your platform:
+
+================================================================
+WINDOWS BUILD
+================================================================
+
+1. Open Command Prompt in this folder
+
+2. Run:
+   build_windows.bat
+
+3. Wait 5-10 minutes
+
+4. Find executable in:
+   dist\GEM_Trading_Bot.exe
+
+5. Distribution package in:
+   dist\GEM_Trading_Bot_Windows\
+
+================================================================
+macOS BUILD
+================================================================
+
+1. Open Terminal in this folder
+
+2. Run:
+   chmod +x build_mac.sh
+   ./build_mac.sh
+
+3. Wait 5-10 minutes
+
+4. Find application in:
+   dist/GEM_Trading_Bot.app
+
+5. Distribution package in:
+   dist/GEM_Trading_Bot_macOS/
+
+================================================================
+TESTING
+================================================================
+
+Windows:
+  cd dist
+  GEM_Trading_Bot.exe
+
+macOS:
+  cd dist
+  open GEM_Trading_Bot.app
+
+Expected:
+  - Browser opens to http://localhost:5000
+  - Dashboard loads
+  - All features work
+
+================================================================
+DISTRIBUTION
+================================================================
+
+Windows:
+  1. Zip the folder: dist\GEM_Trading_Bot_Windows
+  2. Name it: GEM_Trading_Bot_v2.0_Windows.zip
+  3. Upload and share
+
+macOS:
+  1. Create DMG:
+     hdiutil create -volname "GEM Trading Bot" \
+         -srcfolder dist/GEM_Trading_Bot_macOS \
+         -ov -format UDZO \
+         GEM_Trading_Bot_v2.0_macOS.dmg
+  
+  2. OR create ZIP:
+     cd dist
+     zip -r GEM_Trading_Bot_v2.0_macOS.zip GEM_Trading_Bot_macOS
+  
+  3. Upload and share
+
+================================================================
+TROUBLESHOOTING
+================================================================
+
+Issue: PyInstaller not found
+Fix: pip install pyinstaller
+
+Issue: Build fails
+Fix: pip install -r requirements.txt
+
+Issue: Permission denied (macOS)
+Fix: chmod +x build_mac.sh
+
+For detailed help, see: BUILD_EXECUTABLE_GUIDE.md
+
+================================================================
+SUPPORT
+================================================================
+
+Build Time: 5-10 minutes per platform
+File Size: ~150-200 MB
+Requirements: Python 3.8+, all dependencies installed
+
+For complete guide: BUILD_EXECUTABLE_GUIDE.md
+
+================================================================
