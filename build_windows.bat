@@ -28,7 +28,7 @@ if errorlevel 1 (
 
 REM Install/upgrade PyInstaller
 echo.
-echo Step 1: Installing PyInstaller...
+echo Step 1: Installing build dependencies...
 pip install --upgrade pyinstaller
 if errorlevel 1 (
     echo ERROR: Failed to install PyInstaller
@@ -36,9 +36,19 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Install web dependencies
+echo.
+echo Step 2: Installing web dependencies...
+pip install -r requirements_web.txt
+if errorlevel 1 (
+    echo ERROR: Failed to install web dependencies
+    pause
+    exit /b 1
+)
+
 REM Clean previous builds
 echo.
-echo Step 2: Cleaning previous builds...
+echo Step 3: Cleaning previous builds...
 if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist
 if exist GEM_Trading_Bot.spec del GEM_Trading_Bot.spec
@@ -49,7 +59,7 @@ if not exist dist mkdir dist
 
 REM Build executable
 echo.
-echo Step 3: Building Windows executable...
+echo Step 4: Building Windows executable...
 echo This may take 5-10 minutes, please wait...
 echo.
 
@@ -87,7 +97,7 @@ if errorlevel 1 (
 
 REM Create distribution package
 echo.
-echo Step 4: Creating distribution package...
+echo Step 5: Creating distribution package...
 
 if not exist "dist\GEM_Trading_Bot_Windows" mkdir "dist\GEM_Trading_Bot_Windows"
 if not exist "dist\GEM_Trading_Bot_Windows\docs" mkdir "dist\GEM_Trading_Bot_Windows\docs"
