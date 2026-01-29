@@ -62,7 +62,7 @@
         30
     ],
     "max_lot_per_order": 0.5,
-    "max_trades_total": 999,
+    "max_trades_total": 50,
     "max_trades_per_symbol": 10,
     "enable_trailing_stop": true,
     "trail_activation": 1,
@@ -71,14 +71,14 @@
     "max_risk_multiplier": 2,
     "min_risk_multiplier": 0.5,
     "max_drawdown_percent": 15,
-    "max_daily_trades": 999,
-    "use_volume_filter": false,
+    "max_daily_trades": 100,
+    "use_volume_filter": true,
     "min_volume_ma": 1,
     "volume_ma_period": 20,
     "obv_period": 20,
     "update_interval": 60,
     "version": "2.1.0",
-    "last_updated": "2026-01-29T20:46:05.488477",
+    "last_updated": "2026-01-29T20:46:01.935238",
     "use_dynamic_tp": true,
     "use_dynamic_sl": true
 }

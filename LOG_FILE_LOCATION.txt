@@ -1,0 +1,202 @@
+📁 TRADING BOT LOG FILE LOCATION
+================================================================
+
+✅ LOG FILE PATH
+----------------
+Full Path: C:\Users\srika\Labs\AgenticAI\Bots\tradegold\trading_bot.log
+
+Relative Path: trading_bot.log (in project root directory)
+
+File Size: 8.2 MB (8,217,343 bytes)
+Last Updated: January 29, 2026 - 20:36:57
+Created: January 27, 2026 - 15:40:29
+
+
+================================================================
+📝 HOW THE LOG FILE IS GENERATED
+================================================================
+
+The log file is created by the bot in src/mt5_trading_bot.py:
+
+CODE LOCATION (lines 24-50):
+-----------------------------
+# Log file path
+LOG_FILE = BASE_DIR / 'trading_bot.log'
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+EXPLANATION:
+------------
+• BASE_DIR = Project root directory (C:\Users\srika\Labs\AgenticAI\Bots\tradegold)
+• LOG_FILE = BASE_DIR / 'trading_bot.log'
+• FileHandler writes all logs to this file
+• StreamHandler also displays logs in console
+• Encoding: UTF-8 (supports emojis and special characters)
+• Level: INFO (shows INFO, WARNING, ERROR messages)
+
+
+================================================================
+🔍 HOW TO VIEW THE LOG FILE
+================================================================
+
+METHOD 1: View Last 100 Lines
+------------------------------
+Get-Content trading_bot.log -Tail 100
+
+METHOD 2: Watch Live Updates
+-----------------------------
+Get-Content trading_bot.log -Wait
+
+METHOD 3: Search for Specific Text
+-----------------------------------
+Get-Content trading_bot.log | Select-String -Pattern "Dynamic"
+
+METHOD 4: View in Text Editor
+------------------------------
+notepad trading_bot.log
+
+METHOD 5: Open in VS Code
+--------------------------
+code trading_bot.log
+
+
+================================================================
+🔍 USEFUL LOG MONITORING COMMANDS
+================================================================
+
+Watch Dynamic TP/SL Adjustments:
+---------------------------------
+Get-Content trading_bot.log -Wait | Select-String -Pattern "Dynamic (TP|SL)"
+
+View Recent Signals:
+--------------------
+Get-Content trading_bot.log | Select-String -Pattern "SIGNAL" | Select-Object -Last 20
+
+View Recent Trades:
+-------------------
+Get-Content trading_bot.log | Select-String -Pattern "Trade opened|Position closed" | Select-Object -Last 20
+
+View Errors Only:
+-----------------
+Get-Content trading_bot.log | Select-String -Pattern "ERROR|WARNING"
+
+View Specific Symbol:
+---------------------
+Get-Content trading_bot.log | Select-String -Pattern "XAUUSD" | Select-Object -Last 50
+
+View Last Hour of Activity:
+----------------------------
+Get-Content trading_bot.log -Tail 1000
+
+
+================================================================
+📊 WHAT'S LOGGED IN THE FILE
+================================================================
+
+✓ Bot startup and initialization
+✓ MT5 connection status
+✓ Configuration loading
+✓ Symbol analysis (every 60 seconds)
+✓ Technical indicator calculations
+✓ Signal generation (crossovers, trend confirmations)
+✓ Filter checks (RSI, MACD, ADX, Volume)
+✓ Trade entries (with full details)
+✓ Position management
+✓ Dynamic TP extensions (with reasons)
+✓ Dynamic SL adjustments (with reasons)
+✓ Trailing stop updates
+✓ Position closures (with profit/loss)
+✓ Error messages and warnings
+✓ Dashboard API requests
+
+
+================================================================
+🎯 DETAILED LOGGING FEATURES
+================================================================
+
+The bot logs DETAILED CALCULATIONS for every signal check:
+
+EXAMPLE LOG OUTPUT:
+-------------------
+2026-01-29 20:31:02,437 - INFO - ===============================================
+2026-01-29 20:31:02,437 - INFO - 📊 SIGNAL ANALYSIS - DETAILED CALCULATIONS
+2026-01-29 20:31:02,438 - INFO - ===============================================
+2026-01-29 20:31:02,439 - INFO - Current Price:     1.96178
+2026-01-29 20:31:02,439 - INFO - Fast MA (10):      1.96381
+2026-01-29 20:31:02,439 - INFO - Slow MA (30):      1.96001
+2026-01-29 20:31:02,439 - INFO - MA Distance:       0.00380 points
+2026-01-29 20:31:02,440 - INFO - MA Position:       Fast ABOVE Slow
+2026-01-29 20:31:02,440 - INFO - Price vs Fast MA:  -0.00203 (below)
+2026-01-29 20:31:02,440 - INFO - Price vs Slow MA:  +0.00177 (above)
+2026-01-29 20:31:02,441 - INFO - 🔍 CHECKING MA CROSSOVER:
+2026-01-29 20:31:02,441 - INFO -   Previous: Fast MA=1.96486, Slow MA=1.95968
+2026-01-29 20:31:02,441 - INFO -   Current:  Fast MA=1.96381, Slow MA=1.96001
+2026-01-29 20:31:02,442 - INFO -   ❌ No crossover detected
+
+This shows EXACTLY how the bot makes decisions!
+
+
+================================================================
+📁 OTHER LOG FILES
+================================================================
+
+If debug logging is enabled, there's also:
+  logs/debug.log - More detailed debug information
+
+Dashboard also logs to the same file:
+  web_dashboard.py uses the same trading_bot.log file
+
+
+================================================================
+🔧 LOG FILE MANAGEMENT
+================================================================
+
+ROTATION:
+---------
+The log file grows continuously. Current size: 8.2 MB
+
+To clear old logs:
+  1. Stop the bot
+  2. Rename or delete trading_bot.log
+  3. Restart the bot (creates new file)
+
+To backup logs:
+  copy trading_bot.log trading_bot_backup_20260129.log
+
+To compress logs:
+  Compress-Archive -Path trading_bot.log -DestinationPath logs_backup.zip
+
+
+================================================================
+✅ SUMMARY
+================================================================
+
+Log File Location:
+  C:\Users\srika\Labs\AgenticAI\Bots\tradegold\trading_bot.log
+
+Generated By:
+  src/mt5_trading_bot.py (lines 24-50)
+  web_dashboard.py (lines 29-39)
+
+View Command:
+  Get-Content trading_bot.log -Tail 100
+
+Watch Live:
+  Get-Content trading_bot.log -Wait
+
+The log file contains ALL bot activity including:
+  ✓ Detailed signal calculations
+  ✓ Trade entries and exits
+  ✓ Dynamic TP/SL adjustments
+  ✓ Filter checks and reasons
+  ✓ Error messages
+
+This is your complete audit trail of bot activity! 📊

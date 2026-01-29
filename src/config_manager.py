@@ -44,7 +44,7 @@ class ConfigManager:
         """Get default configuration values - M30 with aggressive settings"""
         return {
             'symbols': ['XAUUSD', 'XAGUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'],
-            'timeframe': 30,  # M30 - 30 minute timeframe
+            'timeframe': 30,  # M30 - 30 minute timeframe (changed from 60)
             'magic_number': 123456,
             'lot_size': 0.01,
             'risk_percent': 0.5,

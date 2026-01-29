@@ -61,9 +61,26 @@ class VolumeAnalyzer:
             return True
         
         volume_ratio = current_volume / avg_volume
-        is_above = volume_ratio >= self.min_volume_ma
+        threshold = self.min_volume_ma
+        is_above = volume_ratio >= threshold
         
-        logger.debug(f"Volume check: Current={current_volume:.0f}, Avg={avg_volume:.0f}, Ratio={volume_ratio:.2f}x, Above={is_above}")
+        # DETAILED LOGGING
+        logger.info("="*80)
+        logger.info("📊 VOLUME FILTER CHECK - DETAILED CALCULATIONS")
+        logger.info("="*80)
+        logger.info(f"Current Volume:        {current_volume:.0f}")
+        logger.info(f"Average Volume (MA{self.volume_ma_period}): {avg_volume:.0f}")
+        logger.info(f"Volume Ratio:          {volume_ratio:.2f}x")
+        logger.info(f"Required Threshold:    {threshold:.2f}x")
+        logger.info(f"Comparison:            {current_volume:.0f} / {avg_volume:.0f} = {volume_ratio:.2f}x")
+        logger.info(f"Check:                 {volume_ratio:.2f}x >= {threshold:.2f}x?")
+        if is_above:
+            logger.info(f"✅ VOLUME FILTER PASSED: {volume_ratio:.2f}x >= {threshold:.2f}x")
+        else:
+            logger.info(f"❌ VOLUME FILTER REJECTED: {volume_ratio:.2f}x < {threshold:.2f}x")
+            logger.info(f"   Current volume is only {volume_ratio:.1%} of average")
+            logger.info(f"   Need at least {threshold:.1%} of average to pass")
+        logger.info("="*80)
         
         return is_above
     
@@ -271,76 +288,121 @@ class VolumeAnalyzer:
             'confidence_boost': 0.0
         }
         
+        logger.info("-"*80)
+        logger.info(f"🔍 VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
+        logger.info("-"*80)
+        
         # 1. Check if volume is above average
         confirmation['above_average'] = self.is_above_average_volume(df)
+        logger.info(f"1. Above Average Volume: {confirmation['above_average']}")
         
         # 2. Get volume trend
         confirmation['volume_trend'] = self.get_volume_trend(df)
+        logger.info(f"2. Volume Trend: {confirmation['volume_trend']}")
         
         # 3. Get OBV signal
         confirmation['obv_signal'] = self.get_obv_signal(df)
+        logger.info(f"3. OBV Signal: {confirmation['obv_signal']}")
         
         # 4. Check for divergence
         confirmation['divergence'] = self.check_volume_divergence(df)
+        logger.info(f"4. Divergence: {confirmation['divergence']}")
+        
+        logger.info("-"*80)
+        logger.info("📈 CALCULATING CONFIRMATION:")
         
         # 5. Determine if signal is confirmed
         if signal_type == 'buy':
             # Buy confirmation: above average volume, increasing trend, bullish OBV
+            positive_signals = 0
+            
             if confirmation['above_average']:
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ Above average volume (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ Below average volume (0 signals)")
             
             if confirmation['volume_trend'] == 'increasing':
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ Volume increasing (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ Volume not increasing (0 signals)")
             
             if confirmation['obv_signal'] == 'bullish':
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ OBV bullish (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ OBV not bullish (0 signals)")
             
             if confirmation['divergence'] == 'bullish_divergence':
                 confirmation['confidence_boost'] += 0.10
+                logger.info(f"   ✅ Bullish divergence (+10% confidence)")
             elif confirmation['divergence'] == 'bearish_divergence':
                 confirmation['confidence_boost'] -= 0.10
+                logger.info(f"   ⚠️  Bearish divergence (-10% confidence)")
             
             # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
-            # Don't require above_average volume as mandatory
-            positive_signals = 0
-            if confirmation['above_average']:
-                positive_signals += 1
-            if confirmation['volume_trend'] == 'increasing':
-                positive_signals += 1
-            if confirmation['obv_signal'] == 'bullish':
-                positive_signals += 1
-            
             confirmation['confirmed'] = positive_signals >= 2
+            
+            logger.info("-"*80)
+            logger.info(f"Total Positive Signals: {positive_signals}/3")
+            logger.info(f"Required for Confirmation: 2/3")
+            logger.info(f"Confidence Boost: {confirmation['confidence_boost']:+.1%}")
+            
+            if confirmation['confirmed']:
+                logger.info(f"✅ VOLUME CONFIRMATION PASSED ({positive_signals}/3 signals)")
+            else:
+                logger.info(f"❌ VOLUME CONFIRMATION FAILED ({positive_signals}/3 signals, need 2)")
         
         elif signal_type == 'sell':
             # Sell confirmation: above average volume, increasing trend, bearish OBV
+            positive_signals = 0
+            
             if confirmation['above_average']:
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ Above average volume (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ Below average volume (0 signals)")
             
             if confirmation['volume_trend'] == 'increasing':
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ Volume increasing (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ Volume not increasing (0 signals)")
             
             if confirmation['obv_signal'] == 'bearish':
                 confirmation['confidence_boost'] += 0.05
+                positive_signals += 1
+                logger.info(f"   ✅ OBV bearish (+1 signal, +5% confidence)")
+            else:
+                logger.info(f"   ❌ OBV not bearish (0 signals)")
             
             if confirmation['divergence'] == 'bearish_divergence':
                 confirmation['confidence_boost'] += 0.10
+                logger.info(f"   ✅ Bearish divergence (+10% confidence)")
             elif confirmation['divergence'] == 'bullish_divergence':
                 confirmation['confidence_boost'] -= 0.10
+                logger.info(f"   ⚠️  Bullish divergence (-10% confidence)")
             
             # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
-            # Don't require above_average volume as mandatory
-            positive_signals = 0
-            if confirmation['above_average']:
-                positive_signals += 1
-            if confirmation['volume_trend'] == 'increasing':
-                positive_signals += 1
-            if confirmation['obv_signal'] == 'bearish':
-                positive_signals += 1
-            
             confirmation['confirmed'] = positive_signals >= 2
+            
+            logger.info("-"*80)
+            logger.info(f"Total Positive Signals: {positive_signals}/3")
+            logger.info(f"Required for Confirmation: 2/3")
+            logger.info(f"Confidence Boost: {confirmation['confidence_boost']:+.1%}")
+            
+            if confirmation['confirmed']:
+                logger.info(f"✅ VOLUME CONFIRMATION PASSED ({positive_signals}/3 signals)")
+            else:
+                logger.info(f"❌ VOLUME CONFIRMATION FAILED ({positive_signals}/3 signals, need 2)")
         
-        logger.info(f"Volume confirmation for {signal_type}: {confirmation}")
+        logger.info("="*80)
         
         return confirmation
     
