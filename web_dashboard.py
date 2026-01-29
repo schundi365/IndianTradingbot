@@ -8,19 +8,32 @@ import MetaTrader5 as mt5
 from datetime import datetime, timedelta
 import json
 import os
+import sys
 import threading
 import time
 import logging
+from pathlib import Path
 from src.config_manager import get_config_manager, get_config
 
 app = Flask(__name__)
+
+# Determine base directory (works for both script and executable)
+if getattr(sys, 'frozen', False):
+    # Running as executable
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # Running as script
+    BASE_DIR = Path(__file__).parent
+
+# Ensure logs directory exists
+LOG_FILE = BASE_DIR / 'trading_bot.log'
 
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('trading_bot.log'),
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -680,17 +693,17 @@ def get_logs():
     try:
         lines = int(request.args.get('lines', 50))
         
-        if not os.path.exists('trading_bot.log'):
+        if not LOG_FILE.exists():
             logger.info("Log file not found, returning empty logs")
             return jsonify({'logs': ['No log file found yet. Start the bot to generate logs.']})
         
         # Try to read with different encodings
         try:
-            with open('trading_bot.log', 'r', encoding='utf-8') as f:
+            with open(LOG_FILE, 'r', encoding='utf-8') as f:
                 all_lines = f.readlines()
         except UnicodeDecodeError:
             # Try with latin-1 if utf-8 fails
-            with open('trading_bot.log', 'r', encoding='latin-1') as f:
+            with open(LOG_FILE, 'r', encoding='latin-1') as f:
                 all_lines = f.readlines()
         
         if not all_lines:
@@ -712,10 +725,10 @@ def get_logs():
 def download_logs():
     """Download log file"""
     try:
-        if not os.path.exists('trading_bot.log'):
+        if not LOG_FILE.exists():
             return jsonify({'status': 'error', 'message': 'No log file found'})
         
-        return send_file('trading_bot.log', as_attachment=True, download_name='gem_trading_logs.txt')
+        return send_file(LOG_FILE, as_attachment=True, download_name='gem_trading_logs.txt')
     
     except Exception as e:
         logger.error(f"Failed to download logs: {str(e)}")

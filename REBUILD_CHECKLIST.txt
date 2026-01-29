@@ -121,6 +121,18 @@ Test 7: Configuration Persistence
 [ ] Start bot
 [ ] Check logs - should use saved config
 
+Test 8: Log File Creation
+--------------------------
+[ ] Start executable
+[ ] Wait for dashboard to load
+[ ] Check dist\trading_bot.log exists
+[ ] Dashboard > System Logs tab
+[ ] Should show logs without errors
+[ ] Click "Download Logs"
+[ ] Should download successfully
+[ ] Downloaded file contains logs
+[ ] No "file not found" errors
+
 ================================================================================
 DISTRIBUTION CHECKLIST
 ================================================================================
@@ -252,6 +264,7 @@ Critical Fixes:
 ✅ Enhanced logging
 ✅ Volume analysis integration
 ✅ TensorBoard build error fixed
+✅ Log file path for executable
 
 ================================================================================
 FINAL CHECKS BEFORE DISTRIBUTION

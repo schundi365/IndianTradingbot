@@ -9,6 +9,19 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import logging
+import sys
+from pathlib import Path
+
+# Determine base directory (works for both script and executable)
+if getattr(sys, 'frozen', False):
+    # Running as executable
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # Running as script
+    BASE_DIR = Path(__file__).parent.parent
+
+# Log file path
+LOG_FILE = BASE_DIR / 'trading_bot.log'
 
 # Import adaptive risk management
 try:
@@ -31,7 +44,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('trading_bot.log'),
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
