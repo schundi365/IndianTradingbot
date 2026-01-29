@@ -1,0 +1,62 @@
+================================================================================
+CRITICAL: REBUILD EXECUTABLE NOW - TWO MAJOR FIXES APPLIED
+================================================================================
+
+TWO CRITICAL ISSUES FIXED:
+
+1. IPC CONNECTION ERROR FIX
+   - Bot was getting "No IPC connection" errors for all symbols after first one
+   - Root cause: No delay between symbol requests (rapid-fire requests)
+   - Fix: Added 500ms delay between each symbol analysis
+   - Impact: Bot can now analyze ALL symbols without connection errors
+
+2. VOLUME FILTER TOO STRICT FIX
+   - Bot was detecting valid signals but rejecting ALL trades
+   - Root cause: Required volume to be 1.2x average (too strict)
+   - Fix: Changed to "any 2 of 3 positive signals" instead of mandatory above-average
+   - Impact: Bot will now place trades when signals are valid
+
+CURRENT STATUS:
+- Bot detects signals: ✓ (XAUUSD SELL, XAGUSD BUY)
+- Bot analyzes all symbols: ✓ (XAUUSD, XAGUSD, GBPUSD)
+- Bot places trades: ✗ (volume filter too strict)
+
+AFTER REBUILD:
+- Bot detects signals: ✓
+- Bot analyzes all symbols: ✓ (with 500ms delay, no IPC errors)
+- Bot places trades: ✓ (XAUUSD SELL will be accepted with 2/3 volume signals)
+
+IMPORTANT NOTE:
+The config currently has only 3 symbols: XAUUSD, XAGUSD, GBPUSD
+If you want to trade more symbols, add them in the dashboard configuration.
+
+FILES MODIFIED:
+1. src/mt5_trading_bot.py
+   - Added time.sleep(0.5) between symbol analyses
+   - Improved IPC error handling for error codes -10004 and -10001
+
+2. src/volume_analyzer.py
+   - Changed confirmation logic from "above_average AND other" to "any 2 of 3"
+   - Now counts positive signals instead of requiring above_average
+
+REBUILD COMMAND:
+   build_windows.bat
+
+TESTING AFTER REBUILD:
+1. Start bot from executable
+2. Check logs - should see all symbols being analyzed
+3. Wait for signal detection (XAUUSD currently has SELL signals)
+4. Verify trade is placed (not rejected by volume filter)
+5. Monitor for IPC connection errors (should be gone)
+
+EXPECTED FIRST TRADE:
+- Symbol: XAUUSD
+- Direction: SELL
+- Reason: Bearish MA crossover + increasing volume + bearish OBV = 2/3 signals ✓
+
+DOCUMENTATION:
+- docs/fixes/FIX_IPC_ERROR.md
+- docs/fixes/VOLUME_FILTER_TOO_STRICT_FIX.md
+- SYMBOL_ANALYSIS_STATUS.txt (explains what bot is currently analyzing)
+
+================================================================================

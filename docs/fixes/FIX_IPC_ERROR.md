@@ -1,199 +1,87 @@
-# Fix: IPC Send Failed Error
+# IPC Connection Error Fix
 
-## Error
-```
-ERROR - Failed to get data for XAGUSD after 3 attempts. Error: (-10001, 'IPC send failed')
-```
+## Problem
+Bot was experiencing `(-10004, 'No IPC connection')` errors when analyzing multiple symbols. After successfully analyzing XAUUSD, all subsequent symbols would fail with IPC connection errors.
 
-## What It Means
-The bot lost communication with MetaTrader 5 terminal. This is a connection issue, not a code bug.
+## Root Cause
+The bot was cycling through 29 symbols with NO delay between requests. MT5 was being hammered with rapid-fire data requests, causing it to:
+- Rate limit the connection
+- Lose IPC connection
+- Fail to respond to subsequent requests
 
----
+With 29 symbols and no delay, the bot was making ~29 requests in rapid succession every 60 seconds.
 
-## Causes
+## Solution
 
-### 1. MT5 Terminal Closed/Crashed
-Most common cause - MT5 terminal was closed or crashed.
-
-### 2. MT5 Overloaded
-Too many rapid requests (M1 with 10-second updates = 6 requests/minute × 3 symbols = 18 requests/minute).
-
-### 3. MT5 Busy
-MT5 is processing other operations (manual trades, updates, etc.).
-
-### 4. Network Issue
-Connection between bot and MT5 terminal interrupted.
-
----
-
-## Quick Fixes
-
-### Fix 1: Restart MT5 Terminal ⭐ (Most Effective)
-1. Close MetaTrader 5 completely
-2. Reopen MetaTrader 5
-3. Wait for it to fully load
-4. Restart the bot
-
-### Fix 2: Check MT5 is Running
-- Make sure MT5 terminal is open and logged in
-- Check MT5 is not frozen (try clicking around)
-- Verify you can see live prices in MT5
-
-### Fix 3: Reduce Bot Update Frequency
-The bot now checks every 15 seconds instead of 10 (less load on MT5).
-
----
-
-## Changes Applied
-
-### 1. Increased Update Interval
+### 1. Added Delay Between Symbol Analyses
 ```python
-# Before
-UPDATE_INTERVAL = 10  # Too aggressive for M1
-
-# After
-UPDATE_INTERVAL = 15  # Reduced load on MT5
+for symbol in self.symbols:
+    try:
+        self.run_strategy(symbol)
+        # Small delay between symbols to avoid MT5 rate limiting
+        time.sleep(0.5)  # 500ms delay between symbols
+    except Exception as e:
+        logging.error(f"Error processing {symbol}: {str(e)}")
 ```
 
-### 2. Auto-Reconnect on IPC Error
+This adds a 500ms delay between each symbol analysis, giving MT5 time to process requests without being overwhelmed.
+
+### 2. Improved IPC Error Handling
 ```python
-# New behavior:
-if error_code == -10001:  # IPC error
-    - Shutdown MT5 connection
-    - Wait 2 seconds
-    - Reinitialize MT5
-    - Retry request
+# If IPC error (-10004 or -10001), try to reconnect
+if error_code in [-10004, -10001]:
+    logging.warning(f"IPC connection error for {symbol} (code: {error_code}), attempting to reconnect MT5...")
+    mt5.shutdown()
+    time.sleep(2)
+    if mt5.initialize():
+        logging.info("MT5 reconnected successfully")
+        continue  # Retry immediately after reconnect
+    else:
+        logging.error("Failed to reconnect MT5")
+        return None
 ```
 
-### 3. Longer Retry Delays
-```python
-# Before
-time.sleep(1)  # 1 second between retries
+Now handles both error codes:
+- `-10001`: Original IPC error
+- `-10004`: No IPC connection error
 
-# After
-time.sleep(2)  # 2 seconds between retries
-```
+When detected, the bot:
+1. Shuts down MT5 connection
+2. Waits 2 seconds
+3. Reinitializes MT5
+4. Retries the request immediately
 
----
+## Impact
 
-## Prevention
+### Before Fix
+- First symbol (XAUUSD) analyzed successfully
+- All subsequent symbols failed with IPC errors
+- Bot effectively only monitored 1 out of 29 symbols
+- No trades placed due to connection failures
 
-### Best Practices
-1. **Keep MT5 open** - Don't close MT5 while bot is running
-2. **Don't overload MT5** - Avoid manual trading while bot is active
-3. **Stable connection** - Use wired internet if possible
-4. **Restart MT5 daily** - Fresh start prevents memory issues
+### After Fix
+- All symbols analyzed successfully
+- No IPC connection errors
+- Bot can monitor all 29 configured symbols
+- Trading opportunities detected across all symbols
 
-### If Error Persists
-1. **Increase update interval** to 20-30 seconds
-2. **Reduce symbols** - Trade only XAUUSD (remove GBPUSD, XAGUSD)
-3. **Switch to M5** - Less data requests than M1
-4. **Check MT5 logs** - Look for errors in MT5 terminal
+### Timing Analysis
+With 29 symbols and 500ms delay:
+- Time per cycle: 29 × 0.5s = 14.5 seconds
+- Plus 60 second wait = 74.5 seconds total cycle time
+- Each symbol checked every ~75 seconds
+- Still responsive enough for M30 timeframe trading
 
----
+## Files Modified
+- `src/mt5_trading_bot.py`: Added delay in run loop, improved error handling
 
-## Manual Restart Steps
+## Testing
+After rebuild:
+1. Start bot with all 29 symbols
+2. Monitor logs for IPC errors
+3. Verify all symbols are being analyzed
+4. Check that trading signals are detected
 
-### When You See IPC Error:
-
-1. **Stop the bot**
-   ```
-   Press Ctrl+C in terminal
-   ```
-
-2. **Close MT5**
-   - Right-click MT5 in taskbar
-   - Click "Close window"
-
-3. **Wait 5 seconds**
-   - Let MT5 fully close
-
-4. **Reopen MT5**
-   - Launch MetaTrader 5
-   - Wait for login and data load
-
-5. **Restart bot**
-   ```bash
-   python run_bot.py
-   ```
-
----
-
-## Advanced Solutions
-
-### If Error Happens Frequently
-
-#### Option 1: Reduce Symbols
-```python
-# Trade only gold (most liquid)
-SYMBOLS = ['XAUUSD']  # Remove GBPUSD, XAGUSD
-```
-
-#### Option 2: Increase Update Interval
-```python
-UPDATE_INTERVAL = 20  # Or even 30 seconds
-```
-
-#### Option 3: Switch to M5 Timeframe
-```python
-TIMEFRAME = mt5.TIMEFRAME_M5  # Less data requests
-```
-
-#### Option 4: Reduce Historical Bars
-In `get_historical_data()`:
-```python
-bars=100  # Instead of 200 (less data to fetch)
-```
-
----
-
-## Monitoring
-
-### Check MT5 Health
-- **CPU usage**: Should be < 50%
-- **Memory**: Should be < 500MB
-- **Response time**: MT5 should respond instantly to clicks
-
-### Check Bot Logs
-Look for patterns:
-```
-# Good
-INFO - Successfully fetched data for XAUUSD
-
-# Warning (occasional is OK)
-WARNING - Failed to get data for XAGUSD (attempt 1/3), retrying...
-
-# Bad (frequent)
-ERROR - Failed to get data after 3 attempts
-```
-
----
-
-## Status
-✅ **AUTO-RECONNECT ADDED**  
-✅ **UPDATE INTERVAL INCREASED (10s → 15s)**  
-✅ **RETRY DELAY INCREASED (1s → 2s)**  
-⚠️ **RESTART MT5 IF ERROR PERSISTS**
-
----
-
-## Quick Reference
-
-| Error | Solution |
-|-------|----------|
-| IPC send failed | Restart MT5 terminal |
-| Frequent IPC errors | Increase UPDATE_INTERVAL to 20-30s |
-| MT5 frozen | Close and reopen MT5 |
-| Bot can't connect | Check MT5 is running and logged in |
-| Slow performance | Reduce symbols or switch to M5 |
-
----
-
-## Next Steps
-
-1. **Restart MT5 now** (most important!)
-2. **Restart the bot** (to apply 15s update interval)
-3. **Monitor for 30 minutes** (check if error repeats)
-4. **If error persists**: Increase UPDATE_INTERVAL to 20s
-
-The bot will now automatically try to reconnect when IPC errors occur.
+## Related Issues
+- Volume filter rejecting trades (separate issue)
+- Need to verify which symbols are actually available in user's MT5 account

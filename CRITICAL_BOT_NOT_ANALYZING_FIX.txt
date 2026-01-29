@@ -1,0 +1,93 @@
+================================================================================
+CRITICAL FIX: Bot Not Analyzing Symbols - Missing Delay in Web Dashboard Loop
+================================================================================
+
+PROBLEM IDENTIFIED:
+- Bot starts successfully but never analyzes any symbols
+- No "signal detected" or "MA crossover" logs after "starting trading loop"
+- Only IPC connection errors every ~60 seconds
+- Bot appears to be running but is actually stuck/failing silently
+
+ROOT CAUSE:
+The web dashboard uses its own bot loop in `run_bot_background()` instead of calling
+`bot.run()`. The 500ms delay between symbols was added to `bot.run()` but NOT to
+the web dashboard's custom loop.
+
+Result: Bot tries to analyze all symbols instantly, hits IPC errors, and fails.
+
+CODE LOCATION:
+File: web_dashboard.py
+Function: run_bot_background()
+Line: ~950-960
+
+MISSING CODE:
+```python
+for symbol in bot.symbols:
+    try:
+        bot.run_strategy(symbol)
+        # ← MISSING: time.sleep(0.5)  # Delay between symbols
+    except Exception as e:
+        logger.error(f"Error processing {symbol}: {str(e)}")
+```
+
+FIXED CODE:
+```python
+for symbol in bot.symbols:
+    try:
+        bot.run_strategy(symbol)
+        # Small delay between symbols to avoid MT5 rate limiting
+        time.sleep(0.5)  # 500ms delay between symbols
+    except Exception as e:
+        logger.error(f"Error processing {symbol}: {str(e)}")
+```
+
+WHY THIS HAPPENED:
+- I added the delay to src/mt5_trading_bot.py run() method
+- But web_dashboard.py has its own loop that doesn't call bot.run()
+- The delay was not added to the web dashboard loop
+- This is why the bot appears to start but never analyzes
+
+IMPACT:
+- Bot cannot analyze any symbols
+- No trades can be placed
+- Bot appears "running" but is non-functional
+
+FILES MODIFIED:
+- web_dashboard.py: Added time.sleep(0.5) after bot.run_strategy(symbol)
+
+REBUILD REQUIRED: YES
+
+After rebuild, bot will:
+1. Start successfully ✓
+2. Analyze each symbol with 500ms delay ✓
+3. Detect signals ✓
+4. Place trades (if volume filter passes) ✓
+
+================================================================================
+TESTING AFTER REBUILD:
+================================================================================
+
+1. Start bot from executable
+2. Check logs immediately - should see:
+   - "Bot connected successfully, starting trading loop..."
+   - Within 60 seconds: "Bearish MA crossover detected" or similar
+   - Symbol analysis logs for each configured symbol
+   - Signal detection or "No signal" messages
+
+3. If you see ONLY:
+   - "Bot connected successfully, starting trading loop..."
+   - Then nothing but IPC errors
+   - = Bot is still not analyzing (rebuild failed or wrong build)
+
+4. Expected log pattern (every 60 seconds):
+   - Analyzing XAUUSD...
+   - [500ms delay]
+   - Analyzing XAGUSD...
+   - [500ms delay]
+   - Analyzing XPTUSD...
+   - [500ms delay]
+   - Analyzing GBPUSD...
+   - [60 second wait]
+   - Repeat
+
+================================================================================

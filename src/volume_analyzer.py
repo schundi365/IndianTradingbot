@@ -300,12 +300,17 @@ class VolumeAnalyzer:
             elif confirmation['divergence'] == 'bearish_divergence':
                 confirmation['confidence_boost'] -= 0.10
             
-            # Confirmed if above average and at least one other positive signal
-            confirmation['confirmed'] = (
-                confirmation['above_average'] and
-                (confirmation['volume_trend'] == 'increasing' or 
-                 confirmation['obv_signal'] == 'bullish')
-            )
+            # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
+            # Don't require above_average volume as mandatory
+            positive_signals = 0
+            if confirmation['above_average']:
+                positive_signals += 1
+            if confirmation['volume_trend'] == 'increasing':
+                positive_signals += 1
+            if confirmation['obv_signal'] == 'bullish':
+                positive_signals += 1
+            
+            confirmation['confirmed'] = positive_signals >= 2
         
         elif signal_type == 'sell':
             # Sell confirmation: above average volume, increasing trend, bearish OBV
@@ -323,12 +328,17 @@ class VolumeAnalyzer:
             elif confirmation['divergence'] == 'bullish_divergence':
                 confirmation['confidence_boost'] -= 0.10
             
-            # Confirmed if above average and at least one other positive signal
-            confirmation['confirmed'] = (
-                confirmation['above_average'] and
-                (confirmation['volume_trend'] == 'increasing' or 
-                 confirmation['obv_signal'] == 'bearish')
-            )
+            # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
+            # Don't require above_average volume as mandatory
+            positive_signals = 0
+            if confirmation['above_average']:
+                positive_signals += 1
+            if confirmation['volume_trend'] == 'increasing':
+                positive_signals += 1
+            if confirmation['obv_signal'] == 'bearish':
+                positive_signals += 1
+            
+            confirmation['confirmed'] = positive_signals >= 2
         
         logger.info(f"Volume confirmation for {signal_type}: {confirmation}")
         

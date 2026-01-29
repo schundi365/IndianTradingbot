@@ -1,0 +1,113 @@
+================================================================================
+CRITICAL FIX: AttributeError - 'NoneType' object has no attribute 'ask'
+================================================================================
+
+ERROR FROM LOG:
+```
+ERROR - Error processing XAGUSD: 'NoneType' object has no attribute 'ask'
+Traceback (most recent call last):
+  File "web_dashboard.py", line 958, in run_bot_background
+  File "src\mt5_trading_bot.py", line 1222, in run_strategy
+    success, group_id, tickets = self.open_split_positions(
+  File "src\mt5_trading_bot.py", line 690, in open_split_positions
+    price = tick.ask if direction == 1 else tick.bid
+            ^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'ask'
+```
+
+ROOT CAUSE:
+The bot detected a signal for XAGUSD and tried to place a trade, but
+`mt5.symbol_info_tick(symbol)` returned `None` instead of tick data.
+
+This happens when:
+1. Symbol is not available in the MT5 account
+2. Symbol is not enabled/visible in Market Watch
+3. MT5 connection issue at that moment
+4. Symbol name is incorrect or not supported by broker
+
+GOOD NEWS:
+This error means the bot IS working! It:
+✓ Analyzed XAGUSD
+✓ Detected a trading signal
+✓ Tried to place a trade
+✗ Failed because tick data was None
+
+FIXES APPLIED:
+
+Added None checks in 4 locations where tick data is used:
+
+1. open_split_positions() - Line 690
+```python
+tick = mt5.symbol_info_tick(symbol)
+if tick is None:
+    logging.error(f"Failed to get tick data for {symbol} - symbol may not be available")
+    logging.error(f"MT5 error: {mt5.last_error()}")
+    continue  # Skip this position
+price = tick.ask if direction == 1 else tick.bid
+```
+
+2. Trailing stop check - Line 851
+```python
+tick = mt5.symbol_info_tick(symbol)
+if tick is None:
+    logging.error(f"Failed to get tick data for {symbol} in trailing stop check")
+    return 0  # Don't update trailing stop
+current_price = tick.bid if direction == 1 else tick.ask
+```
+
+3. Standard risk management - Line 1197
+```python
+tick = mt5.symbol_info_tick(symbol)
+if tick is None:
+    logging.error(f"Failed to get tick data for {symbol} - cannot place trade")
+    return  # Skip trade
+entry_price = tick.ask if signal == 1 else tick.bid
+```
+
+4. Already fixed in open_position() - Line 691
+
+IMPACT:
+- Bot will no longer crash when tick data is unavailable
+- Will log clear error message explaining why trade was skipped
+- Will continue analyzing other symbols
+- Will retry the symbol in next cycle (60 seconds)
+
+SYMBOL AVAILABILITY CHECK:
+After rebuild, check which symbols are actually available:
+
+1. Open MT5 terminal
+2. Go to Market Watch (Ctrl+M)
+3. Right-click → Symbols
+4. Check if XAGUSD, XPTUSD are listed and enabled
+5. If not, either:
+   - Enable them in MT5
+   - Remove them from bot config
+
+RECOMMENDED CONFIG:
+Only use symbols that are:
+✓ Available in your MT5 account
+✓ Visible in Market Watch
+✓ Have active quotes (bid/ask showing)
+
+Common symbols that work on most brokers:
+- XAUUSD (Gold) ✓
+- EURUSD, GBPUSD, USDJPY (Major Forex) ✓
+- US30, US500, NAS100 (Indices) - Check availability
+
+Symbols that may not be available:
+- XAGUSD (Silver) - Not all brokers
+- XPTUSD (Platinum) - Rare
+- XPDUSD (Palladium) - Rare
+
+FILES MODIFIED:
+- src/mt5_trading_bot.py: Added None checks for tick data in 3 locations
+
+REBUILD REQUIRED: YES
+
+AFTER REBUILD:
+- Bot will handle unavailable symbols gracefully
+- Clear error messages in logs
+- No more crashes
+- Trades will be placed for available symbols
+
+================================================================================

@@ -44,6 +44,8 @@ class ConfigManager:
         return {
             'symbols': ['XAUUSD', 'XAGUSD'],
             'timeframe': 30,  # M30
+            'magic_number': 123456,  # Unique identifier for bot trades
+            'lot_size': 0.01,  # Default lot size
             'risk_percent': 1.0,
             'reward_ratio': 1.5,
             'min_confidence': 0.6,
@@ -75,6 +77,9 @@ class ConfigManager:
             'tp_level_1': 1.0,
             'tp_level_2': 1.5,
             'tp_level_3': 2.5,
+            'tp_levels': [1.5, 2.5, 4.0],  # R:R ratios for split orders
+            'partial_close_percent': [40, 30, 30],  # % allocation for each TP
+            'max_lot_per_order': 0.5,  # Max lot size per order
             'max_trades_total': 20,
             'max_trades_per_symbol': 5,
             'enable_trailing_stop': True,
@@ -85,18 +90,37 @@ class ConfigManager:
             'min_risk_multiplier': 0.5,
             'max_drawdown_percent': 15,
             'max_daily_trades': 50,
+            'use_volume_filter': True,  # Volume analysis
+            'min_volume_ma': 1.2,  # Minimum volume vs MA
+            'volume_ma_period': 20,  # Volume MA period
+            'obv_period': 20,  # OBV period
+            'update_interval': 60,  # Analysis interval in seconds
             'version': '2.1.0',
             'last_updated': datetime.now().isoformat()
         }
     
     def _load_or_create_config(self):
         """Load configuration from file or create default"""
+        defaults = self._get_default_config()
+        
         if self.config_file.exists():
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
+                
+                # Merge with defaults to ensure all required keys exist
+                merged_config = defaults.copy()
+                merged_config.update(config)
+                
                 logger.info(f"Configuration loaded from {self.config_file}")
-                return config
+                
+                # Save merged config back to ensure all keys are present
+                if len(merged_config) > len(config):
+                    logger.info(f"Added {len(merged_config) - len(config)} missing config keys")
+                    self.config = merged_config
+                    self.save_config()
+                
+                return merged_config
             except Exception as e:
                 logger.error(f"Failed to load config: {e}")
                 logger.info("Creating default configuration")

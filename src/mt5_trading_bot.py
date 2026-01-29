@@ -25,7 +25,7 @@ LOG_FILE = BASE_DIR / 'trading_bot.log'
 
 # Import adaptive risk management
 try:
-    from adaptive_risk_manager import AdaptiveRiskManager, integrate_adaptive_risk
+    from src.adaptive_risk_manager import AdaptiveRiskManager, integrate_adaptive_risk
     ADAPTIVE_RISK_AVAILABLE = True
 except ImportError:
     ADAPTIVE_RISK_AVAILABLE = False
@@ -33,7 +33,7 @@ except ImportError:
 
 # Import volume analyzer
 try:
-    from volume_analyzer import VolumeAnalyzer
+    from src.volume_analyzer import VolumeAnalyzer
     VOLUME_ANALYZER_AVAILABLE = True
 except ImportError:
     VOLUME_ANALYZER_AVAILABLE = False
@@ -211,20 +211,22 @@ class MT5TradingBot:
             error = mt5.last_error()
             error_code = error[0] if error else 0
             
-            # If IPC error, try to reconnect
-            if error_code == -10001:
-                logging.warning(f"IPC error for {symbol}, attempting to reconnect MT5...")
+            # If IPC error (-10004 or -10001), try to reconnect
+            if error_code in [-10004, -10001]:
+                logging.warning(f"IPC connection error for {symbol} (code: {error_code}), attempting to reconnect MT5...")
                 mt5.shutdown()
                 time.sleep(2)
                 if mt5.initialize():
                     logging.info("MT5 reconnected successfully")
+                    continue  # Retry immediately after reconnect
                 else:
                     logging.error("Failed to reconnect MT5")
+                    return None
             
             # If failed, log and retry
             if attempt < max_retries - 1:
                 logging.warning(f"Failed to get data for {symbol} (attempt {attempt + 1}/{max_retries}), retrying...")
-                time.sleep(2)  # Wait 2 seconds before retry (increased from 1)
+                time.sleep(2)  # Wait 2 seconds before retry
             else:
                 logging.error(f"Failed to get data for {symbol} after {max_retries} attempts. Error: {error}")
         
@@ -685,6 +687,11 @@ class MT5TradingBot:
             
             # Get current price
             tick = mt5.symbol_info_tick(symbol)
+            if tick is None:
+                logging.error(f"Failed to get tick data for {symbol} - symbol may not be available")
+                logging.error(f"MT5 error: {mt5.last_error()}")
+                continue
+            
             price = tick.ask if direction == 1 else tick.bid
             
             request = {
@@ -842,6 +849,10 @@ class MT5TradingBot:
         current_atr = df.iloc[-1]['atr']
         
         tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            logging.error(f"Failed to get tick data for {symbol} in trailing stop check")
+            return 0
+        
         current_price = tick.bid if direction == 1 else tick.ask
         entry_price = group['entry_price']
         
@@ -1082,9 +1093,7 @@ class MT5TradingBot:
         Args:
             symbol (str): Trading symbol
         """
-        logging.debug(f"=" * 60)
-        logging.debug(f"ANALYZING {symbol}")
-        logging.debug(f"=" * 60)
+        logging.info(f"Analyzing {symbol}...")
         
         # Check daily loss limit before trading
         if not self.check_daily_loss_limit():
@@ -1096,11 +1105,10 @@ class MT5TradingBot:
         max_per_symbol = self.config.get('max_trades_per_symbol', 1)
         
         if positions and len(positions) >= max_per_symbol:
-            logging.debug(f"Already have {len(positions)} position(s) for {symbol} (Max: {max_per_symbol}) - skipping")
+            logging.info(f"Already have {len(positions)} position(s) for {symbol} (Max: {max_per_symbol}) - skipping")
             return
         
         # Get data and calculate indicators
-        logging.debug(f"Fetching historical data for {symbol}...")
         df = self.get_historical_data(symbol, self.timeframe)
         if df is None:
             logging.error(f"Failed to get data for {symbol}")
@@ -1114,7 +1122,7 @@ class MT5TradingBot:
         signal = self.check_entry_signal(df)
         
         if signal == 0:
-            logging.debug(f"No entry signal for {symbol}")
+            logging.info(f"No entry signal for {symbol}")
             return  # No signal
         
         logging.info(f"{'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
@@ -1191,6 +1199,10 @@ class MT5TradingBot:
             latest = df.iloc[-1]
             current_atr = latest['atr']
             tick = mt5.symbol_info_tick(symbol)
+            if tick is None:
+                logging.error(f"Failed to get tick data for {symbol} - cannot place trade")
+                return
+            
             entry_price = tick.ask if signal == 1 else tick.bid
             
             # Calculate SL
@@ -1254,6 +1266,8 @@ class MT5TradingBot:
                 for symbol in self.symbols:
                     try:
                         self.run_strategy(symbol)
+                        # Small delay between symbols to avoid MT5 rate limiting
+                        time.sleep(0.5)  # 500ms delay between symbols
                     except Exception as e:
                         logging.error(f"Error processing {symbol}: {str(e)}")
                         logging.debug(f"Traceback:", exc_info=True)

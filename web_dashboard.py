@@ -140,6 +140,22 @@ def config_api():
             if min_risk_mult >= max_risk_mult:
                 return jsonify({'status': 'error', 'message': 'Min risk multiplier must be less than max'})
             
+            # Validate volume filter settings
+            if 'min_volume_ma' in new_config:
+                min_vol_ma = new_config.get('min_volume_ma', 1.2)
+                if min_vol_ma < 1.0 or min_vol_ma > 2.0:
+                    return jsonify({'status': 'error', 'message': 'Min volume multiplier must be between 1.0 and 2.0'})
+            
+            if 'volume_ma_period' in new_config:
+                vol_ma_period = new_config.get('volume_ma_period', 20)
+                if vol_ma_period < 10 or vol_ma_period > 50:
+                    return jsonify({'status': 'error', 'message': 'Volume MA period must be between 10 and 50'})
+            
+            if 'obv_period' in new_config:
+                obv_period = new_config.get('obv_period', 20)
+                if obv_period < 10 or obv_period > 50:
+                    return jsonify({'status': 'error', 'message': 'OBV period must be between 10 and 50'})
+            
             # Update configuration using config manager
             if config_manager.update_config(new_config):
                 # Reload current_config from config manager
@@ -879,7 +895,23 @@ def run_bot_background():
     """Run bot in background thread with proper termination handling"""
     global bot_running, current_config
     
-    from src.mt5_trading_bot import MT5TradingBot
+    # Add src to path for executable compatibility
+    import sys
+    from pathlib import Path
+    if getattr(sys, 'frozen', False):
+        # Running as executable - add src to path
+        src_path = Path(sys.executable).parent / 'src'
+        if src_path.exists() and str(src_path) not in sys.path:
+            sys.path.insert(0, str(src_path))
+            logger.info(f"Added to sys.path: {src_path}")
+    
+    try:
+        from src.mt5_trading_bot import MT5TradingBot
+    except ImportError as e:
+        logger.error(f"Failed to import MT5TradingBot: {e}")
+        logger.error(f"sys.path: {sys.path}")
+        bot_running = False
+        return
     
     # Get latest configuration from config manager
     current_config = config_manager.get_config()
@@ -892,7 +924,13 @@ def run_bot_background():
     logger.info(f"  Reward Ratio: {current_config.get('reward_ratio')}:1")
     logger.info(f"  Min Confidence: {current_config.get('min_confidence', 0.6)*100}%")
     
-    bot = MT5TradingBot(current_config)
+    try:
+        bot = MT5TradingBot(current_config)
+    except Exception as e:
+        logger.error(f"Failed to create MT5TradingBot instance: {e}")
+        logger.error(f"Traceback:", exc_info=True)
+        bot_running = False
+        return
     
     if not bot.connect():
         logger.error("Failed to connect to MT5")
@@ -909,12 +947,18 @@ def run_bot_background():
                     logger.info("Bot stop signal received, exiting loop")
                     break
                 
+                logger.info(f"Starting analysis cycle for {len(bot.symbols)} symbols...")
+                
                 # Run strategy for each symbol
                 for symbol in bot.symbols:
                     if not bot_running:  # Check again before each symbol
                         break
                     try:
+                        logger.info(f"Analyzing {symbol}...")
                         bot.run_strategy(symbol)
+                        logger.info(f"Completed analysis for {symbol}")
+                        # Small delay between symbols to avoid MT5 rate limiting
+                        time.sleep(0.5)  # 500ms delay between symbols
                     except Exception as e:
                         logger.error(f"Error processing {symbol}: {str(e)}")
                         logger.error(f"Traceback:", exc_info=True)

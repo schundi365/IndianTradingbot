@@ -1012,6 +1012,49 @@
                         </div>
                     </div>
                     
+                    <!-- Volume Analysis -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('volume')">
+                            <span>📊 Volume Analysis</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="volume-content" class="accordion-content">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Enable Volume Filter</label>
+                                    <select id="use-volume-filter">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No (Trade All Signals)</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Filter trades based on volume confirmation</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Min Volume Multiplier</label>
+                                    <input type="number" id="min-volume-ma" value="1.2" step="0.1" min="1.0" max="2.0">
+                                    <small style="color: #94a3b8;">Volume must be X times average (1.2 = 120%)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Volume MA Period</label>
+                                    <input type="number" id="volume-ma-period" value="20" min="10" max="50">
+                                    <small style="color: #94a3b8;">Periods for volume moving average</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>OBV Period</label>
+                                    <input type="number" id="obv-period" value="20" min="10" max="50">
+                                    <small style="color: #94a3b8;">On-Balance Volume indicator period</small>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; padding: 12px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                                <strong style="color: #92400e;">ℹ️ Volume Filter Info:</strong>
+                                <ul style="margin: 8px 0 0 20px; color: #78350f; font-size: 13px;">
+                                    <li>Requires 2 of 3 signals: above average volume, increasing trend, or matching OBV</li>
+                                    <li>Helps filter weak signals and improve trade quality</li>
+                                    <li>Disable if you want to trade all technical signals</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #667eea;">
                         <strong style="color: #667eea;">💡 Tip:</strong> 
                         <span style="color: #64748b;">Start with the "Profitable Balanced" preset and adjust gradually. Test changes on demo account first!</span>
@@ -1289,11 +1332,11 @@
                 </div>
                 
                 <!-- Log Actions -->
-                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                     <button class="btn btn-secondary" onclick="loadLogs()">🔄 Refresh Logs</button>
                     <button class="btn btn-secondary" onclick="downloadLogs()">💾 Download Logs</button>
                     <button class="btn btn-secondary" onclick="clearLogsDisplay()">🗑️ Clear Display</button>
-                    <select id="log-lines" style="padding: 10px; border-radius: 5px; background: #1e293b; color: white; border: 1px solid #334155;">
+                    <select id="log-lines" onchange="loadLogs()" style="padding: 10px; border-radius: 5px; background: #1e293b; color: white; border: 1px solid #334155; cursor: pointer;">
                         <option value="50">Last 50 lines</option>
                         <option value="100" selected>Last 100 lines</option>
                         <option value="200">Last 200 lines</option>
@@ -1302,8 +1345,8 @@
                 </div>
                 
                 <!-- Logs Display -->
-                <div style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">
-                    <pre id="logs-content" style="margin: 0; color: #94a3b8; white-space: pre-wrap; word-wrap: break-word;">Loading logs...</pre>
+                <div id="logs-container" style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 600px; overflow-y: scroll; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em; border: 1px solid #334155;">
+                    <pre id="logs-content" style="margin: 0; color: #94a3b8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">Loading logs...</pre>
                 </div>
                 
                 <!-- Help Text -->
@@ -1671,6 +1714,7 @@
         // Load logs
         function loadLogs() {
             const logsContent = document.getElementById('logs-content');
+            const logsContainer = document.getElementById('logs-container');
             const lines = document.getElementById('log-lines')?.value || 100;
             logsContent.textContent = 'Loading logs...';
             
@@ -1686,8 +1730,12 @@
                         // Store original logs for filtering
                         window.originalLogs = data.logs.join('');
                         filterLogs();
-                        // Scroll to bottom
-                        logsContent.parentElement.scrollTop = logsContent.parentElement.scrollHeight;
+                        // Scroll to bottom after a short delay to ensure content is rendered
+                        setTimeout(() => {
+                            if (logsContainer) {
+                                logsContainer.scrollTop = logsContainer.scrollHeight;
+                            }
+                        }, 100);
                     } else if (data.status === 'error') {
                         logsContent.textContent = 'Error: ' + data.message;
                     } else {
@@ -3140,6 +3188,12 @@
             document.getElementById('max-drawdown').value = config.max_drawdown;
             document.getElementById('max-daily-trades').value = config.max_daily_trades;
             
+            // Volume Analysis
+            document.getElementById('use-volume-filter').value = config.use_volume_filter !== undefined ? config.use_volume_filter : true;
+            document.getElementById('min-volume-ma').value = config.min_volume_ma || 1.2;
+            document.getElementById('volume-ma-period').value = config.volume_ma_period || 20;
+            document.getElementById('obv-period').value = config.obv_period || 20;
+            
             // Validate after loading
             validateRisk();
             validateConfidence();
@@ -3221,7 +3275,13 @@
                 max_risk_multiplier: parseFloat(document.getElementById('max-risk-multiplier').value),
                 min_risk_multiplier: parseFloat(document.getElementById('min-risk-multiplier').value),
                 max_drawdown_percent: parseFloat(document.getElementById('max-drawdown').value),
-                max_daily_trades: parseInt(document.getElementById('max-daily-trades').value)
+                max_daily_trades: parseInt(document.getElementById('max-daily-trades').value),
+                
+                // Volume Analysis
+                use_volume_filter: document.getElementById('use-volume-filter').value === 'true',
+                min_volume_ma: parseFloat(document.getElementById('min-volume-ma').value),
+                volume_ma_period: parseInt(document.getElementById('volume-ma-period').value),
+                obv_period: parseInt(document.getElementById('obv-period').value)
             };
             
             fetch('/api/config', {
