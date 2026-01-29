@@ -84,6 +84,16 @@ pyinstaller ^
     --hidden-import=datetime ^
     --hidden-import=pathlib ^
     --hidden-import=json ^
+    --hidden-import=src.mt5_trading_bot ^
+    --hidden-import=src.config_manager ^
+    --hidden-import=src.adaptive_risk_manager ^
+    --hidden-import=src.volume_analyzer ^
+    --hidden-import=src.dynamic_sl_manager ^
+    --hidden-import=src.dynamic_tp_manager ^
+    --hidden-import=src.scalping_manager ^
+    --hidden-import=src.split_order_calculator ^
+    --hidden-import=src.trailing_strategies ^
+    --hidden-import=src.enhanced_indicators ^
     --exclude-module=tensorboard ^
     --exclude-module=tensorflow ^
     --exclude-module=torch ^

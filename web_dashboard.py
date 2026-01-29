@@ -693,9 +693,17 @@ def get_logs():
     try:
         lines = int(request.args.get('lines', 50))
         
+        # Log the file path for debugging
+        logger.info(f"Reading logs from: {LOG_FILE}")
+        logger.info(f"Log file exists: {LOG_FILE.exists()}")
+        
         if not LOG_FILE.exists():
-            logger.info("Log file not found, returning empty logs")
-            return jsonify({'logs': ['No log file found yet. Start the bot to generate logs.']})
+            logger.warning(f"Log file not found at: {LOG_FILE}")
+            return jsonify({'logs': [
+                f'Log file not found at: {LOG_FILE}',
+                'This may be normal on first start.',
+                'Start the bot to generate logs.'
+            ]})
         
         # Try to read with different encodings
         try:
@@ -710,29 +718,52 @@ def get_logs():
             return jsonify({'logs': ['Log file is empty. Start the bot to generate logs.']})
         
         recent_lines = all_lines[-lines:]
+        logger.info(f"Returning {len(recent_lines)} log lines")
         return jsonify({'logs': recent_lines})
     
     except PermissionError:
         logger.error("Permission denied reading log file")
-        return jsonify({'logs': ['Error: Permission denied. Log file may be locked by another process.']})
+        return jsonify({'logs': [f'Error: Permission denied reading {LOG_FILE}']})
     
     except Exception as e:
         logger.error(f"Failed to read logs: {str(e)}")
-        return jsonify({'logs': [f'Error loading logs: {str(e)}']})
-
+        return jsonify({'logs': [f'Error loading logs: {str(e)}', f'Log file path: {LOG_FILE}']})
 
 @app.route('/api/logs/download', methods=['GET'])
 def download_logs():
     """Download log file"""
     try:
         if not LOG_FILE.exists():
-            return jsonify({'status': 'error', 'message': 'No log file found'})
+            return jsonify({'status': 'error', 'message': f'No log file found at {LOG_FILE}'})
         
         return send_file(LOG_FILE, as_attachment=True, download_name='gem_trading_logs.txt')
     
     except Exception as e:
         logger.error(f"Failed to download logs: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/logs/info', methods=['GET'])
+def logs_info():
+    """Get log file information for debugging"""
+    try:
+        import os
+        info = {
+            'log_file_path': str(LOG_FILE),
+            'log_file_exists': LOG_FILE.exists(),
+            'base_dir': str(BASE_DIR),
+            'is_frozen': getattr(sys, 'frozen', False),
+            'executable_path': sys.executable if getattr(sys, 'frozen', False) else 'N/A',
+            'current_dir': os.getcwd(),
+        }
+        
+        if LOG_FILE.exists():
+            info['log_file_size'] = LOG_FILE.stat().st_size
+            info['log_file_lines'] = sum(1 for _ in open(LOG_FILE, 'r', encoding='utf-8', errors='ignore'))
+        
+        return jsonify(info)
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 
 def update_config_file(new_config):
@@ -886,7 +917,7 @@ def run_bot_background():
                         bot.run_strategy(symbol)
                     except Exception as e:
                         logger.error(f"Error processing {symbol}: {str(e)}")
-                        logger.debug(f"Traceback:", exc_info=True)
+                        logger.error(f"Traceback:", exc_info=True)
                 
                 # Manage existing positions (trailing stops)
                 if bot_running:
@@ -894,7 +925,7 @@ def run_bot_background():
                         bot.manage_positions()
                     except Exception as e:
                         logger.error(f"Error managing positions: {str(e)}")
-                        logger.debug(f"Traceback:", exc_info=True)
+                        logger.error(f"Traceback:", exc_info=True)
                 
                 # Sleep with frequent checks for stop signal
                 update_interval = current_config.get('update_interval', 60)
@@ -906,13 +937,13 @@ def run_bot_background():
                 
             except Exception as e:
                 logger.error(f"Error in bot loop: {str(e)}")
-                logger.debug(f"Traceback:", exc_info=True)
+                logger.error(f"Traceback:", exc_info=True)
                 if not bot_running:
                     break
                 time.sleep(5)  # Wait before retrying
     except Exception as e:
         logger.error(f"Critical bot error: {str(e)}")
-        logger.debug(f"Traceback:", exc_info=True)
+        logger.error(f"Traceback:", exc_info=True)
     finally:
         logger.info("Shutting down bot...")
         try:
