@@ -444,18 +444,21 @@ class MT5TradingBot:
             int: 1 for buy, -1 for sell, 0 for no signal
         """
         if len(df) < 2:
+            logging.debug("Not enough data for signal check (need at least 2 bars)")
             return 0
         
         latest = df.iloc[-1]
         previous = df.iloc[-2]
         
+        logging.debug(f"Signal Check - Close: {latest['close']:.5f}, Fast MA: {latest['fast_ma']:.5f}, Slow MA: {latest['slow_ma']:.5f}")
+        
         # Check for MA crossover
         signal = 0
         if latest['ma_cross'] == 1:
-            logging.info(f"Bullish MA crossover detected")
+            logging.info(f"✓ Bullish MA crossover detected")
             signal = 1
         elif latest['ma_cross'] == -1:
-            logging.info(f"Bearish MA crossover detected")
+            logging.info(f"✓ Bearish MA crossover detected")
             signal = -1
         
         # Additional confirmation: price above/below both MAs
@@ -463,45 +466,50 @@ class MT5TradingBot:
             if (latest['close'] > latest['fast_ma'] and 
                 latest['close'] > latest['slow_ma'] and 
                 latest['ma_trend'] == 1 and previous['ma_trend'] == -1):
-                logging.info(f"Bullish trend confirmation")
+                logging.info(f"✓ Bullish trend confirmation (price above both MAs)")
                 signal = 1
             elif (latest['close'] < latest['fast_ma'] and 
                   latest['close'] < latest['slow_ma'] and 
                   latest['ma_trend'] == -1 and previous['ma_trend'] == 1):
-                logging.info(f"Bearish trend confirmation")
+                logging.info(f"✓ Bearish trend confirmation (price below both MAs)")
                 signal = -1
+            else:
+                logging.debug(f"No signal: Price={latest['close']:.5f}, Fast MA={latest['fast_ma']:.5f}, Slow MA={latest['slow_ma']:.5f}, Trend={latest['ma_trend']}")
         
         # Apply RSI filter (most popular enhancement)
         if signal != 0 and not pd.isna(latest['rsi']):
             rsi = latest['rsi']
             if signal == 1:  # BUY
                 if rsi > 70:
-                    logging.info(f"  [X] RSI filter: Too overbought (RSI: {rsi:.1f})")
+                    logging.info(f"  ✗ RSI filter: Too overbought (RSI: {rsi:.1f}) - TRADE REJECTED")
                     return 0
                 else:
-                    logging.info(f"  [OK] RSI filter: OK (RSI: {rsi:.1f})")
+                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
             elif signal == -1:  # SELL
                 if rsi < 30:
-                    logging.info(f"  [X] RSI filter: Too oversold (RSI: {rsi:.1f})")
+                    logging.info(f"  ✗ RSI filter: Too oversold (RSI: {rsi:.1f}) - TRADE REJECTED")
                     return 0
                 else:
-                    logging.info(f"  [OK] RSI filter: OK (RSI: {rsi:.1f})")
+                    logging.info(f"  ✓ RSI filter: OK (RSI: {rsi:.1f})")
         
         # Apply MACD confirmation (second most popular)
         if signal != 0 and not pd.isna(latest['macd_histogram']):
             histogram = latest['macd_histogram']
             if signal == 1:  # BUY
                 if histogram <= 0:
-                    logging.info(f"  [X] MACD filter: Histogram not positive ({histogram:.6f})")
+                    logging.info(f"  ✗ MACD filter: Histogram not positive ({histogram:.6f}) - TRADE REJECTED")
                     return 0
                 else:
-                    logging.info(f"  [OK] MACD filter: Confirmed ({histogram:.6f})")
+                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
             elif signal == -1:  # SELL
                 if histogram >= 0:
-                    logging.info(f"  [X] MACD filter: Histogram not negative ({histogram:.6f})")
+                    logging.info(f"  ✗ MACD filter: Histogram not negative ({histogram:.6f}) - TRADE REJECTED")
                     return 0
                 else:
-                    logging.info(f"  [OK] MACD filter: Confirmed ({histogram:.6f})")
+                    logging.info(f"  ✓ MACD filter: Confirmed ({histogram:.6f})")
+        
+        if signal != 0:
+            logging.info(f"{'BUY' if signal == 1 else 'SELL'} signal confirmed - All filters passed!")
         
         return signal
     
@@ -1061,8 +1069,13 @@ class MT5TradingBot:
         Args:
             symbol (str): Trading symbol
         """
+        logging.debug(f"=" * 60)
+        logging.debug(f"ANALYZING {symbol}")
+        logging.debug(f"=" * 60)
+        
         # Check daily loss limit before trading
         if not self.check_daily_loss_limit():
+            logging.warning(f"Daily loss limit reached - skipping {symbol}")
             return
         
         # Check if already have maximum positions for this symbol
@@ -1070,21 +1083,28 @@ class MT5TradingBot:
         max_per_symbol = self.config.get('max_trades_per_symbol', 1)
         
         if positions and len(positions) >= max_per_symbol:
-            logging.info(f"Already have {len(positions)} position(s) for {symbol} (Max: {max_per_symbol})")
+            logging.debug(f"Already have {len(positions)} position(s) for {symbol} (Max: {max_per_symbol}) - skipping")
             return
         
         # Get data and calculate indicators
+        logging.debug(f"Fetching historical data for {symbol}...")
         df = self.get_historical_data(symbol, self.timeframe)
         if df is None:
+            logging.error(f"Failed to get data for {symbol}")
             return
         
+        logging.debug(f"Calculating indicators for {symbol}...")
         df = self.calculate_indicators(df)
         
         # Check for entry signal
+        logging.debug(f"Checking entry signals for {symbol}...")
         signal = self.check_entry_signal(df)
         
         if signal == 0:
+            logging.debug(f"No entry signal for {symbol}")
             return  # No signal
+        
+        logging.info(f"{'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
         
         # === VOLUME ANALYSIS ===
         confidence_adjustment = 0.0
@@ -1097,12 +1117,12 @@ class MT5TradingBot:
             )
             
             if not should_trade:
-                logging.info(f"Trade rejected by volume filter for {symbol}")
+                logging.warning(f"✗ Trade REJECTED by volume filter for {symbol}")
                 return
             
             # Apply confidence boost from volume analysis
             confidence_adjustment = volume_confidence
-            logging.info(f"Volume confidence adjustment: {confidence_adjustment:+.2%}")
+            logging.info(f"✓ Volume analysis passed - Confidence boost: {confidence_adjustment:+.2%}")
         
         # === ADAPTIVE RISK MANAGEMENT ===
         if self.use_adaptive_risk and self.adaptive_risk_manager:

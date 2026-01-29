@@ -84,6 +84,14 @@ pyinstaller ^
     --hidden-import=datetime ^
     --hidden-import=pathlib ^
     --hidden-import=json ^
+    --exclude-module=tensorboard ^
+    --exclude-module=tensorflow ^
+    --exclude-module=torch ^
+    --exclude-module=matplotlib ^
+    --exclude-module=scipy ^
+    --exclude-module=sklearn ^
+    --exclude-module=IPython ^
+    --exclude-module=jupyter ^
     --collect-all=flask ^
     --collect-all=werkzeug ^
     --collect-all=jinja2 ^

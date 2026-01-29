@@ -31,9 +31,9 @@
         "AUS200"
     ],
     "timeframe": 30,
-    "risk_percent": 0.5,
+    "risk_percent": 1,
     "reward_ratio": 1.5,
-    "min_confidence": 0.4,
+    "min_confidence": 0.6,
     "max_daily_loss": 5,
     "fast_ma_period": 10,
     "slow_ma_period": 30,
@@ -73,5 +73,5 @@
     "max_drawdown_percent": 15,
     "max_daily_trades": 50,
     "version": "2.1.0",
-    "last_updated": "2026-01-29T10:17:30.368563"
+    "last_updated": "2026-01-29T10:02:34.214721"
 }

@@ -1,0 +1,336 @@
+================================================================================
+EMERGENCY: DASHBOARD CRASHED - RECOVERY GUIDE
+================================================================================
+
+If the web dashboard is not loading (browser shows "Can't reach this page" or
+"Connection refused"), the executable has crashed or stopped.
+
+================================================================================
+IMMEDIATE RECOVERY STEPS
+================================================================================
+
+STEP 1: Close Everything
+-------------------------
+1. Close all browser windows
+2. Open Task Manager (Ctrl+Shift+Esc)
+3. Look for "GEM_Trading_Bot.exe"
+4. If found: Right-click > End Task
+5. Close Task Manager
+
+STEP 2: Restart Executable
+---------------------------
+1. Double-click GEM_Trading_Bot.exe
+2. Wait 30 seconds
+3. Browser should open automatically to http://localhost:5000
+4. If browser doesn't open, manually go to: http://localhost:5000
+
+STEP 3: If Still Not Working
+-----------------------------
+1. Check if executable is running:
+   - Task Manager > Look for GEM_Trading_Bot.exe
+   - Should be in "Background processes"
+   
+2. If NOT running:
+   - Executable crashed on startup
+   - Go to "TROUBLESHOOTING STARTUP CRASH" below
+   
+3. If IS running but dashboard won't load:
+   - Port 5000 might be blocked
+   - Go to "PORT ISSUES" below
+
+================================================================================
+TROUBLESHOOTING STARTUP CRASH
+================================================================================
+
+If executable crashes immediately after starting:
+
+CAUSE 1: Missing Dependencies
+------------------------------
+Error: "DLL load failed" or "Module not found"
+Fix: Install Visual C++ Redistributable
+Download: https://aka.ms/vs/17/release/vc_redist.x64.exe
+Action:
+1. Download and install
+2. Restart computer
+3. Try executable again
+
+CAUSE 2: Port 5000 Already in Use
+----------------------------------
+Error: "Address already in use" or "Port 5000 is busy"
+Fix: Kill process using port 5000
+Action:
+1. Open Command Prompt as Administrator
+2. Run: netstat -ano | findstr :5000
+3. Note the PID (last number)
+4. Run: taskkill /PID [number] /F
+5. Try executable again
+
+CAUSE 3: Antivirus Blocking
+----------------------------
+Error: Executable starts then immediately closes
+Fix: Add exception to antivirus
+Action:
+1. Open your antivirus software
+2. Add GEM_Trading_Bot.exe to exceptions/whitelist
+3. Try executable again
+
+CAUSE 4: Corrupted Configuration
+---------------------------------
+Error: Crashes when loading config
+Fix: Delete bot_config.json
+Action:
+1. Find bot_config.json in executable folder
+2. Rename it to bot_config.json.backup
+3. Try executable again (will create new config)
+
+CAUSE 5: Python/MT5 Module Issues
+----------------------------------
+Error: "No module named 'MetaTrader5'" or "Import error"
+Fix: Rebuild executable with all dependencies
+Action:
+1. This shouldn't happen with properly built executable
+2. Rebuild using: build_windows.bat
+3. Make sure requirements.txt includes all dependencies
+
+================================================================================
+PORT ISSUES
+================================================================================
+
+If executable runs but dashboard won't load:
+
+TEST 1: Check if Port 5000 is Listening
+----------------------------------------
+1. Open Command Prompt
+2. Run: netstat -ano | findstr :5000
+3. Should see: TCP 0.0.0.0:5000 ... LISTENING
+
+If NOT listening:
+- Executable started but web server failed
+- Check logs (see below)
+
+If IS listening:
+- Port is working
+- Try different browser
+- Check firewall (see below)
+
+TEST 2: Try Different URL
+--------------------------
+Try these URLs in browser:
+1. http://localhost:5000
+2. http://127.0.0.1:5000
+3. http://0.0.0.0:5000
+
+If any work:
+- Use that URL
+- Bookmark it
+
+If none work:
+- Firewall blocking
+- See TEST 3
+
+TEST 3: Check Windows Firewall
+-------------------------------
+1. Windows Security > Firewall & network protection
+2. Click "Allow an app through firewall"
+3. Look for GEM_Trading_Bot.exe
+4. If not listed:
+   - Click "Change settings"
+   - Click "Allow another app"
+   - Browse to GEM_Trading_Bot.exe
+   - Check both Private and Public
+   - Click Add
+5. Try dashboard again
+
+================================================================================
+CHECK LOGS FOR CRASH REASON
+================================================================================
+
+If executable crashes, check log file:
+
+1. Go to executable folder
+2. Look for: trading_bot.log
+3. Open with Notepad
+4. Scroll to bottom
+5. Look for last error message
+
+COMMON CRASH ERRORS:
+
+ERROR: "Address already in use"
+--------------------------------
+Cause: Port 5000 busy
+Fix: Kill process on port 5000 (see above)
+
+ERROR: "Failed to initialize MT5"
+---------------------------------
+Cause: MT5 not running or not found
+Fix: Open MT5 before starting executable
+
+ERROR: "ModuleNotFoundError"
+-----------------------------
+Cause: Missing Python module
+Fix: Rebuild executable with all dependencies
+
+ERROR: "PermissionError"
+------------------------
+Cause: No write permission
+Fix: Run as Administrator
+
+ERROR: "KeyError" or "AttributeError"
+-------------------------------------
+Cause: Corrupted configuration
+Fix: Delete bot_config.json
+
+ERROR: "MemoryError"
+--------------------
+Cause: Not enough RAM
+Fix: Close other programs, restart computer
+
+================================================================================
+SAFE MODE START
+================================================================================
+
+To start executable in safe mode (minimal config):
+
+1. Delete or rename bot_config.json
+2. Start executable
+3. It will create default config
+4. Dashboard should load
+5. Reconfigure settings
+
+================================================================================
+MANUAL START (ADVANCED)
+================================================================================
+
+If executable won't work, try running from source:
+
+1. Install Python 3.8+ (if not installed)
+2. Open Command Prompt in bot folder
+3. Run: pip install -r requirements.txt
+4. Run: pip install -r requirements_web.txt
+5. Run: python web_dashboard.py
+6. Check console for errors
+7. Dashboard should open at http://localhost:5000
+
+This will show detailed error messages!
+
+================================================================================
+REBUILD EXECUTABLE
+================================================================================
+
+If executable is corrupted or has issues:
+
+1. Get latest code from repository
+2. Open Command Prompt as Administrator
+3. Navigate to project folder
+4. Run: build_windows.bat
+5. Wait 5-10 minutes
+6. New executable in dist/ folder
+7. Copy bot_config.json from old folder (if you want to keep settings)
+8. Try new executable
+
+================================================================================
+EMERGENCY CHECKLIST
+================================================================================
+
+Dashboard crashed? Try these in order:
+
+[ ] 1. Close browser and executable
+[ ] 2. Kill GEM_Trading_Bot.exe in Task Manager
+[ ] 3. Restart executable
+[ ] 4. Wait 30 seconds
+[ ] 5. Try http://localhost:5000
+
+Still not working?
+
+[ ] 6. Check Task Manager - is executable running?
+[ ] 7. Check trading_bot.log for errors
+[ ] 8. Try running as Administrator
+[ ] 9. Check Windows Firewall
+[ ] 10. Delete bot_config.json and restart
+
+Still not working?
+
+[ ] 11. Restart computer
+[ ] 12. Try executable again
+[ ] 13. If fails, run from source (python web_dashboard.py)
+[ ] 14. If still fails, rebuild executable
+
+================================================================================
+PREVENTION
+================================================================================
+
+To prevent dashboard crashes:
+
+1. Don't close executable while bot is running
+2. Always stop bot before closing dashboard
+3. Keep MT5 running when bot is active
+4. Don't modify files while executable is running
+5. Run as Administrator if permission issues
+6. Keep antivirus exceptions updated
+7. Restart executable daily for stability
+
+================================================================================
+QUICK RECOVERY COMMAND
+================================================================================
+
+Copy and paste this into Command Prompt (as Administrator):
+
+taskkill /F /IM GEM_Trading_Bot.exe
+timeout /t 3
+cd /d "%~dp0"
+start GEM_Trading_Bot.exe
+
+This will:
+1. Kill any running instance
+2. Wait 3 seconds
+3. Restart executable
+
+================================================================================
+GET HELP
+================================================================================
+
+If dashboard keeps crashing, provide:
+
+1. Last 50 lines of trading_bot.log
+2. Windows version
+3. Antivirus software name
+4. What you were doing when it crashed
+5. Error message (if any)
+6. Screenshot of Task Manager showing processes
+
+================================================================================
+MOST LIKELY CAUSES (IN ORDER)
+================================================================================
+
+1. Port 5000 already in use (40%)
+   Fix: Kill process on port 5000
+
+2. MT5 not running (30%)
+   Fix: Open MT5 before starting executable
+
+3. Antivirus blocking (15%)
+   Fix: Add to exceptions
+
+4. Corrupted config (10%)
+   Fix: Delete bot_config.json
+
+5. Missing dependencies (5%)
+   Fix: Install Visual C++ Redistributable
+
+================================================================================
+RIGHT NOW - DO THIS
+================================================================================
+
+1. Open Task Manager (Ctrl+Shift+Esc)
+2. Look for GEM_Trading_Bot.exe
+3. If found: End Task
+4. Close Task Manager
+5. Double-click GEM_Trading_Bot.exe
+6. Wait 30 seconds
+7. Browser should open
+
+If browser doesn't open:
+- Manually go to http://localhost:5000
+- If that doesn't work, check trading_bot.log for errors
+
+================================================================================

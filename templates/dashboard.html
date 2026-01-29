@@ -563,6 +563,29 @@
             
             <div class="card">
                 <h2>Performance</h2>
+                
+                <!-- No Trades Info Box (hidden when trades exist) -->
+                <div id="no-trades-info" style="display: none; padding: 15px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">ℹ️</span>
+                        <div>
+                            <strong style="color: white; display: block; margin-bottom: 5px;">No Trading History Yet</strong>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">
+                                Your bot hasn't executed any trades yet. This is normal for:
+                            </p>
+                            <ul style="color: rgba(255,255,255,0.9); margin: 8px 0 0 20px; font-size: 13px;">
+                                <li>New installations</li>
+                                <li>Fresh demo accounts</li>
+                                <li>Waiting for quality trade signals</li>
+                                <li>High confidence threshold (bot is selective)</li>
+                            </ul>
+                            <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 13px;">
+                                <strong>Tip:</strong> Lower "Min Trade Confidence" to 40% in Configuration to see trades faster, or wait for the bot to find high-quality setups.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="stat">
                     <span class="stat-label">Win Rate</span>
                     <span class="stat-value" id="win-rate">0%</span>
@@ -1210,13 +1233,90 @@
             
             <!-- Logs Tab -->
             <div id="logs-tab" class="tab-content">
-                <h2>System Logs</h2>
-                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                    <button class="btn btn-secondary" onclick="loadLogs()">Refresh Logs</button>
-                    <button class="btn btn-secondary" onclick="downloadLogs()">Download Logs</button>
+                <h2>System Logs & Diagnostics</h2>
+                
+                <!-- MT5 Connection Status -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">🔌 MT5 Connection Status</h3>
+                    <div id="mt5-diagnostics" style="font-family: 'Courier New', monospace; font-size: 0.9em;">
+                        <div style="padding: 10px; background: #1e293b; border-radius: 5px; margin-bottom: 10px;">
+                            <strong>Status:</strong> <span id="mt5-status-text">Checking...</span>
+                        </div>
+                        <div style="padding: 10px; background: #1e293b; border-radius: 5px; margin-bottom: 10px;">
+                            <strong>Build:</strong> <span id="mt5-build">-</span>
+                        </div>
+                        <div style="padding: 10px; background: #1e293b; border-radius: 5px; margin-bottom: 10px;">
+                            <strong>Account:</strong> <span id="mt5-account">-</span>
+                        </div>
+                        <div style="padding: 10px; background: #1e293b; border-radius: 5px;">
+                            <strong>Last Check:</strong> <span id="mt5-last-check">-</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="checkMT5Diagnostics()" style="margin-top: 15px;">🔄 Check MT5 Connection</button>
                 </div>
-                <div style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">
-                    <pre id="logs-content" style="margin: 0; color: #94a3b8;">Loading logs...</pre>
+                
+                <!-- Debug Information -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">🐛 Debug Information</h3>
+                    <div id="debug-info" style="font-family: 'Courier New', monospace; font-size: 0.85em; background: #1e293b; padding: 15px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+                        <div><strong>Bot Running:</strong> <span id="debug-bot-running">-</span></div>
+                        <div><strong>Symbols Configured:</strong> <span id="debug-symbols">-</span></div>
+                        <div><strong>Timeframe:</strong> <span id="debug-timeframe">-</span></div>
+                        <div><strong>Min Confidence:</strong> <span id="debug-confidence">-</span></div>
+                        <div><strong>Volume Filter:</strong> <span id="debug-volume-filter">-</span></div>
+                        <div><strong>Last Analysis:</strong> <span id="debug-last-analysis">-</span></div>
+                    </div>
+                </div>
+                
+                <!-- Log Filters -->
+                <div style="margin-bottom: 15px; padding: 15px; background: #1e293b; border-radius: 8px;">
+                    <strong style="color: #94a3b8; margin-right: 15px;">Filter Logs:</strong>
+                    <label style="margin-right: 15px; color: #94a3b8;">
+                        <input type="checkbox" id="filter-errors" checked onchange="filterLogs()"> Errors
+                    </label>
+                    <label style="margin-right: 15px; color: #94a3b8;">
+                        <input type="checkbox" id="filter-warnings" checked onchange="filterLogs()"> Warnings
+                    </label>
+                    <label style="margin-right: 15px; color: #94a3b8;">
+                        <input type="checkbox" id="filter-info" checked onchange="filterLogs()"> Info
+                    </label>
+                    <label style="margin-right: 15px; color: #94a3b8;">
+                        <input type="checkbox" id="filter-debug" onchange="filterLogs()"> Debug
+                    </label>
+                    <label style="color: #94a3b8;">
+                        <input type="checkbox" id="filter-signals" checked onchange="filterLogs()"> Signals Only
+                    </label>
+                </div>
+                
+                <!-- Log Actions -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="loadLogs()">🔄 Refresh Logs</button>
+                    <button class="btn btn-secondary" onclick="downloadLogs()">💾 Download Logs</button>
+                    <button class="btn btn-secondary" onclick="clearLogsDisplay()">🗑️ Clear Display</button>
+                    <select id="log-lines" style="padding: 10px; border-radius: 5px; background: #1e293b; color: white; border: 1px solid #334155;">
+                        <option value="50">Last 50 lines</option>
+                        <option value="100" selected>Last 100 lines</option>
+                        <option value="200">Last 200 lines</option>
+                        <option value="500">Last 500 lines</option>
+                    </select>
+                </div>
+                
+                <!-- Logs Display -->
+                <div style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 500px; overflow-y: auto; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">
+                    <pre id="logs-content" style="margin: 0; color: #94a3b8; white-space: pre-wrap; word-wrap: break-word;">Loading logs...</pre>
+                </div>
+                
+                <!-- Help Text -->
+                <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 8px;">
+                    <strong style="color: white; display: block; margin-bottom: 10px;">💡 Understanding Logs</strong>
+                    <ul style="color: rgba(255,255,255,0.9); margin: 0; padding-left: 20px; font-size: 0.9em;">
+                        <li><strong>ERROR</strong> - Critical issues (MT5 connection failed, etc.)</li>
+                        <li><strong>WARNING</strong> - Important notices (trade rejected, etc.)</li>
+                        <li><strong>INFO</strong> - Normal operations (bot started, signal detected)</li>
+                        <li><strong>DEBUG</strong> - Detailed analysis (every check, filter result)</li>
+                        <li><strong>✓</strong> - Filter passed</li>
+                        <li><strong>✗</strong> - Filter rejected (this is normal!)</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -1571,9 +1671,10 @@
         // Load logs
         function loadLogs() {
             const logsContent = document.getElementById('logs-content');
+            const lines = document.getElementById('log-lines')?.value || 100;
             logsContent.textContent = 'Loading logs...';
             
-            fetch('/api/logs?lines=100')
+            fetch(`/api/logs?lines=${lines}`)
                 .then(r => {
                     if (!r.ok) {
                         throw new Error(`HTTP ${r.status}: ${r.statusText}`);
@@ -1582,7 +1683,9 @@
                 })
                 .then(data => {
                     if (data.logs && data.logs.length > 0) {
-                        logsContent.textContent = data.logs.join('');
+                        // Store original logs for filtering
+                        window.originalLogs = data.logs.join('');
+                        filterLogs();
                         // Scroll to bottom
                         logsContent.parentElement.scrollTop = logsContent.parentElement.scrollHeight;
                     } else if (data.status === 'error') {
@@ -1596,6 +1699,130 @@
                     logsContent.textContent = 'Error loading logs: ' + err.message + '\n\nPossible causes:\n- Log file is locked by another process\n- Dashboard server issue\n- Network error\n\nTry:\n1. Refresh the page\n2. Restart the dashboard\n3. Check if bot is running';
                     showToast('❌ Failed to load logs', 'error');
                 });
+        }
+        
+        // Filter logs based on checkboxes
+        function filterLogs() {
+            if (!window.originalLogs) return;
+            
+            const logsContent = document.getElementById('logs-content');
+            const showErrors = document.getElementById('filter-errors')?.checked;
+            const showWarnings = document.getElementById('filter-warnings')?.checked;
+            const showInfo = document.getElementById('filter-info')?.checked;
+            const showDebug = document.getElementById('filter-debug')?.checked;
+            const signalsOnly = document.getElementById('filter-signals')?.checked;
+            
+            let lines = window.originalLogs.split('\n');
+            
+            if (signalsOnly) {
+                // Show only signal-related lines
+                lines = lines.filter(line => 
+                    line.includes('ANALYZING') ||
+                    line.includes('signal') ||
+                    line.includes('Signal') ||
+                    line.includes('crossover') ||
+                    line.includes('filter') ||
+                    line.includes('Filter') ||
+                    line.includes('✓') ||
+                    line.includes('✗') ||
+                    line.includes('REJECTED') ||
+                    line.includes('confirmed')
+                );
+            } else {
+                // Filter by log level
+                lines = lines.filter(line => {
+                    if (showErrors && line.includes('ERROR')) return true;
+                    if (showWarnings && line.includes('WARNING')) return true;
+                    if (showInfo && line.includes('INFO')) return true;
+                    if (showDebug && line.includes('DEBUG')) return true;
+                    // Show lines without level markers if any filter is checked
+                    if ((showErrors || showWarnings || showInfo || showDebug) && 
+                        !line.includes('ERROR') && !line.includes('WARNING') && 
+                        !line.includes('INFO') && !line.includes('DEBUG')) {
+                        return true;
+                    }
+                    return false;
+                });
+            }
+            
+            logsContent.textContent = lines.join('\n') || 'No logs match the selected filters.';
+        }
+        
+        // Clear logs display
+        function clearLogsDisplay() {
+            document.getElementById('logs-content').textContent = 'Logs cleared. Click "Refresh Logs" to reload.';
+            window.originalLogs = null;
+        }
+        
+        // Check MT5 diagnostics
+        function checkMT5Diagnostics() {
+            const statusText = document.getElementById('mt5-status-text');
+            const buildText = document.getElementById('mt5-build');
+            const accountText = document.getElementById('mt5-account');
+            const lastCheckText = document.getElementById('mt5-last-check');
+            
+            statusText.textContent = 'Checking...';
+            statusText.style.color = '#fbbf24';
+            
+            fetch('/api/mt5/test')
+                .then(r => r.json())
+                .then(data => {
+                    const now = new Date().toLocaleTimeString();
+                    lastCheckText.textContent = now;
+                    
+                    if (data.connected) {
+                        statusText.textContent = '✅ Connected';
+                        statusText.style.color = '#10b981';
+                        buildText.textContent = data.server || 'Unknown';
+                        accountText.textContent = `${data.account_name} (${data.account_number})`;
+                        
+                        // Update debug info
+                        updateDebugInfo();
+                        
+                        showToast('✅ MT5 connected successfully', 'success');
+                    } else {
+                        statusText.textContent = '❌ Not Connected';
+                        statusText.style.color = '#ef4444';
+                        buildText.textContent = data.error || 'Connection failed';
+                        accountText.textContent = '-';
+                        showToast('❌ MT5 connection failed: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(err => {
+                    statusText.textContent = '❌ Error';
+                    statusText.style.color = '#ef4444';
+                    buildText.textContent = err.message;
+                    accountText.textContent = '-';
+                    lastCheckText.textContent = new Date().toLocaleTimeString();
+                    showToast('❌ Failed to check MT5: ' + err.message, 'error');
+                });
+        }
+        
+        // Update debug information
+        function updateDebugInfo() {
+            // Get current configuration
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(config => {
+                    document.getElementById('debug-symbols').textContent = config.symbols?.join(', ') || '-';
+                    document.getElementById('debug-timeframe').textContent = config.timeframe || '-';
+                    document.getElementById('debug-confidence').textContent = 
+                        config.min_confidence ? (config.min_confidence * 100).toFixed(0) + '%' : '-';
+                    document.getElementById('debug-volume-filter').textContent = 
+                        config.use_volume_filter ? '✅ Enabled' : '❌ Disabled';
+                })
+                .catch(err => console.error('Failed to load config for debug:', err));
+            
+            // Get bot status
+            fetch('/api/bot/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('debug-bot-running').textContent = 
+                        data.running ? '✅ Yes' : '❌ No';
+                    document.getElementById('debug-last-analysis').textContent = 
+                        new Date().toLocaleTimeString();
+                })
+                .catch(err => console.error('Failed to load status for debug:', err));
         }
         
         // Download logs
@@ -1799,6 +2026,14 @@
                     const todayLosses = data.today_losses || 0;
                     const totalTradesToday = todayWins + todayLosses;
                     
+                    // Show/hide no-trades info box
+                    const noTradesInfo = document.getElementById('no-trades-info');
+                    if (totalTrades === 0) {
+                        noTradesInfo.style.display = 'block';
+                    } else {
+                        noTradesInfo.style.display = 'none';
+                    }
+                    
                     document.getElementById('win-rate').textContent = winRate + '%';
                     document.getElementById('total-trades').textContent = totalTrades;
                     document.getElementById('total-trades-today').textContent = totalTradesToday;
@@ -1815,7 +2050,8 @@
                 })
                 .catch(err => {
                     console.error('Failed to fetch performance:', err);
-                    // Set defaults on error
+                    // Set defaults on error and show info box
+                    document.getElementById('no-trades-info').style.display = 'block';
                     document.getElementById('win-rate').textContent = '0%';
                     document.getElementById('total-trades').textContent = '0';
                     document.getElementById('total-trades-today').textContent = '0';

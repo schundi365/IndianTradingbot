@@ -1,0 +1,283 @@
+================================================================================
+ENABLE DEBUG LOGGING - GET DETAILED INFORMATION
+================================================================================
+
+Your bot is not connecting to MT5 or not placing trades?
+Run this command to get detailed debug information:
+
+    python enable_debug_logging.py
+
+================================================================================
+WHAT THIS DOES
+================================================================================
+
+1. Tests MT5 Connection
+   - Shows if MT5 is running
+   - Displays build number
+   - Shows account info
+   - Tests symbol access
+   - Tests data retrieval
+
+2. Enables Debug Logging
+   - Creates logs/debug.log
+   - Shows every analysis cycle
+   - Shows why trades are rejected
+   - Shows filter results
+   - Shows confidence calculations
+
+3. Provides Troubleshooting Info
+   - Identifies connection issues
+   - Shows configuration problems
+   - Explains rejection reasons
+
+================================================================================
+EXPECTED OUTPUT
+================================================================================
+
+✅ GOOD (MT5 Working):
+--------------------
+Step 1: Attempting MT5 initialization...
+✓ MT5 initialized successfully
+
+Step 2: MT5 Version Information
+   Version: (5, 0, 4415, 0)
+
+Step 3: Terminal Information
+   Build: 5549
+   Company: MetaQuotes Software Corp.
+   Connected: True
+   Trade allowed: True
+
+Step 4: Account Information
+   Login: 12345678
+   Server: Demo-Server
+   Balance: 10000.00
+   Trade allowed: True
+
+Step 5: Testing Symbol Access
+   ✓ XAUUSD: Available (spread: 25)
+   ✓ EURUSD: Available (spread: 2)
+
+Step 6: Testing Data Retrieval
+   ✓ Successfully retrieved 10 bars
+
+✅ MT5 CONNECTION TEST COMPLETE
+
+
+❌ BAD (MT5 Not Working):
+-------------------------
+Step 1: Attempting MT5 initialization...
+❌ MT5 initialization failed!
+   Error code: 1
+   Error message: Terminal not found
+
+Troubleshooting:
+  1. Is MT5 running?
+  2. Are you logged into an account?
+  3. Is algo trading enabled?
+
+================================================================================
+AFTER RUNNING DEBUG SCRIPT
+================================================================================
+
+1. Check Output
+   - If all ✓ green checks: MT5 is working
+   - If any ❌ red X: Follow troubleshooting steps
+
+2. Start Bot
+   python web_dashboard.py
+
+3. Check Debug Logs
+   - Open: logs/debug.log
+   - Look for: "ANALYZING [SYMBOL]"
+   - Look for: "✓" (passed) or "✗" (rejected)
+
+4. Understand Rejections
+   Example log:
+   
+   ANALYZING XAUUSD
+   ✓ Bullish MA crossover detected
+   ✗ RSI filter: Too overbought (RSI: 78.5) - TRADE REJECTED
+   
+   This means:
+   - Signal was found (MA crossover)
+   - But RSI filter rejected it (too overbought)
+   - This is NORMAL - bot is being selective
+
+================================================================================
+COMMON ISSUES & QUICK FIXES
+================================================================================
+
+Issue 1: "MT5 initialization failed"
+-------------------------------------
+Fix:
+1. Open MetaTrader 5
+2. Login to your account
+3. Tools > Options > Expert Advisors
+4. Check "Allow algorithmic trading"
+5. Click OK
+6. Run debug script again
+
+
+Issue 2: "Cannot get account info"
+-----------------------------------
+Fix:
+1. Check MT5 shows "Connected" in bottom right
+2. Try logging out and back in
+3. Check internet connection
+
+
+Issue 3: "Symbol not available"
+--------------------------------
+Fix:
+1. Open MT5
+2. Right-click Market Watch
+3. Click "Show All"
+4. Find your symbol (e.g., XAUUSD)
+5. If not there, your broker doesn't offer it
+
+
+Issue 4: Bot Running But No Trades
+-----------------------------------
+Check logs/debug.log for:
+
+ANALYZING XAUUSD
+Fetching historical data...
+Calculating indicators...
+Checking entry signals...
+No signal: Price=2650.45, Fast MA=2648.20, Slow MA=2645.10
+
+This means:
+- Bot is working correctly
+- No MA crossover detected yet
+- Waiting for signal
+
+To get trades faster:
+1. Dashboard > Configuration
+2. Min Trade Confidence > 40%
+3. Add more symbols (10+)
+4. Timeframe > M5
+5. Save and restart bot
+
+
+Issue 5: Signals Detected But Rejected
+---------------------------------------
+Check logs/debug.log for:
+
+✓ Bullish MA crossover detected
+✗ RSI filter: Too overbought (RSI: 78.5) - TRADE REJECTED
+
+This means:
+- Signal found
+- But filters rejected it
+- This is NORMAL and EXPECTED
+
+To pass filters:
+1. Dashboard > Configuration
+2. Uncheck "Use RSI"
+3. Uncheck "Use Trend Filter"
+4. Save and restart bot
+
+OR wait for better market conditions
+
+================================================================================
+DETAILED LOGS EXPLANATION
+================================================================================
+
+With debug logging, you'll see:
+
+Every 60 seconds:
+------------------
+============================================================
+ANALYZING XAUUSD
+============================================================
+Fetching historical data for XAUUSD...
+Calculating indicators for XAUUSD...
+Checking entry signals for XAUUSD...
+Signal Check - Close: 2650.45, Fast MA: 2648.20, Slow MA: 2645.10
+No signal: Price=2650.45, Fast MA=2648.20, Slow MA=2645.10
+No entry signal for XAUUSD
+
+This is NORMAL - bot is analyzing but no signal yet
+
+
+When Signal Found:
+------------------
+============================================================
+ANALYZING XAUUSD
+============================================================
+Fetching historical data for XAUUSD...
+Calculating indicators for XAUUSD...
+Checking entry signals for XAUUSD...
+✓ Bullish MA crossover detected
+  ✓ RSI filter: OK (RSI: 55.2)
+  ✓ MACD filter: Confirmed (0.000456)
+✓ Volume analysis passed - Confidence boost: +15.0%
+BUY signal confirmed - All filters passed!
+Trade confidence: 75%
+Signal for XAUUSD: BUY
+Entry: 2650.45, SL: 2645.20, Total Lots: 0.10
+
+This means TRADE WILL BE PLACED!
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Run Debug Script
+   python enable_debug_logging.py
+
+2. Check Output
+   - All green ✓ = MT5 working
+   - Any red ❌ = Fix issue
+
+3. Start Bot
+   python web_dashboard.py
+
+4. Monitor Logs
+   tail -f logs/debug.log
+
+5. Look For
+   - "ANALYZING [SYMBOL]" every 60 seconds
+   - "✓" for passed checks
+   - "✗" for rejected checks
+
+6. Adjust Settings
+   - If too many rejections: Lower confidence, disable filters
+   - If no signals: Add symbols, use M5 timeframe
+   - If working: Leave it running!
+
+================================================================================
+SUPPORT
+================================================================================
+
+Still having issues?
+
+Provide this information:
+1. Output of: python enable_debug_logging.py
+2. Last 50 lines of: logs/debug.log
+3. Your configuration settings
+4. MT5 build number
+
+Read full guide: DEBUG_GUIDE.md
+
+================================================================================
+QUICK COMMANDS
+================================================================================
+
+# Enable debug and test MT5
+python enable_debug_logging.py
+
+# Start bot
+python web_dashboard.py
+
+# Check logs (last 50 lines)
+tail -n 50 logs/debug.log
+
+# Follow logs live
+tail -f logs/debug.log
+
+# Check configuration
+python -c "from src.config_manager import get_config; c = get_config(); print('Symbols:', c['symbols']); print('Confidence:', c['min_confidence'])"
+
+================================================================================
