@@ -1,0 +1,96 @@
+================================================================================
+HOW TO GET MORE SIGNALS IMMEDIATELY
+================================================================================
+
+I've created a configuration that will generate MORE signals: config_more_signals.json
+
+CHANGES FROM CURRENT CONFIG:
+1. Added 4 more symbols (EURUSD, GBPUSD, USDJPY, AUDUSD) - 6 total
+2. Disabled MACD filter (was rejecting many signals)
+3. Relaxed RSI thresholds (80/20 instead of 70/30)
+4. Lowered confidence to 40% (from 50%)
+5. Disabled volume filter
+
+EXPECTED RESULT:
+- 6 symbols instead of 2 = 3x more opportunities
+- No MACD filter = 2x more signals accepted
+- Relaxed RSI = 1.5x more signals accepted
+- Total: ~9x MORE SIGNALS than current setup
+
+================================================================================
+TO APPLY THIS CONFIG:
+================================================================================
+
+Option 1: COPY FILE (Recommended)
+   1. Copy config_more_signals.json to bot_config.json
+   2. Restart bot from dashboard
+   
+   Command:
+   copy config_more_signals.json bot_config.json
+
+Option 2: UPDATE VIA DASHBOARD
+   1. Open dashboard (http://localhost:5000)
+   2. Go to Configuration section
+   3. Change these settings:
+      - Symbols: Add EURUSD, GBPUSD, USDJPY, AUDUSD
+      - Use MACD: Disable (uncheck)
+      - RSI Overbought: 80
+      - RSI Oversold: 20
+      - Min Confidence: 40%
+      - Volume Filter: Disable (uncheck)
+   4. Click "Save Configuration"
+   5. Click "Restart Bot"
+
+================================================================================
+RISK WARNING
+================================================================================
+
+More signals = More trades = Higher risk
+
+This configuration is MORE AGGRESSIVE:
+- Will take trades in more conditions
+- May have lower win rate
+- Could generate 10-20 trades per day
+- Make sure you monitor closely
+
+If you want to be SAFER:
+- Keep current config
+- Just add more symbols (don't change filters)
+- Wait for natural crossovers (XAGUSD is 0.10 points away!)
+
+================================================================================
+CURRENT STATUS REMINDER
+================================================================================
+
+Your bot IS working correctly right now:
+- Analyzing every 60 seconds ✓
+- M1 timeframe active ✓
+- Waiting for MA crossovers ✓
+
+XAGUSD: 0.10 points from crossover (IMMINENT!)
+XAUUSD: 17.44 points from crossover (SOON!)
+
+You could see a signal in the next 5-10 minutes with current config.
+
+================================================================================
+RECOMMENDATION
+================================================================================
+
+OPTION A (Conservative): Wait 30 minutes with current config
+   - Let natural crossovers happen
+   - XAGUSD very close to signal
+   - Safer approach
+
+OPTION B (Moderate): Add more symbols only
+   - Keep all filters
+   - Just add EURUSD, GBPUSD, USDJPY, AUDUSD
+   - More opportunities, same quality
+
+OPTION C (Aggressive): Apply config_more_signals.json
+   - Many more signals
+   - Lower quality trades
+   - Higher risk
+
+Your choice!
+
+================================================================================

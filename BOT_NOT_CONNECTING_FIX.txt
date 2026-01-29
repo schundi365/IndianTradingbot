@@ -1,0 +1,120 @@
+================================================================================
+🚨 CRITICAL ISSUE FOUND: Bot Failing to Connect to MT5
+================================================================================
+
+ROOT CAUSE IDENTIFIED:
+
+The bot is initializing but NEVER connecting to MT5. Looking at the logs:
+
+Pattern (Every Start Attempt):
+  1. "Initializing trading bot..." ✓
+  2. "Configuration loaded..." ✓
+  3. "Bot connected successfully..." ❌ MISSING
+  4. "starting trading loop..." ❌ MISSING
+
+This means `bot.connect()` is returning False, causing the bot thread to exit
+immediately without any error message.
+
+================================================================================
+WHY THIS IS HAPPENING
+================================================================================
+
+Possible causes:
+1. MT5 terminal is not running
+2. MT5 terminal is not logged in
+3. MT5 connection is blocked
+4. Recent code change broke MT5 initialization
+
+The bot is failing silently because the error logging in `start_bot()` is not
+capturing the connection failure.
+
+================================================================================
+IMMEDIATE FIX
+================================================================================
+
+1. CHECK MT5 TERMINAL
+   - Open MetaTrader 5
+   - Verify it's running
+   - Verify you're logged in
+   - Check connection status (should show green indicator)
+
+2. RESTART MT5
+   - Close MT5 completely
+   - Reopen MT5
+   - Wait for login to complete
+   - Then try starting bot again
+
+3. CHECK MT5 BUILD
+   - Your MT5 build: 5546
+   - This is compatible
+   - But verify MT5 is not in "safe mode" or restricted
+
+================================================================================
+TESTING
+================================================================================
+
+After restarting MT5, try this test script:
+
+```python
+import MetaTrader5 as mt5
+
+print("Testing MT5 connection...")
+if mt5.initialize():
+    print("✓ MT5 initialized successfully")
+    account = mt5.account_info()
+    if account:
+        print(f"✓ Account: {account.login}")
+        print(f"✓ Balance: {account.balance}")
+        print(f"✓ Server: {account.server}")
+    else:
+        print("✗ No account info")
+    mt5.shutdown()
+else:
+    print(f"✗ MT5 initialization failed: {mt5.last_error()}")
+```
+
+Save as `test_mt5_connection.py` and run it.
+
+If this fails, MT5 is the problem, not the bot.
+
+================================================================================
+PERMANENT FIX NEEDED
+================================================================================
+
+The web_dashboard.py needs better error logging in the `start_bot()` function.
+
+Current code (line ~220):
+```python
+if not mt5.initialize():
+    logger.error("Failed to start bot: MT5 not connected")
+    return jsonify({'status': 'error', 'message': 'MT5 not connected...'})
+```
+
+But this test happens BEFORE the bot thread starts. The actual connection
+failure happens in `run_bot_background()` where `bot.connect()` returns False
+but doesn't log why.
+
+Need to add better logging in `run_bot_background()` after `bot.connect()`:
+```python
+if not bot.connect():
+    error_msg = f"Failed to connect to MT5: {mt5.last_error()}"
+    logger.error(error_msg)
+    bot_running = False
+    return
+```
+
+================================================================================
+SUMMARY
+================================================================================
+
+Problem: Bot initializes but never connects to MT5
+Cause: `bot.connect()` returning False silently
+Solution: 
+  1. Restart MT5 terminal
+  2. Verify MT5 is logged in
+  3. Try starting bot again
+  4. If still fails, run test_mt5_connection.py
+
+The bot code is fine - it's an MT5 connection issue.
+
+================================================================================

@@ -1,0 +1,203 @@
+================================================================================
+DEFAULT CONFIGURATION UPDATED - M30 WITH AGGRESSIVE SETTINGS
+================================================================================
+Date: 2026-01-29
+Status: UPDATED
+
+================================================================================
+CHANGE SUMMARY
+================================================================================
+
+Default configuration now matches your current M1 aggressive settings,
+but with M30 timeframe instead of M1.
+
+Only Change: Timeframe M1 → M30
+Everything Else: Same as current aggressive config
+
+================================================================================
+NEW DEFAULT CONFIGURATION
+================================================================================
+
+Timeframe: M30 (30 minutes) - ONLY CHANGE
+Symbols: 8 (XAUUSD, XAGUSD, EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, NZDUSD)
+Fast MA: 10
+Slow MA: 20
+Min Confidence: 25%
+RSI: 10/90 (very permissive)
+MACD: Disabled
+ADX: Disabled
+Trend Filter: Disabled
+Volume Filter: Disabled
+Trading Hours: 24/7
+Max Daily Trades: 999
+Max Trades Per Symbol: 10
+Max Total Trades: 999
+
+================================================================================
+COMPARISON
+================================================================================
+
+Setting                 M30 Default (New)    M1 Current
+---------------------------------------------------------
+Timeframe:              30 minutes           1 minute      ← ONLY DIFFERENCE
+Symbols:                8                    8             ✓ Same
+Fast MA:                10                   10            ✓ Same
+Slow MA:                20                   20            ✓ Same
+Min Confidence:         25%                  25%           ✓ Same
+RSI:                    10/90                10/90         ✓ Same
+MACD:                   Disabled             Disabled      ✓ Same
+ADX:                    Disabled             Disabled      ✓ Same
+Trend Filter:           Disabled             Disabled      ✓ Same
+Volume Filter:          Disabled             Disabled      ✓ Same
+Trading Hours:          24/7                 24/7          ✓ Same
+Max Daily Trades:       999                  999           ✓ Same
+Max Per Symbol:         10                   10            ✓ Same
+
+================================================================================
+WHY M30 INSTEAD OF M1
+================================================================================
+
+Benefits of M30 with aggressive settings:
+
+✅ More Reliable Signals:
+   - 30-minute candles filter out noise
+   - Crossovers more meaningful
+   - Better quality trades
+
+✅ Manageable Trade Frequency:
+   - Still frequent (10-30 trades/day)
+   - Not overwhelming (vs 100+ on M1)
+   - Easier to monitor
+
+✅ Stable MT5 Connection:
+   - Fewer API calls
+   - Less likely to disconnect
+   - More sustainable
+
+✅ Better Win Rate Expected:
+   - Longer timeframe = better trends
+   - Less whipsaw/false signals
+   - Higher probability trades
+
+✅ Still Aggressive:
+   - 8 symbols
+   - Fast MAs (10/20)
+   - Permissive filters
+   - Unlimited trades
+
+================================================================================
+WHEN DEFAULT IS USED
+================================================================================
+
+This M30 aggressive default will be used when:
+
+1. First time bot launch (no config file exists)
+2. Config file deleted
+3. Config file corrupted
+4. Missing configuration keys (merged with defaults)
+
+Your current bot_config.json is NOT affected!
+
+================================================================================
+EXPECTED BEHAVIOR WITH M30
+================================================================================
+
+Trade Frequency:
+- M1: 100-200+ trades per day (very high)
+- M30: 10-30 trades per day (moderate-high)
+- Still aggressive, but more manageable
+
+Signal Quality:
+- M1: Many false signals, whipsaws
+- M30: Better quality, fewer false signals
+- Higher win rate expected
+
+MT5 Connection:
+- M1: Frequent disconnects (too many API calls)
+- M30: Stable connection
+- Sustainable long-term
+
+Monitoring:
+- M1: Hard to track all trades
+- M30: Easier to monitor
+- Can review each trade
+
+================================================================================
+RECOMMENDATION
+================================================================================
+
+For Your Current Testing:
+- Continue with M1 in bot_config.json
+- Evaluate results
+- See how many trades you can handle
+
+For Future Live Trading:
+- Switch to M30 (delete config, restart bot)
+- Or manually change timeframe to 30 in bot_config.json
+- More sustainable for live trading
+
+Best of Both Worlds:
+- M30 timeframe (quality)
+- Aggressive settings (frequency)
+- 8 symbols (opportunities)
+- Permissive filters (acceptance)
+
+================================================================================
+HOW TO SWITCH TO M30 DEFAULT
+================================================================================
+
+Option 1: Delete Config (Gets New Default)
+1. Stop bot
+2. Delete bot_config.json
+3. Start bot
+4. Bot creates new config with M30 default
+
+Option 2: Edit Current Config
+1. Stop bot
+2. Open bot_config.json
+3. Change "timeframe": 1 to "timeframe": 30
+4. Save file
+5. Start bot
+
+Option 3: Use Dashboard
+1. Open http://localhost:5000
+2. Go to Configuration
+3. Change Timeframe to M30
+4. Save
+5. Restart bot
+
+================================================================================
+FILES UPDATED
+================================================================================
+
+✅ src/config_manager.py
+   - _get_default_config() method updated
+   - Timeframe: 30 (M30)
+   - All other settings match M1 aggressive
+   - sys import added (bug fix)
+
+✅ DEFAULT_CONFIG_UPDATED.txt
+   - This documentation file
+
+================================================================================
+SUMMARY
+================================================================================
+
+✅ Default config now: M30 with aggressive settings
+✅ Only timeframe changed: M1 → M30
+✅ All other settings same as your current M1 config
+✅ Your current bot_config.json NOT affected
+✅ Default only applies to new installations
+✅ M30 recommended for sustainable trading
+✅ Still aggressive with 8 symbols and permissive filters
+
+The default configuration is now optimized for:
+- Quality signals (M30 timeframe)
+- High frequency (8 symbols, fast MAs)
+- Permissive acceptance (minimal filters)
+- Unlimited trades (999 daily limit)
+- Sustainable operation (stable MT5 connection)
+
+Best of both worlds: Quality + Frequency!
+
+================================================================================

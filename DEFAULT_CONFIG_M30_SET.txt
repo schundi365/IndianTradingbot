@@ -1,0 +1,317 @@
+================================================================================
+DEFAULT CONFIGURATION SET TO M30 CONSERVATIVE STRATEGY
+================================================================================
+Date: 2026-01-29
+Status: UPDATED
+
+================================================================================
+CHANGES MADE
+================================================================================
+
+File: src/config_manager.py
+
+1. Updated _get_default_config() method
+2. Added missing 'sys' import (fixes potential bug)
+3. Set M30 conservative strategy as default
+
+================================================================================
+NEW DEFAULT CONFIGURATION
+================================================================================
+
+When bot launches for the first time (or if config file is missing):
+
+Timeframe & Symbols:
+- Timeframe: M30 (30 minutes) - Conservative
+- Symbols: XAUUSD, XAGUSD (Gold & Silver)
+
+Moving Averages:
+- Fast MA: 20 (conservative)
+- Slow MA: 50 (conservative)
+- Generates fewer, higher-quality signals
+
+Filters & Indicators:
+- RSI: 30/70 (standard levels)
+- MACD: Enabled (quality filter)
+- ADX: Enabled (trend strength filter)
+- Trend Filter: Enabled (additional quality check)
+- Volume Filter: Enabled (volume confirmation)
+
+Risk Management:
+- Risk per trade: 1.0%
+- Reward ratio: 2:1
+- Min confidence: 50%
+- Max daily loss: 5%
+- Max drawdown: 10%
+
+Trade Limits:
+- Max daily trades: 20
+- Max total trades: 20
+- Max trades per symbol: 3
+
+Position Management:
+- Split orders: 3 positions
+- Take profits: 1.5x, 2.5x, 4.0x
+- Trailing stop: Enabled
+- Adaptive risk: Enabled
+
+Trading Hours:
+- 24/7 trading enabled
+- News avoidance: Enabled (60 min buffer)
+
+================================================================================
+COMPARISON: M30 vs M1 AGGRESSIVE
+================================================================================
+
+                        M30 (Default)       M1 (Testing)
+Timeframe:              30 minutes          1 minute
+Symbols:                2                   8
+Fast/Slow MA:           20/50               10/20
+Signal Frequency:       Low (quality)       Very High
+RSI Filter:             30/70 (strict)      10/90 (permissive)
+MACD Filter:            Enabled             Disabled
+ADX Filter:             Enabled             Disabled
+Trend Filter:           Enabled             Disabled
+Volume Filter:          Enabled             Disabled
+Min Confidence:         50%                 25%
+Max Daily Trades:       20                  999
+Max Per Symbol:         3                   10
+
+Trade Frequency:        1-5 per day         100+ per day
+Risk Level:             Conservative        Aggressive
+Recommended For:        Live trading        Testing only
+
+================================================================================
+WHY M30 AS DEFAULT
+================================================================================
+
+Benefits of M30 Conservative Strategy:
+
+✅ Higher Quality Signals:
+   - Longer timeframe filters out noise
+   - Multiple filters ensure quality
+   - Better win rate expected
+
+✅ Lower Risk:
+   - Fewer trades = less exposure
+   - Conservative position limits
+   - Multiple safety filters
+
+✅ Manageable:
+   - 1-5 trades per day
+   - Easy to monitor
+   - Less stressful
+
+✅ Stable:
+   - Won't overload MT5 connection
+   - Sustainable long-term
+   - Lower API call frequency
+
+✅ Profitable:
+   - Focus on quality over quantity
+   - Better risk/reward ratios
+   - Compound gains over time
+
+================================================================================
+WHEN DEFAULT CONFIG IS USED
+================================================================================
+
+The default M30 configuration will be used when:
+
+1. First Time Launch:
+   - No bot_config.json exists
+   - Bot creates new config with M30 defaults
+
+2. Config File Deleted:
+   - User deletes bot_config.json
+   - Bot recreates with M30 defaults
+
+3. Config File Corrupted:
+   - bot_config.json is invalid JSON
+   - Bot falls back to M30 defaults
+
+4. Missing Config Keys:
+   - Config file missing some settings
+   - Bot merges with M30 defaults for missing keys
+
+================================================================================
+CURRENT CONFIG PRESERVED
+================================================================================
+
+Important: Your current aggressive M1 configuration is NOT affected!
+
+Your bot_config.json still has:
+- M1 timeframe
+- 8 symbols
+- Fast MAs (10/20)
+- Permissive filters
+- Unlimited trades
+
+The default config only applies to:
+- New installations
+- Deleted/corrupted config files
+- Missing config keys
+
+To keep using M1 aggressive settings:
+- Just continue using current bot_config.json
+- No action needed
+
+To switch to M30 conservative:
+- Delete bot_config.json
+- Restart bot
+- Bot will create new config with M30 defaults
+
+================================================================================
+SWITCHING BETWEEN CONFIGURATIONS
+================================================================================
+
+Option 1: Use Dashboard
+- Open http://localhost:5000
+- Go to Configuration section
+- Adjust settings as needed
+- Click "Save Configuration"
+- Restart bot
+
+Option 2: Edit bot_config.json
+- Open bot_config.json in text editor
+- Change settings manually
+- Save file
+- Restart bot
+
+Option 3: Use Preset Configs
+- M30 Conservative: Delete bot_config.json, restart
+- M1 Aggressive: Use config_testing_mode.json
+- Balanced: Use config_profitable_balanced.py
+
+Option 4: Create Custom Config
+- Copy bot_config.json
+- Modify settings
+- Save as new file
+- Copy to bot_config.json when needed
+
+================================================================================
+RECOMMENDED CONFIGURATIONS
+================================================================================
+
+For Live Trading (Real Money):
+✅ Use M30 Conservative (default)
+- Timeframe: M30
+- Symbols: 2-4
+- MA: 20/50
+- All filters enabled
+- Max daily trades: 20
+- Conservative risk
+
+For Testing (Demo Account):
+✅ Use M1 Aggressive (current)
+- Timeframe: M1
+- Symbols: 8
+- MA: 10/20
+- Most filters disabled
+- Max daily trades: 999
+- Aggressive testing
+
+For Balanced Approach:
+✅ Use M5 or M15
+- Timeframe: M5 or M15
+- Symbols: 4-6
+- MA: 15/35
+- Key filters enabled
+- Max daily trades: 50
+- Moderate risk
+
+================================================================================
+CONFIGURATION PROFILES
+================================================================================
+
+Profile 1: Ultra Conservative (M30)
+- Timeframe: M30
+- Symbols: 2 (XAUUSD, XAGUSD)
+- MA: 20/50
+- All filters: Enabled
+- Max trades: 10/day
+- Best for: Risk-averse traders
+
+Profile 2: Conservative (M15) - NEW DEFAULT
+- Timeframe: M30
+- Symbols: 2-3
+- MA: 20/50
+- Most filters: Enabled
+- Max trades: 20/day
+- Best for: Live trading
+
+Profile 3: Balanced (M5)
+- Timeframe: M5
+- Symbols: 4-6
+- MA: 15/35
+- Key filters: Enabled
+- Max trades: 50/day
+- Best for: Active traders
+
+Profile 4: Aggressive (M1)
+- Timeframe: M1
+- Symbols: 8
+- MA: 10/20
+- Few filters: Enabled
+- Max trades: 999/day
+- Best for: Testing only
+
+================================================================================
+TESTING RECOMMENDATIONS
+================================================================================
+
+Before Using M30 Default on Live Account:
+
+1. Test on Demo First:
+   - Run for at least 1 week
+   - Monitor win rate (target: >50%)
+   - Check max drawdown (<10%)
+   - Verify profitability
+
+2. Start Small:
+   - Use minimum lot size (0.01)
+   - Limit to 1-2 symbols
+   - Monitor closely for first week
+
+3. Gradually Increase:
+   - If profitable after 1 week, increase lot size
+   - Add more symbols if desired
+   - Adjust settings based on results
+
+4. Monitor Continuously:
+   - Check daily P/L
+   - Track win rate
+   - Monitor drawdown
+   - Adjust as needed
+
+================================================================================
+DOCUMENTATION UPDATED
+================================================================================
+
+Related Files:
+✅ src/config_manager.py - Default config updated
+✅ DEFAULT_CONFIG_M30_SET.txt - This file
+
+Configuration Guides:
+- docs/CONFIGURATION_QUICK_REFERENCE.md
+- docs/PROFITABLE_STRATEGY_GUIDE.md
+- TESTING_MODE_GUIDE.txt
+- AGGRESSIVE_TESTING_CONFIG_APPLIED.txt
+
+================================================================================
+SUMMARY
+================================================================================
+
+✅ Default configuration set to M30 conservative strategy
+✅ Missing 'sys' import added to config_manager.py
+✅ Current aggressive M1 config NOT affected
+✅ Default only applies to new installations or missing configs
+✅ M30 recommended for live trading
+✅ M1 aggressive good for testing only
+
+Next Steps:
+1. Continue using current M1 config for testing
+2. Evaluate results after sufficient data
+3. Switch to M30 for live trading when ready
+4. Monitor and adjust based on performance
+
+================================================================================

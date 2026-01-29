@@ -5,6 +5,7 @@ Handles external configuration file for executable compatibility
 
 import json
 import os
+import sys
 import logging
 from pathlib import Path
 from datetime import datetime
@@ -40,61 +41,61 @@ class ConfigManager:
         self.config = self._load_or_create_config()
     
     def _get_default_config(self):
-        """Get default configuration values"""
+        """Get default configuration values - M30 with aggressive settings"""
         return {
-            'symbols': ['XAUUSD', 'XAGUSD'],
-            'timeframe': 30,  # M30
-            'magic_number': 123456,  # Unique identifier for bot trades
-            'lot_size': 0.01,  # Default lot size
-            'risk_percent': 1.0,
-            'reward_ratio': 1.5,
-            'min_confidence': 0.6,
-            'max_daily_loss': 5,
+            'symbols': ['XAUUSD', 'XAGUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'],
+            'timeframe': 30,  # M30 - 30 minute timeframe
+            'magic_number': 123456,
+            'lot_size': 0.01,
+            'risk_percent': 0.5,
+            'reward_ratio': 2,
+            'min_confidence': 0.25,
+            'max_daily_loss': 10,
             'fast_ma_period': 10,
-            'slow_ma_period': 30,
+            'slow_ma_period': 20,
             'rsi_period': 14,
-            'rsi_overbought': 75,
-            'rsi_oversold': 25,
+            'rsi_overbought': 90,
+            'rsi_oversold': 10,
             'macd_fast': 12,
             'macd_slow': 26,
             'macd_signal': 9,
-            'macd_min_histogram': 0.3,
+            'macd_min_histogram': 0.5,
             'atr_period': 14,
-            'atr_multiplier': 1.5,
-            'adx_min_strength': 20,
+            'atr_multiplier': 2,
+            'adx_min_strength': 25,
             'use_rsi': True,
-            'use_macd': True,
-            'use_adx': True,
+            'use_macd': False,
+            'use_adx': False,
             'use_trend_filter': False,
             'trend_ma_period': 100,
             'enable_trading_hours': False,
             'trading_start_hour': 0,
             'trading_end_hour': 23,
             'avoid_news_trading': False,
-            'news_buffer_minutes': 30,
+            'news_buffer_minutes': 60,
             'use_split_orders': True,
             'num_positions': 3,
-            'tp_level_1': 1.0,
-            'tp_level_2': 1.5,
-            'tp_level_3': 2.5,
-            'tp_levels': [1.5, 2.5, 4.0],  # R:R ratios for split orders
-            'partial_close_percent': [40, 30, 30],  # % allocation for each TP
-            'max_lot_per_order': 0.5,  # Max lot size per order
-            'max_trades_total': 20,
-            'max_trades_per_symbol': 5,
+            'tp_level_1': 1.5,
+            'tp_level_2': 2.5,
+            'tp_level_3': 4,
+            'tp_levels': [1.5, 2.5, 4.0],
+            'partial_close_percent': [40, 30, 30],
+            'max_lot_per_order': 0.5,
+            'max_trades_total': 999,
+            'max_trades_per_symbol': 10,
             'enable_trailing_stop': True,
-            'trail_activation': 1.0,
-            'trail_distance': 0.8,
+            'trail_activation': 1.5,
+            'trail_distance': 1,
             'use_adaptive_risk': True,
-            'max_risk_multiplier': 2.0,
+            'max_risk_multiplier': 1.5,
             'min_risk_multiplier': 0.5,
-            'max_drawdown_percent': 15,
-            'max_daily_trades': 50,
-            'use_volume_filter': True,  # Volume analysis
-            'min_volume_ma': 1.2,  # Minimum volume vs MA
-            'volume_ma_period': 20,  # Volume MA period
-            'obv_period': 20,  # OBV period
-            'update_interval': 60,  # Analysis interval in seconds
+            'max_drawdown_percent': 10,
+            'max_daily_trades': 999,
+            'use_volume_filter': False,
+            'min_volume_ma': 1.2,
+            'volume_ma_period': 20,
+            'obv_period': 20,
+            'update_interval': 60,
             'version': '2.1.0',
             'last_updated': datetime.now().isoformat()
         }
