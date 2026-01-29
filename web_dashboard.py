@@ -129,13 +129,20 @@ def config_api():
             
             # Update configuration using config manager
             if config_manager.update_config(new_config):
+                # Reload current_config from config manager
                 current_config = config_manager.get_config()
+                
                 logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
                 logger.info(f"Configuration saved to: {config_manager.config_file}")
+                
+                # If bot is running, it needs to be restarted to apply new config
+                restart_needed = bot_running
+                
                 return jsonify({
                     'status': 'success', 
-                    'message': 'Configuration saved successfully',
-                    'config_file': str(config_manager.config_file)
+                    'message': 'Configuration saved successfully. Restart bot to apply changes.' if restart_needed else 'Configuration saved successfully',
+                    'config_file': str(config_manager.config_file),
+                    'restart_needed': restart_needed
                 })
             else:
                 return jsonify({'status': 'error', 'message': 'Failed to save configuration'})
@@ -148,10 +155,22 @@ def config_api():
 @app.route('/api/bot/start', methods=['POST'])
 def start_bot():
     """Start the trading bot"""
-    global bot_running, bot_thread
+    global bot_running, bot_thread, current_config
     
     if bot_running:
         return jsonify({'status': 'error', 'message': 'Bot already running'})
+    
+    # CRITICAL: Reload configuration from config manager before starting
+    current_config = config_manager.get_config()
+    logger.info("=" * 80)
+    logger.info("STARTING BOT WITH CONFIGURATION:")
+    logger.info(f"Config file: {config_manager.config_file}")
+    logger.info(f"Symbols: {current_config.get('symbols')}")
+    logger.info(f"Timeframe: {current_config.get('timeframe')}")
+    logger.info(f"Risk: {current_config.get('risk_percent')}%")
+    logger.info(f"Min Confidence: {current_config.get('min_confidence', 0.6)*100}%")
+    logger.info(f"Use Volume Filter: {current_config.get('use_volume_filter', True)}")
+    logger.info("=" * 80)
     
     # Test MT5 connection first
     if not mt5.initialize():
@@ -167,20 +186,46 @@ def start_bot():
     mt5.shutdown()
     
     bot_running = True
-    bot_thread = threading.Thread(target=run_bot_background)
+    bot_thread = threading.Thread(target=run_bot_background, daemon=True)  # Make daemon thread
     bot_thread.start()
     
-    logger.info("Trading bot started")
+    logger.info("Trading bot started successfully")
     return jsonify({'status': 'success', 'message': 'Bot started successfully'})
 
 
 @app.route('/api/bot/stop', methods=['POST'])
 def stop_bot():
     """Stop the trading bot"""
-    global bot_running
+    global bot_running, bot_thread
+    
+    if not bot_running:
+        return jsonify({'status': 'warning', 'message': 'Bot is not running'})
+    
+    logger.info("=" * 80)
+    logger.info("STOPPING TRADING BOT...")
+    logger.info("=" * 80)
     
     bot_running = False
-    logger.info("Trading bot stopped")
+    
+    # Wait for thread to finish (max 10 seconds)
+    if bot_thread and bot_thread.is_alive():
+        logger.info("Waiting for bot thread to stop...")
+        bot_thread.join(timeout=10)
+        if bot_thread.is_alive():
+            logger.warning("Bot thread did not stop gracefully within 10 seconds")
+        else:
+            logger.info("Bot thread stopped successfully")
+    
+    # Force MT5 shutdown to ensure clean state
+    try:
+        mt5.shutdown()
+        logger.info("MT5 connection closed")
+    except Exception as e:
+        logger.warning(f"Error closing MT5: {e}")
+    
+    logger.info("=" * 80)
+    logger.info("TRADING BOT STOPPED")
+    logger.info("=" * 80)
     
     return jsonify({'status': 'success', 'message': 'Bot stopped successfully'})
 
@@ -787,12 +832,22 @@ def update_config_file(new_config):
 
 
 def run_bot_background():
-    """Run bot in background thread"""
-    global bot_running
+    """Run bot in background thread with proper termination handling"""
+    global bot_running, current_config
     
     from src.mt5_trading_bot import MT5TradingBot
     
+    # Get latest configuration from config manager
+    current_config = config_manager.get_config()
+    
     logger.info("Initializing trading bot...")
+    logger.info(f"Configuration loaded:")
+    logger.info(f"  Symbols: {current_config.get('symbols')}")
+    logger.info(f"  Timeframe: {current_config.get('timeframe')}")
+    logger.info(f"  Risk: {current_config.get('risk_percent')}%")
+    logger.info(f"  Reward Ratio: {current_config.get('reward_ratio')}:1")
+    logger.info(f"  Min Confidence: {current_config.get('min_confidence', 0.6)*100}%")
+    
     bot = MT5TradingBot(current_config)
     
     if not bot.connect():
@@ -805,16 +860,52 @@ def run_bot_background():
     try:
         while bot_running:
             try:
-                bot.run()
-                time.sleep(current_config.get('update_interval', 15))
+                # Check if bot should still be running
+                if not bot_running:
+                    logger.info("Bot stop signal received, exiting loop")
+                    break
+                
+                # Run strategy for each symbol
+                for symbol in bot.symbols:
+                    if not bot_running:  # Check again before each symbol
+                        break
+                    try:
+                        bot.run_strategy(symbol)
+                    except Exception as e:
+                        logger.error(f"Error processing {symbol}: {str(e)}")
+                        logger.debug(f"Traceback:", exc_info=True)
+                
+                # Manage existing positions (trailing stops)
+                if bot_running:
+                    try:
+                        bot.manage_positions()
+                    except Exception as e:
+                        logger.error(f"Error managing positions: {str(e)}")
+                        logger.debug(f"Traceback:", exc_info=True)
+                
+                # Sleep with frequent checks for stop signal
+                update_interval = current_config.get('update_interval', 60)
+                for _ in range(update_interval):
+                    if not bot_running:
+                        logger.info("Bot stop signal received during sleep")
+                        break
+                    time.sleep(1)  # Check every second
+                
             except Exception as e:
                 logger.error(f"Error in bot loop: {str(e)}")
+                logger.debug(f"Traceback:", exc_info=True)
+                if not bot_running:
+                    break
                 time.sleep(5)  # Wait before retrying
     except Exception as e:
         logger.error(f"Critical bot error: {str(e)}")
+        logger.debug(f"Traceback:", exc_info=True)
     finally:
         logger.info("Shutting down bot...")
-        bot.disconnect()
+        try:
+            bot.disconnect()
+        except Exception as e:
+            logger.error(f"Error disconnecting bot: {e}")
         bot_running = False
         logger.info("Bot shutdown complete")
 

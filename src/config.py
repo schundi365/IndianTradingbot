@@ -80,7 +80,7 @@ INDICES = [
 
 # Default symbols (conservative - metals only)
 # Uncomment categories below to add more symbols
-SYMBOLS = ['XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD', 'AUDUSD']
+SYMBOLS = ['XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD', 'EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD']
 
 # To trade forex majors, uncomment:
 # SYMBOLS.extend(FOREX_MAJORS)
@@ -138,7 +138,7 @@ TREND_CONSISTENCY_HIGH = 70     # High consistency required
 VOLATILITY_HIGH = 1.5
 
 # HIGH confidence threshold
-MIN_TRADE_CONFIDENCE = 0.6
+MIN_TRADE_CONFIDENCE = 0.5
 
 MAX_RISK_MULTIPLIER = 2
 MIN_RISK_MULTIPLIER = 0.5
@@ -232,6 +232,8 @@ TREND_MA_PERIOD = 50
 # ==============================================================================
 USE_VOLUME_FILTER = True
 MIN_VOLUME_MA = 1.2             # Require above-average volume
+VOLUME_MA_PERIOD = 20           # Period for volume moving average
+OBV_PERIOD = 14                 # Period for On-Balance Volume indicator
 
 AVOID_NEWS_TRADING = False
 NEWS_BUFFER_MINUTES = 30
@@ -376,6 +378,8 @@ def get_config():
         'trend_ma_period': TREND_MA_PERIOD,
         'use_volume_filter': USE_VOLUME_FILTER,
         'min_volume_ma': MIN_VOLUME_MA,
+        'volume_ma_period': VOLUME_MA_PERIOD,
+        'obv_period': OBV_PERIOD,
         'avoid_news_trading': AVOID_NEWS_TRADING,
         'news_buffer_minutes': NEWS_BUFFER_MINUTES,
         'use_bollinger': USE_BOLLINGER,

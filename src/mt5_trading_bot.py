@@ -18,6 +18,14 @@ except ImportError:
     ADAPTIVE_RISK_AVAILABLE = False
     logging.warning("Adaptive Risk Manager not available")
 
+# Import volume analyzer
+try:
+    from volume_analyzer import VolumeAnalyzer
+    VOLUME_ANALYZER_AVAILABLE = True
+except ImportError:
+    VOLUME_ANALYZER_AVAILABLE = False
+    logging.warning("Volume Analyzer not available")
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -80,23 +88,82 @@ class MT5TradingBot:
             if self.use_adaptive_risk and not ADAPTIVE_RISK_AVAILABLE:
                 logging.warning("Adaptive Risk requested but module not available")
         
+        # Volume analyzer
+        self.use_volume_filter = config.get('use_volume_filter', True)
+        if self.use_volume_filter and VOLUME_ANALYZER_AVAILABLE:
+            self.volume_analyzer = VolumeAnalyzer(config)
+            logging.info("Volume Analysis enabled")
+        else:
+            self.volume_analyzer = None
+            if self.use_volume_filter and not VOLUME_ANALYZER_AVAILABLE:
+                logging.warning("Volume filter requested but module not available")
+        
         self.positions = {}
         self.split_position_groups = {}  # Track groups of split positions
         
     def connect(self):
-        """Connect to MetaTrader5"""
+        """Connect to MetaTrader5 with build 5549+ compatibility"""
+        import os
+        import platform
+        
+        # Try standard initialization first
         if not mt5.initialize():
-            logging.error(f"MT5 initialization failed: {mt5.last_error()}")
-            return False
+            # Try alternative initialization for build 5549+
+            if platform.system() == 'Windows':
+                logging.info("Standard MT5 initialization failed, trying with path parameter...")
+                
+                # Try common MT5 installation paths
+                username = os.environ.get('USERNAME', '')
+                mt5_paths = [
+                    r"C:\Program Files\MetaTrader 5\terminal64.exe",
+                    r"C:\Program Files (x86)\MetaTrader 5\terminal64.exe",
+                ]
+                
+                # Try to find MT5 in user's AppData
+                appdata = os.environ.get('APPDATA', '')
+                if appdata:
+                    import glob
+                    terminal_paths = glob.glob(os.path.join(appdata, 'MetaQuotes', 'Terminal', '*', 'terminal64.exe'))
+                    mt5_paths.extend(terminal_paths)
+                
+                initialized = False
+                for path in mt5_paths:
+                    if os.path.exists(path):
+                        logging.info(f"Trying MT5 path: {path}")
+                        if mt5.initialize(path=path):
+                            logging.info(f"MT5 initialized successfully with path: {path}")
+                            initialized = True
+                            break
+                
+                if not initialized:
+                    logging.error(f"MT5 initialization failed: {mt5.last_error()}")
+                    logging.error("Tried paths: " + ", ".join(mt5_paths))
+                    return False
+            else:
+                logging.error(f"MT5 initialization failed: {mt5.last_error()}")
+                return False
         
         logging.info(f"MT5 initialized successfully")
-        logging.info(f"MT5 version: {mt5.version()}")
+        
+        # Get version info
+        version_info = mt5.version()
+        if version_info:
+            logging.info(f"MT5 version: {version_info}")
+        
+        # Get terminal info including build number
+        terminal_info = mt5.terminal_info()
+        if terminal_info:
+            logging.info(f"MT5 build: {terminal_info.build}")
+            logging.info(f"MT5 company: {terminal_info.company}")
+            if terminal_info.build >= 5549:
+                logging.info("MT5 build 5549+ detected - enhanced compatibility mode active")
         
         # Get account info
         account_info = mt5.account_info()
         if account_info:
             logging.info(f"Account balance: {account_info.balance}")
             logging.info(f"Account equity: {account_info.equity}")
+            logging.info(f"Account server: {account_info.server}")
         
         return True
     
@@ -1019,6 +1086,24 @@ class MT5TradingBot:
         if signal == 0:
             return  # No signal
         
+        # === VOLUME ANALYSIS ===
+        confidence_adjustment = 0.0
+        if self.use_volume_filter and self.volume_analyzer:
+            logging.info(f"Applying Volume Analysis for {symbol}")
+            
+            # Check if trade should be taken based on volume
+            should_trade, volume_confidence = self.volume_analyzer.should_trade(
+                df, 'buy' if signal == 1 else 'sell'
+            )
+            
+            if not should_trade:
+                logging.info(f"Trade rejected by volume filter for {symbol}")
+                return
+            
+            # Apply confidence boost from volume analysis
+            confidence_adjustment = volume_confidence
+            logging.info(f"Volume confidence adjustment: {confidence_adjustment:+.2%}")
+        
         # === ADAPTIVE RISK MANAGEMENT ===
         if self.use_adaptive_risk and self.adaptive_risk_manager:
             logging.info(f"Using Adaptive Risk Management for {symbol}")
@@ -1040,11 +1125,21 @@ class MT5TradingBot:
             confidence = adaptive_params['confidence']
             market_condition = adaptive_params['market_condition']
             
+            # Apply volume confidence adjustment
+            confidence += confidence_adjustment
+            confidence = min(1.0, max(0.0, confidence))  # Clamp between 0 and 1
+            
+            # Adjust risk multiplier based on updated confidence
+            if confidence >= 0.8:
+                risk_multiplier = min(risk_multiplier * 1.1, self.config.get('max_risk_multiplier', 2.0))
+            elif confidence < 0.5:
+                risk_multiplier = max(risk_multiplier * 0.9, self.config.get('min_risk_multiplier', 0.5))
+            
             logging.info(f"Adaptive Analysis:")
             logging.info(f"  Market Type: {market_condition['market_type']}")
             logging.info(f"  Trend Strength: {market_condition['trend_strength']:.1f}")
             logging.info(f"  Volatility Ratio: {market_condition['volatility_ratio']:.2f}")
-            logging.info(f"  Trade Confidence: {confidence:.1%}")
+            logging.info(f"  Trade Confidence: {confidence:.1%} (Volume boost: {confidence_adjustment:+.1%})")
             logging.info(f"  Risk Multiplier: {risk_multiplier:.2f}x")
             
             # Calculate position size with risk adjustment

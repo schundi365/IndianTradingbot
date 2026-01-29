@@ -1,0 +1,284 @@
+================================================================================
+REBUILD CHECKLIST - GEM Trading Bot v2.1.1
+================================================================================
+
+Date: January 29, 2026
+Critical Update: MT5 5549 Compatibility + Config + Process Management
+
+================================================================================
+PRE-REBUILD CHECKS
+================================================================================
+
+[ ] All code changes committed
+[ ] No syntax errors (run: python -m py_compile src/mt5_trading_bot.py web_dashboard.py)
+[ ] Dependencies installed (run: pip install -r requirements.txt)
+[ ] MT5 installed and accessible for testing
+
+================================================================================
+REBUILD STEPS
+================================================================================
+
+Step 1: Clean Previous Build
+-----------------------------
+[ ] Delete build/ folder
+[ ] Delete dist/ folder
+[ ] Delete *.spec files
+
+Step 2: Run Build Script
+-------------------------
+[ ] Open Command Prompt as Administrator
+[ ] Navigate to project folder
+[ ] Run: build_windows.bat
+[ ] Wait 5-10 minutes
+[ ] Check for "BUILD COMPLETE!" message
+
+Step 3: Verify Build Output
+----------------------------
+[ ] dist/GEM_Trading_Bot.exe exists
+[ ] File size ~150-200 MB
+[ ] dist/GEM_Trading_Bot_Windows/ folder created
+[ ] All documentation files copied
+
+================================================================================
+TESTING CHECKLIST
+================================================================================
+
+Test 1: Basic Startup
+----------------------
+[ ] Double-click GEM_Trading_Bot.exe
+[ ] Wait 30 seconds
+[ ] Browser opens to http://localhost:5000
+[ ] Dashboard loads without errors
+
+Test 2: MT5 Connection (Build 5549)
+------------------------------------
+[ ] Start MT5 build 5549
+[ ] Login to account
+[ ] Enable algo trading
+[ ] Dashboard > Test MT5
+[ ] Shows "Connected"
+[ ] Check logs for "MT5 build: 5549"
+
+Test 3: Configuration Changes
+------------------------------
+[ ] Dashboard > Configuration
+[ ] Change symbols to: XAUUSD, EURUSD, GBPUSD
+[ ] Change timeframe to: M30
+[ ] Change risk to: 0.5%
+[ ] Click "Save Configuration"
+[ ] Check bot_config.json file - changes saved
+[ ] Dashboard > Start Bot
+[ ] Check logs for "STARTING BOT WITH CONFIGURATION"
+[ ] Verify symbols: ['XAUUSD', 'EURUSD', 'GBPUSD']
+[ ] Verify timeframe: 30
+[ ] Verify risk: 0.5%
+
+Test 4: Bot Stop Function
+--------------------------
+[ ] Dashboard > Start Bot
+[ ] Wait 10 seconds
+[ ] Dashboard > Stop Bot
+[ ] Check logs for "STOPPING TRADING BOT"
+[ ] Check logs for "Bot thread stopped successfully"
+[ ] Check logs for "TRADING BOT STOPPED"
+[ ] Open Task Manager (Ctrl+Shift+Esc)
+[ ] Search for "GEM_Trading_Bot.exe"
+[ ] Should NOT be in process list
+[ ] Dashboard shows "Bot Status: Stopped"
+
+Test 5: Volume Analysis Integration
+------------------------------------
+[ ] Dashboard > Configuration
+[ ] Verify "Use Volume Filter" checkbox exists
+[ ] Check it's enabled by default
+[ ] Dashboard > Start Bot
+[ ] Check logs for "Volume Analysis enabled"
+[ ] Check logs for "Applying Volume Analysis"
+[ ] Check logs for "Volume confidence adjustment"
+
+Test 6: Multiple Start/Stop Cycles
+-----------------------------------
+[ ] Start Bot
+[ ] Wait 5 seconds
+[ ] Stop Bot
+[ ] Wait 5 seconds
+[ ] Start Bot again
+[ ] Wait 5 seconds
+[ ] Stop Bot again
+[ ] Check Task Manager - no zombie processes
+[ ] Check logs - clean start/stop messages
+
+Test 7: Configuration Persistence
+----------------------------------
+[ ] Change configuration
+[ ] Save configuration
+[ ] Stop bot
+[ ] Close executable completely
+[ ] Restart executable
+[ ] Check configuration - should be saved
+[ ] Start bot
+[ ] Check logs - should use saved config
+
+================================================================================
+DISTRIBUTION CHECKLIST
+================================================================================
+
+Step 1: Create Distribution Package
+------------------------------------
+[ ] Navigate to dist/ folder
+[ ] Verify GEM_Trading_Bot_Windows/ contains:
+    [ ] GEM_Trading_Bot.exe
+    [ ] START_HERE.txt
+    [ ] USER_GUIDE.md
+    [ ] QUICK_START.md
+    [ ] TROUBLESHOOTING.md
+    [ ] README.md
+    [ ] CHANGELOG.md
+    [ ] WINDOWS_INSTALLATION_GUIDE.md
+    [ ] FEATURES_GUIDE.md
+    [ ] QUICK_REFERENCE_CARD.md
+    [ ] docs/ folder with guides
+
+Step 2: Create ZIP File
+------------------------
+[ ] Right-click GEM_Trading_Bot_Windows folder
+[ ] Send to > Compressed (zipped) folder
+[ ] Rename to: GEM_Trading_Bot_v2.1.1_Windows.zip
+[ ] Test ZIP extraction
+[ ] Verify all files present
+
+Step 3: Create Release Notes
+-----------------------------
+[ ] Copy EXECUTABLE_UPDATE_GUIDE.md
+[ ] Create release notes highlighting:
+    - MT5 5549 compatibility
+    - Configuration fixes
+    - Process management fixes
+[ ] Include upgrade instructions
+
+Step 4: Upload and Distribute
+------------------------------
+[ ] Upload ZIP to file sharing service
+[ ] Create download link
+[ ] Notify users via:
+    [ ] Email
+    [ ] Discord/Slack
+    [ ] GitHub release
+    [ ] Website
+[ ] Include CRITICAL UPDATE notice
+
+================================================================================
+POST-DISTRIBUTION MONITORING
+================================================================================
+
+Week 1: Monitor Closely
+------------------------
+[ ] Check user feedback daily
+[ ] Monitor for common issues
+[ ] Respond to support requests
+[ ] Update troubleshooting guide if needed
+
+Week 2-4: Regular Monitoring
+-----------------------------
+[ ] Check feedback 2-3 times per week
+[ ] Collect feature requests
+[ ] Plan next release
+[ ] Update documentation
+
+================================================================================
+ROLLBACK PLAN (If Issues Found)
+================================================================================
+
+If Critical Issues Discovered:
+-------------------------------
+[ ] Notify users immediately
+[ ] Provide rollback instructions
+[ ] Revert to previous version
+[ ] Fix issues
+[ ] Test thoroughly
+[ ] Rebuild and redistribute
+
+Rollback Steps for Users:
+--------------------------
+1. Download previous version (v2.1.0)
+2. Close current bot
+3. Delete v2.1.1 installation
+4. Extract v2.1.0
+5. Copy bot_config.json back
+6. Restart bot
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+Release is successful if:
+[ ] 90%+ users can connect to MT5 5549
+[ ] 95%+ users report config changes work
+[ ] 100% users report bot stops properly
+[ ] No critical bugs reported in first week
+[ ] Positive user feedback
+[ ] No rollback required
+
+================================================================================
+CONTACTS FOR ISSUES
+================================================================================
+
+Technical Issues:
+- Check: docs/fixes/EXECUTABLE_CRITICAL_FIXES.md
+- Check: TROUBLESHOOTING.md
+- Check: trading_bot.log
+
+User Support:
+- Email: [your-email]
+- Discord: [your-discord]
+- GitHub Issues: [your-repo]/issues
+
+================================================================================
+VERSION INFORMATION
+================================================================================
+
+Version: 2.1.1
+Build Date: January 29, 2026
+Platform: Windows 10/11 (64-bit)
+MT5 Compatibility: Build 5549+
+Python: 3.8+ (embedded)
+
+Critical Fixes:
+✅ MT5 build 5549 compatibility
+✅ Configuration reload on start
+✅ Proper process termination
+✅ Enhanced logging
+✅ Volume analysis integration
+
+================================================================================
+FINAL CHECKS BEFORE DISTRIBUTION
+================================================================================
+
+[ ] All tests passed
+[ ] No errors in logs
+[ ] Documentation complete
+[ ] ZIP file created
+[ ] Release notes written
+[ ] Upgrade guide included
+[ ] Support channels ready
+[ ] Monitoring plan in place
+
+================================================================================
+READY TO DISTRIBUTE? YES / NO
+================================================================================
+
+If YES:
+- Run: build_windows.bat
+- Complete all tests
+- Create distribution ZIP
+- Upload and notify users
+
+If NO:
+- Review failed tests
+- Fix issues
+- Retest
+- Return to this checklist
+
+================================================================================
+GOOD LUCK! 🚀
+================================================================================

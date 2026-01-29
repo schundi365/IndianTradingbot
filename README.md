@@ -26,6 +26,7 @@ An intelligent automated trading bot for MetaTrader 5 with **proven profitable s
 ## ✨ Key Features
 
 - 🎯 **Profitable Strategy** - Trend-following with multiple confirmations (55-65% win rate)
+- 📊 **Volume Analysis** - Professional volume filtering, OBV, divergence detection (NEW!)
 - 📊 **Smart Position Sizing** - Calculates optimal lot sizes based on account and risk
 - 🎚️ **Split Orders** - Multiple take profit levels (1.5R, 2.5R, 4.0R)
 - 🔄 **Intelligent Trailing Stops** - Protect and maximize profits
@@ -237,6 +238,32 @@ mt5-trading-bot/
 ```
 
 ## ⚙️ Advanced Features
+
+### Volume Analysis (NEW!)
+
+Professional-grade volume analysis integrated with adaptive risk management:
+
+**Volume Filtering**:
+- Only trades when volume > 1.2× moving average
+- Filters out low-volume false breakouts
+- Reduces whipsaws in ranging markets
+
+**Volume Indicators**:
+1. **Volume Trend** - Detects increasing/decreasing volume patterns
+2. **On-Balance Volume (OBV)** - Momentum indicator based on volume flow
+3. **Volume Divergence** - Identifies price/volume divergences
+4. **Volume Profile** - Analyzes volume distribution at price levels
+
+**Confidence Boost System**:
+- Above average volume: +5%
+- Increasing volume trend: +5%
+- OBV confirms signal: +5%
+- Bullish/Bearish divergence: +10%
+- Maximum boost: +15%
+
+Volume confidence is added to adaptive risk confidence, dynamically adjusting position size and risk parameters.
+
+See [Volume Analysis Guide](docs/VOLUME_ANALYSIS_GUIDE.md) for details.
 
 ### Adaptive Risk Management
 
