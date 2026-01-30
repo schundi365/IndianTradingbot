@@ -1,0 +1,398 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    GEM TRADING BOT - TEST WORKFLOW DIAGRAM                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           PHASE 1: PREPARATION                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────┐
+    │   README.md     │  ← Start here! Read testing guide
+    └────────┬────────┘
+             │
+             ▼
+    ┌─────────────────────────┐
+    │ TEST_CASES_MASTER.csv   │  ← Review all 100 test cases
+    └────────┬────────────────┘
+             │
+             ▼
+    ┌──────────────────────────────┐
+    │ TEST_SCENARIOS_DETAILED.md   │  ← Study detailed scenarios
+    └──────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          PHASE 2: TEST EXECUTION                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────┐
+    │ TEST_CASES_MASTER.csv   │  ← Select test case (e.g., TC001)
+    └────────┬────────────────┘
+             │
+             ▼
+    ┌──────────────────────────────┐
+    │ TEST_SCENARIOS_DETAILED.md   │  ← Follow step-by-step instructions
+    └────────┬─────────────────────┘
+             │
+             ▼
+         Execute Test
+             │
+             ▼
+    ┌────────────────────────────────┐
+    │ TEST_EXECUTION_TRACKING.csv    │  ← Record results (Pass/Fail)
+    └────────┬───────────────────────┘
+             │
+             ├─── PASS ──→ Continue to next test
+             │
+             └─── FAIL ──→ ┌──────────────────────┐
+                           │ DEFECT_TRACKING.csv  │  ← Log defect
+                           └──────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          PHASE 3: DEFECT MANAGEMENT                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────────────┐
+    │ DEFECT_TRACKING.csv  │  ← Create defect record
+    └────────┬─────────────┘
+             │
+             ▼
+    Assign to Developer
+             │
+             ▼
+    Developer Fixes Issue
+             │
+             ▼
+    ┌────────────────────────────────┐
+    │ TEST_EXECUTION_TRACKING.csv    │  ← Retest and update status
+    └────────┬───────────────────────┘
+             │
+             ├─── PASS ──→ Close defect
+             │
+             └─── FAIL ──→ Reopen defect with new info
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          PHASE 4: ANALYSIS & REPORTING                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+    ┌────────────────────────────────┐
+    │ TEST_EXECUTION_TRACKING.csv    │  ← Gather execution data
+    └────────┬───────────────────────┘
+             │
+             ▼
+    ┌──────────────────────┐
+    │ DEFECT_TRACKING.csv  │  ← Gather defect data
+    └────────┬─────────────┘
+             │
+             ▼
+    ┌──────────────────────────┐
+    │ TEST_COVERAGE_MATRIX.csv │  ← Verify coverage
+    └────────┬─────────────────┘
+             │
+             ▼
+    ┌──────────────────────────┐
+    │ TEST_RESULTS_SUMMARY.md  │  ← Create executive summary
+    └────────┬─────────────────┘
+             │
+             ▼
+    Present to Stakeholders
+             │
+             ▼
+    Get Sign-Off for Release
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           DOCUMENT RELATIONSHIPS                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   ┌──────────────────┐         ┌──────────────────────┐                   │
+│   │   README.md      │────────▶│  All Other Files     │                   │
+│   │  (Master Guide)  │         │  (Referenced)        │                   │
+│   └──────────────────┘         └──────────────────────┘                   │
+│                                                                             │
+│   ┌──────────────────────┐     ┌──────────────────────────────┐           │
+│   │ TEST_CASES_MASTER    │────▶│ TEST_EXECUTION_TRACKING      │           │
+│   │ (What to test)       │     │ (Test results)               │           │
+│   └──────────────────────┘     └──────────────────────────────┘           │
+│            │                                  │                            │
+│            │                                  │                            │
+│            ▼                                  ▼                            │
+│   ┌──────────────────────┐     ┌──────────────────────────────┐           │
+│   │ TEST_SCENARIOS       │     │ DEFECT_TRACKING              │           │
+│   │ (How to test)        │     │ (Issues found)               │           │
+│   └──────────────────────┘     └──────────────────────────────┘           │
+│                                               │                            │
+│                                               │                            │
+│   ┌──────────────────────┐                   │                            │
+│   │ TEST_COVERAGE_MATRIX │                   │                            │
+│   │ (Coverage analysis)  │                   │                            │
+│   └──────────────────────┘                   │                            │
+│            │                                  │                            │
+│            └──────────────┬───────────────────┘                            │
+│                           │                                                │
+│                           ▼                                                │
+│                ┌──────────────────────────┐                                │
+│                │ TEST_RESULTS_SUMMARY     │                                │
+│                │ (Executive report)       │                                │
+│                └──────────────────────────┘                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                            FILE USAGE MATRIX                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────┬──────────┬──────────┬──────────┬──────────┐
+│ File                     │ Planning │ Execution│ Analysis │ Reporting│
+├──────────────────────────┼──────────┼──────────┼──────────┼──────────┤
+│ README.md                │    ✓     │    ✓     │    ✓     │    ✓     │
+│ TEST_CASES_MASTER.csv    │    ✓     │    ✓     │    ✓     │    ✓     │
+│ TEST_SCENARIOS_DETAILED  │    ✓     │    ✓     │          │          │
+│ TEST_EXECUTION_TRACKING  │          │    ✓     │    ✓     │    ✓     │
+│ DEFECT_TRACKING.csv      │          │    ✓     │    ✓     │    ✓     │
+│ TEST_COVERAGE_MATRIX     │    ✓     │          │    ✓     │    ✓     │
+│ TEST_RESULTS_SUMMARY     │          │          │    ✓     │    ✓     │
+└──────────────────────────┴──────────┴──────────┴──────────┴──────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          QUICK REFERENCE GUIDE                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ WHEN YOU NEED TO...                    │ USE THIS FILE...                   │
+├────────────────────────────────────────┼────────────────────────────────────┤
+│ Understand the testing process         │ README.md                          │
+│ See all available test cases           │ TEST_CASES_MASTER.csv              │
+│ Get detailed test instructions         │ TEST_SCENARIOS_DETAILED.md         │
+│ Record test execution results          │ TEST_EXECUTION_TRACKING.csv        │
+│ Log a bug or issue                     │ DEFECT_TRACKING.csv                │
+│ Check test coverage                    │ TEST_COVERAGE_MATRIX.csv           │
+│ Create executive summary               │ TEST_RESULTS_SUMMARY.md            │
+│ See this workflow                      │ TEST_WORKFLOW_DIAGRAM.txt          │
+└────────────────────────────────────────┴────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          TYPICAL TEST DAY WORKFLOW                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Morning:
+--------
+1. Open TEST_EXECUTION_TRACKING.csv
+2. Identify tests not yet executed
+3. Review TEST_SCENARIOS_DETAILED.md for those tests
+4. Set up test environment
+
+During Testing:
+--------------
+1. Execute test following TEST_SCENARIOS_DETAILED.md
+2. Record results in TEST_EXECUTION_TRACKING.csv
+3. If test fails, create entry in DEFECT_TRACKING.csv
+4. Take screenshots and capture logs
+5. Move to next test
+
+End of Day:
+----------
+1. Update TEST_EXECUTION_TRACKING.csv with all results
+2. Review DEFECT_TRACKING.csv for new issues
+3. Calculate progress (tests executed / 100)
+4. Communicate findings to team
+
+End of Cycle:
+------------
+1. Verify all 100 tests executed
+2. Check TEST_COVERAGE_MATRIX.csv for gaps
+3. Complete TEST_RESULTS_SUMMARY.md
+4. Present findings and get sign-off
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          TEST PRIORITY WORKFLOW                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Week 1: High Priority Tests (50 tests)
+---------------------------------------
+Focus: Critical functionality
+Tests: TC001-TC050 (approximately)
+Goal: Ensure core features work
+
+Week 2: Medium Priority Tests (43 tests)
+-----------------------------------------
+Focus: Important features
+Tests: TC051-TC093 (approximately)
+Goal: Verify advanced features
+
+Week 3: Low Priority + Integration (7 tests)
+---------------------------------------------
+Focus: Nice-to-have + full integration
+Tests: TC094-TC100
+Goal: Complete coverage
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          DEFECT WORKFLOW DETAIL                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+1. DEFECT FOUND
+   │
+   ├─→ Create entry in DEFECT_TRACKING.csv
+   │   - Assign unique Defect ID (DEF001, DEF002, etc.)
+   │   - Link to Test ID that found it
+   │   - Set Severity (Critical/High/Medium/Low)
+   │   - Set Priority
+   │   - Describe issue
+   │   - Add steps to reproduce
+   │
+   ├─→ Update TEST_EXECUTION_TRACKING.csv
+   │   - Mark test as "Fail"
+   │   - Add Defect ID reference
+   │   - Set "Retest Required" to Yes
+   │
+   └─→ Notify developer
+
+2. DEFECT FIXED
+   │
+   ├─→ Update DEFECT_TRACKING.csv
+   │   - Change Status to "Fixed"
+   │   - Add Fixed Date
+   │   - Add Fix Version
+   │
+   └─→ Schedule retest
+
+3. RETEST
+   │
+   ├─→ Re-execute test from TEST_CASES_MASTER.csv
+   │
+   ├─→ Update TEST_EXECUTION_TRACKING.csv
+   │   - Add Retest Date
+   │   - Update Retest Status
+   │
+   └─→ Update DEFECT_TRACKING.csv
+       │
+       ├─→ If PASS: Close defect
+       │
+       └─→ If FAIL: Reopen defect, add new info
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          EXCEL IMPORT INSTRUCTIONS                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+For TEST_CASES_MASTER.csv:
+--------------------------
+1. Open Excel
+2. File → Open → Browse
+3. Select TEST_CASES_MASTER.csv
+4. Data imports with 11 columns
+5. Apply filters to header row
+6. Freeze top row for easy scrolling
+7. Save as .xlsx if needed
+
+For TEST_EXECUTION_TRACKING.csv:
+--------------------------------
+1. Open Excel
+2. File → Open → Browse
+3. Select TEST_EXECUTION_TRACKING.csv
+4. Data imports with 13 columns
+5. Use for daily test tracking
+6. Fill in as you execute tests
+7. Save frequently
+
+For DEFECT_TRACKING.csv:
+-----------------------
+1. Open Excel
+2. File → Open → Browse
+3. Select DEFECT_TRACKING.csv
+4. Data imports with 19 columns
+5. Add new row for each defect
+6. Track through to resolution
+7. Save frequently
+
+For TEST_COVERAGE_MATRIX.csv:
+-----------------------------
+1. Open Excel
+2. File → Open → Browse
+3. Select TEST_COVERAGE_MATRIX.csv
+4. Data imports with 4 columns
+5. Review for coverage gaps
+6. Use for planning
+7. Reference only (no updates needed)
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          SUCCESS CRITERIA                                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Testing is complete when:
+-------------------------
+✓ All 100 test cases executed
+✓ All high priority tests passed
+✓ All critical defects fixed and retested
+✓ All high priority defects fixed and retested
+✓ Test coverage verified at 100%
+✓ TEST_RESULTS_SUMMARY.md completed
+✓ Stakeholder sign-off obtained
+
+Ready for release when:
+----------------------
+✓ Pass rate ≥ 95%
+✓ No critical defects open
+✓ No high priority defects open
+✓ All medium defects documented
+✓ Performance tests passed
+✓ Integration tests passed
+✓ Documentation complete
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          CONTACT & SUPPORT                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Questions about testing?
+------------------------
+→ Read tests/README.md first
+→ Review TEST_SCENARIOS_DETAILED.md
+→ Check this workflow diagram
+
+Questions about the system?
+---------------------------
+→ See HIGH_LEVEL_DESIGN.md
+→ See SYSTEM_ARCHITECTURE_DIAGRAM.txt
+→ See ADAPTIVE_FEATURES_ANALYSIS.txt
+
+Questions about configuration?
+------------------------------
+→ See bot_config.json
+→ See USER_CONFIGURABLE_SETTINGS.txt
+→ See docs/ folder
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          DOCUMENT VERSION INFO                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Document: TEST_WORKFLOW_DIAGRAM.txt
+Version: 1.0
+Created: January 30, 2026
+Purpose: Visual guide to test workflow and document relationships
+Status: Complete
+
+Related Documents:
+------------------
+- tests/README.md (Master testing guide)
+- TEST_CASES_MASTER.csv (100 test cases)
+- TEST_SCENARIOS_DETAILED.md (Detailed scenarios)
+- TEST_EXECUTION_TRACKING.csv (Execution tracking)
+- DEFECT_TRACKING.csv (Defect management)
+- TEST_COVERAGE_MATRIX.csv (Coverage analysis)
+- TEST_RESULTS_SUMMARY.md (Executive summary)
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          END OF WORKFLOW DIAGRAM                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝

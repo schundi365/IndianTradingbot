@@ -1,0 +1,291 @@
+GEM TRADING BOT - SYSTEM ARCHITECTURE DIAGRAM
+================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USER INTERFACE LAYER                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────────┐         ┌──────────────────────────┐        │
+│  │   Web Dashboard (Flask)  │         │  Configuration Files     │        │
+│  │  ─────────────────────── │         │  ──────────────────────  │        │
+│  │  • Real-time monitoring  │◄────────┤  • bot_config.json       │        │
+│  │  • Settings management   │         │  • Config backups        │        │
+│  │  • Trade history         │         │  • Default settings      │        │
+│  │  • Performance charts    │         └──────────────────────────┘        │
+│  │  • Bot start/stop        │                                              │
+│  └──────────────────────────┘                                              │
+│              │                                                              │
+└──────────────┼──────────────────────────────────────────────────────────────┘
+               │
+               │ HTTP API (REST)
+               │
+┌──────────────▼──────────────────────────────────────────────────────────────┐
+│                         CORE TRADING ENGINE LAYER                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │                      MT5TradingBot (Main Bot)                         │ │
+│  │  ───────────────────────────────────────────────────────────────────  │ │
+│  │  • Signal generation (MA crossover + filters)                         │ │
+│  │  • Trade execution (single or split positions)                        │ │
+│  │  • Position management (trailing stops, updates)                      │ │
+│  │  • Risk management (position sizing, limits)                          │ │
+│  │  • Multi-symbol support (16 symbols)                                  │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│              │                                                              │
+│              │ Uses                                                         │
+│              ▼                                                              │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │                      ConfigManager                                    │ │
+│  │  ───────────────────────────────────────────────────────────────────  │ │
+│  │  • Load/save configuration                                            │ │
+│  │  • Provide defaults                                                   │ │
+│  │  • Create backups                                                     │ │
+│  │  • Validate settings                                                  │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+               │
+               │ Integrates with
+               │
+┌──────────────▼──────────────────────────────────────────────────────────────┐
+│                         ADAPTIVE MODULES LAYER                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐│
+│  │ AdaptiveRiskManager │  │ DynamicTPManager    │  │ DynamicSLManager    ││
+│  │ ─────────────────── │  │ ─────────────────── │  │ ─────────────────── ││
+│  │ BEFORE Trade        │  │ AFTER Trade (60s)   │  │ AFTER Trade (60s)   ││
+│  │                     │  │                     │  │                     ││
+│  │ • Analyze market    │  │ • Detect trend      │  │ • Detect trend      ││
+│  │ • Classify type     │  │   acceleration      │  │   reversals         ││
+│  │ • Adjust risk       │  │ • Extend TP when    │  │ • Tighten SL when   ││
+│  │ • Set optimal       │  │   trend strong      │  │   trend reverses    ││
+│  │   SL/TP             │  │ • Maximize winners  │  │ • Protect profits   ││
+│  │                     │  │                     │  │                     ││
+│  │ Output:             │  │ Triggers:           │  │ Triggers:           ││
+│  │ • market_condition  │  │ • Strong trend      │  │ • MA crossover      ││
+│  │ • risk_multiplier   │  │ • Momentum surge    │  │ • Swing levels      ││
+│  │ • optimal_params    │  │ • Breakouts         │  │ • Volatility change ││
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘│
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+               │
+               │ Uses
+               │
+┌──────────────▼──────────────────────────────────────────────────────────────┐
+│                         ANALYSIS MODULES LAYER                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      VolumeAnalyzer                                 │   │
+│  │  ─────────────────────────────────────────────────────────────────  │   │
+│  │  • Volume MA calculation                                            │   │
+│  │  • Above-average volume detection                                   │   │
+│  │  • Volume trend analysis                                            │   │
+│  │  • OBV (On-Balance Volume)                                          │   │
+│  │  • Volume divergence detection                                      │   │
+│  │  • Confidence scoring                                               │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                  Technical Indicators (in MT5TradingBot)            │   │
+│  │  ─────────────────────────────────────────────────────────────────  │   │
+│  │  • Moving Averages (Fast 10, Slow 30)                              │   │
+│  │  • RSI (Relative Strength Index)                                    │   │
+│  │  • MACD (Moving Average Convergence Divergence)                     │   │
+│  │  • ADX (Average Directional Index)                                  │   │
+│  │  • ATR (Average True Range)                                         │   │
+│  │  • Bollinger Bands                                                  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+               │
+               │ Connects to
+               │
+┌──────────────▼──────────────────────────────────────────────────────────────┐
+│                         METATRADER 5 PLATFORM                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                      MetaTrader 5 API                               │   │
+│  │  ─────────────────────────────────────────────────────────────────  │   │
+│  │  • Market data feed (real-time prices, historical data)             │   │
+│  │  • Order execution (market orders, pending orders)                  │   │
+│  │  • Position tracking (open positions, closed trades)                │   │
+│  │  • Account information (balance, equity, margin)                    │   │
+│  │  • Symbol information (pip value, digits, spreads)                  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+DATA FLOW DIAGRAM
+================================================================
+
+SIGNAL GENERATION → TRADE EXECUTION → POSITION MANAGEMENT
+     │                    │                    │
+     ▼                    ▼                    ▼
+┌─────────┐         ┌─────────┐         ┌─────────┐
+│ Fetch   │         │ Adaptive│         │ Dynamic │
+│ Data    │────────▶│ Risk    │────────▶│ SL/TP   │
+│ from MT5│         │ Analysis│         │ Updates │
+└─────────┘         └─────────┘         └─────────┘
+     │                    │                    │
+     ▼                    ▼                    ▼
+┌─────────┐         ┌─────────┐         ┌─────────┐
+│Calculate│         │Calculate│         │ Update  │
+│Indicators│────────▶│Position │────────▶│Trailing │
+│         │         │ Size    │         │ Stops   │
+└─────────┘         └─────────┘         └─────────┘
+     │                    │                    │
+     ▼                    ▼                    ▼
+┌─────────┐         ┌─────────┐         ┌─────────┐
+│ Check   │         │ Execute │         │ Clean   │
+│ Filters │────────▶│ Trade   │────────▶│ Up      │
+│         │         │ on MT5  │         │ Closed  │
+└─────────┘         └─────────┘         └─────────┘
+
+
+CONFIGURATION FLOW
+================================================================
+
+┌──────────────┐
+│ User Changes │
+│ Settings in  │
+│ Dashboard    │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ POST to      │
+│ /api/config  │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ ConfigManager│
+│ Validates &  │
+│ Saves        │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ bot_config   │
+│ .json        │
+│ Updated      │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Bot Reloads  │
+│ Config on    │
+│ Next Cycle   │
+└──────────────┘
+
+
+ADAPTIVE FEATURES INTEGRATION
+================================================================
+
+                    ┌─────────────────┐
+                    │  Market Data    │
+                    │  (Price + Vol)  │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │ Calculate       │
+                    │ Indicators      │
+                    └────────┬────────┘
+                             │
+                ┌────────────┼────────────┐
+                │            │            │
+                ▼            ▼            ▼
+        ┌───────────┐ ┌───────────┐ ┌───────────┐
+        │ Adaptive  │ │ Dynamic   │ │ Dynamic   │
+        │ Risk      │ │ TP        │ │ SL        │
+        │ (BEFORE)  │ │ (AFTER)   │ │ (AFTER)   │
+        └─────┬─────┘ └─────┬─────┘ └─────┬─────┘
+              │             │             │
+              │             │             │
+              ▼             ▼             ▼
+        ┌───────────────────────────────────┐
+        │  Optimal Trade Execution          │
+        │  • Best entry parameters          │
+        │  • Extended TPs on acceleration   │
+        │  • Tightened SLs on reversal      │
+        └───────────────────────────────────┘
+
+
+POSITION MANAGEMENT CYCLE
+================================================================
+
+Every 60 seconds:
+
+┌─────────────────────────────────────────────────────────┐
+│ For Each Open Position:                                 │
+│                                                          │
+│  1. Fetch current market data                           │
+│  2. Calculate indicators                                │
+│  3. Get market condition (Adaptive Risk)                │
+│  4. Check Dynamic SL triggers                           │
+│     └─ Tighten if trend reverses                        │
+│  5. Check Dynamic TP triggers                           │
+│     └─ Extend if trend accelerates                      │
+│  6. Check Scalping Mode (if enabled)                    │
+│     └─ Close if profit target reached                   │
+│  7. Update trailing stop                                │
+│     └─ Move SL as price moves favorably                 │
+│  8. Log all actions                                     │
+└─────────────────────────────────────────────────────────┘
+
+
+MODULE DEPENDENCY GRAPH
+================================================================
+
+                    ┌──────────────┐
+                    │ run_bot.py   │
+                    │ (Entry Point)│
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │MT5TradingBot │◄──────────┐
+                    │ (Core Engine)│           │
+                    └──────┬───────┘           │
+                           │                   │
+        ┌──────────────────┼──────────────────┼────────────┐
+        │                  │                  │            │
+        ▼                  ▼                  ▼            ▼
+┌───────────────┐  ┌───────────────┐  ┌──────────┐  ┌──────────┐
+│ConfigManager  │  │AdaptiveRisk   │  │DynamicTP │  │DynamicSL │
+│               │  │Manager        │  │Manager   │  │Manager   │
+└───────────────┘  └───────────────┘  └──────────┘  └──────────┘
+        │                  │                  │            │
+        │                  └──────────────────┴────────────┘
+        │                             │
+        ▼                             ▼
+┌───────────────┐          ┌──────────────────┐
+│bot_config.json│          │VolumeAnalyzer    │
+│               │          │                  │
+└───────────────┘          └──────────────────┘
+                                    │
+                                    ▼
+                           ┌──────────────────┐
+                           │MetaTrader 5 API  │
+                           │                  │
+                           └──────────────────┘
+
+
+LEGEND
+================================================================
+
+┌─────┐
+│     │  = Module/Component
+└─────┘
+
+   │
+   ▼     = Data/Control Flow
+
+◄─────   = Bidirectional Communication
+
+═══════  = Layer Boundary

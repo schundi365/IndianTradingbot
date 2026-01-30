@@ -476,6 +476,74 @@ def trades_open():
     return jsonify({'positions': positions_list})
 
 
+@app.route('/api/trades/close/<int:ticket>', methods=['POST'])
+def close_position(ticket):
+    """Close a specific position by ticket number"""
+    if not mt5.initialize():
+        return jsonify({'status': 'error', 'message': 'MT5 not connected'})
+    
+    try:
+        # Get the position
+        positions = mt5.positions_get(ticket=ticket)
+        
+        if positions is None or len(positions) == 0:
+            mt5.shutdown()
+            return jsonify({'status': 'error', 'message': f'Position {ticket} not found'})
+        
+        position = positions[0]
+        
+        # Determine order type for closing (opposite of position type)
+        if position.type == mt5.ORDER_TYPE_BUY:
+            order_type = mt5.ORDER_TYPE_SELL
+            price = mt5.symbol_info_tick(position.symbol).bid
+        else:
+            order_type = mt5.ORDER_TYPE_BUY
+            price = mt5.symbol_info_tick(position.symbol).ask
+        
+        # Create close request
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": position.symbol,
+            "volume": position.volume,
+            "type": order_type,
+            "position": ticket,
+            "price": price,
+            "deviation": 20,
+            "magic": current_config.get('magic_number', 123456),
+            "comment": "Closed from dashboard",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC,
+        }
+        
+        # Send close order
+        result = mt5.order_send(request)
+        
+        if result is None:
+            mt5.shutdown()
+            return jsonify({'status': 'error', 'message': 'Failed to send close order'})
+        
+        if result.retcode != mt5.TRADE_RETCODE_DONE:
+            error_msg = f'Close order failed: {result.retcode} - {result.comment}'
+            logger.error(error_msg)
+            mt5.shutdown()
+            return jsonify({'status': 'error', 'message': error_msg})
+        
+        logger.info(f"Position {ticket} closed successfully from dashboard. Profit: {position.profit}")
+        mt5.shutdown()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Position {ticket} closed successfully',
+            'profit': position.profit,
+            'symbol': position.symbol
+        })
+    
+    except Exception as e:
+        logger.error(f"Error closing position {ticket}: {str(e)}")
+        mt5.shutdown()
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/api/analysis/performance', methods=['GET'])
 def analysis_performance():
     """Get performance analysis"""

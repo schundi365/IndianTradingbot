@@ -1239,7 +1239,10 @@
             <div id="positions-tab" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Open Positions</h2>
-                    <button class="btn btn-secondary" onclick="refreshPositions(event)" title="Refresh Positions">🔄</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span id="positions-last-update" style="color: #94a3b8; font-size: 0.9em;">Last updated: Never</span>
+                        <button class="btn btn-secondary" onclick="refreshPositions(event)" title="Refresh Positions">🔄</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="positions-table">
@@ -1254,10 +1257,11 @@
                                 <th>SL</th>
                                 <th>TP</th>
                                 <th>Profit</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="positions-body">
-                            <tr><td colspan="9" class="loading">Loading...</td></tr>
+                            <tr><td colspan="10" class="loading">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2473,8 +2477,13 @@
                     const tbody = document.getElementById('positions-body');
                     tbody.innerHTML = '';
                     
+                    // Update last update time
+                    const now = new Date();
+                    document.getElementById('positions-last-update').textContent = 
+                        `Last updated: ${now.toLocaleTimeString()}`;
+                    
                     if (data.positions.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" class="loading">No open positions</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="10" class="loading">No open positions</td></tr>';
                         return;
                     }
                     
@@ -2492,12 +2501,58 @@
                             <td>${pos.sl.toFixed(5)}</td>
                             <td>${pos.tp.toFixed(5)}</td>
                             <td class="${pos.profit >= 0 ? 'positive' : 'negative'}">${currencySymbol}${pos.profit.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" 
+                                        onclick="closePosition(${pos.ticket}, '${pos.symbol}')" 
+                                        title="Close this position">
+                                    ✕ Close
+                                </button>
+                            </td>
                         `;
                     });
                 })
                 .catch(err => {
                     console.error('Failed to load positions:', err);
+                    document.getElementById('positions-last-update').textContent = 
+                        `Last updated: Error - ${err.message}`;
                 });
+        }
+        
+        function closePosition(ticket, symbol) {
+            if (!confirm(`Close position ${ticket} (${symbol})?\n\nThis will immediately close the position at market price.`)) {
+                return;
+            }
+            
+            // Disable all close buttons during operation
+            const closeButtons = document.querySelectorAll('#positions-body button');
+            closeButtons.forEach(btn => btn.disabled = true);
+            
+            fetch(`/api/trades/close/${ticket}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast(`Position ${ticket} closed successfully. Profit: ${data.profit.toFixed(2)}`, 'success');
+                    // Refresh positions immediately
+                    loadPositions();
+                    // Also refresh status to update account balance
+                    loadStatus();
+                } else {
+                    showToast(`Failed to close position: ${data.message}`, 'error');
+                }
+            })
+            .catch(err => {
+                showToast(`Error closing position: ${err.message}`, 'error');
+            })
+            .finally(() => {
+                // Re-enable buttons
+                const closeButtons = document.querySelectorAll('#positions-body button');
+                closeButtons.forEach(btn => btn.disabled = false);
+            });
         }
         
         function startPositionsAutoRefresh() {
@@ -2509,8 +2564,8 @@
             // Load immediately
             loadPositions();
             
-            // Then refresh every 2 seconds
-            positionsRefreshInterval = setInterval(loadPositions, 2000);
+            // Then refresh every 1 second for real-time updates
+            positionsRefreshInterval = setInterval(loadPositions, 1000);
         }
         
         function stopPositionsAutoRefresh() {

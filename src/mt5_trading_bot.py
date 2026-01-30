@@ -114,6 +114,83 @@ class MT5TradingBot:
         self.positions = {}
         self.split_position_groups = {}  # Track groups of split positions
         
+        # Price level protection
+        self.prevent_worse_entries = config.get('prevent_worse_entries', True)
+        
+    def check_existing_position_prices(self, symbol, signal):
+        """
+        Check existing position prices to prevent placing orders at worse levels
+        
+        Args:
+            symbol (str): Trading symbol
+            signal (int): 1 for BUY, -1 for SELL
+            
+        Returns:
+            tuple: (can_trade, limit_price, reason)
+                can_trade (bool): Whether new position can be placed
+                limit_price (float): Price limit (highest buy or lowest sell)
+                reason (str): Explanation message
+        """
+        if not self.prevent_worse_entries:
+            return True, None, "Price level protection disabled"
+        
+        # Get existing positions for this symbol with our magic number
+        positions = mt5.positions_get(symbol=symbol, magic=self.magic_number)
+        
+        if not positions or len(positions) == 0:
+            return True, None, "No existing positions"
+        
+        # Get current price
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            return True, None, "Cannot get current price"
+        
+        current_price = tick.ask if signal == 1 else tick.bid
+        
+        if signal == 1:  # BUY signal
+            # Find highest existing BUY position price
+            buy_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_BUY]
+            
+            if not buy_positions:
+                return True, None, "No existing BUY positions"
+            
+            highest_buy_price = max(p.price_open for p in buy_positions)
+            
+            # Don't place BUY if current price is higher than highest existing BUY
+            if current_price > highest_buy_price:
+                reason = (f"Cannot place BUY at {current_price:.5f} - "
+                         f"higher than highest existing BUY at {highest_buy_price:.5f}")
+                logging.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
+                logging.info(f"   Existing BUY positions: {len(buy_positions)}")
+                logging.info(f"   Highest BUY price: {highest_buy_price:.5f}")
+                logging.info(f"   Current price: {current_price:.5f}")
+                logging.info(f"   Difference: {(current_price - highest_buy_price):.5f} ({((current_price - highest_buy_price) / highest_buy_price * 100):.2f}%)")
+                return False, highest_buy_price, reason
+            else:
+                return True, highest_buy_price, f"BUY allowed - below highest existing BUY at {highest_buy_price:.5f}"
+        
+        else:  # SELL signal
+            # Find lowest existing SELL position price
+            sell_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_SELL]
+            
+            if not sell_positions:
+                return True, None, "No existing SELL positions"
+            
+            lowest_sell_price = min(p.price_open for p in sell_positions)
+            
+            # Don't place SELL if current price is lower than lowest existing SELL
+            if current_price < lowest_sell_price:
+                reason = (f"Cannot place SELL at {current_price:.5f} - "
+                         f"lower than lowest existing SELL at {lowest_sell_price:.5f}")
+                logging.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
+                logging.info(f"   Existing SELL positions: {len(sell_positions)}")
+                logging.info(f"   Lowest SELL price: {lowest_sell_price:.5f}")
+                logging.info(f"   Current price: {current_price:.5f}")
+                logging.info(f"   Difference: {(lowest_sell_price - current_price):.5f} ({((lowest_sell_price - current_price) / lowest_sell_price * 100):.2f}%)")
+                return False, lowest_sell_price, reason
+            else:
+                return True, lowest_sell_price, f"SELL allowed - above lowest existing SELL at {lowest_sell_price:.5f}"
+        
     def connect(self):
         """Connect to MetaTrader5 with build 5549+ compatibility"""
         import os
@@ -1237,6 +1314,18 @@ class MT5TradingBot:
         
         logging.info(f"🎯 {'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
         logging.info("")
+        
+        # === PRICE LEVEL PROTECTION ===
+        can_trade, limit_price, price_reason = self.check_existing_position_prices(symbol, signal)
+        
+        if not can_trade:
+            logging.warning(f"❌ TRADE REJECTED by price level protection")
+            logging.warning(f"   {price_reason}")
+            logging.info("="*80)
+            return
+        else:
+            if limit_price is not None:
+                logging.info(f"✅ Price level check passed: {price_reason}")
         
         # === VOLUME ANALYSIS ===
         confidence_adjustment = 0.0

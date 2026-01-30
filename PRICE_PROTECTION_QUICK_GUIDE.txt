@@ -1,0 +1,110 @@
+🛡️ PRICE LEVEL PROTECTION - QUICK GUIDE
+================================================================
+
+✅ FEATURE: Prevent placing orders at worse prices than existing positions
+
+================================================================
+📋 QUICK RULES
+================================================================
+
+BUY ORDERS:
+-----------
+✅ ALLOWED: New BUY price < Highest existing BUY price
+❌ BLOCKED: New BUY price > Highest existing BUY price
+
+SELL ORDERS:
+------------
+✅ ALLOWED: New SELL price > Lowest existing SELL price
+❌ BLOCKED: New SELL price < Lowest existing SELL price
+
+
+================================================================
+⚙️ CONFIGURATION
+================================================================
+
+File: bot_config.json
+
+Enable (default):
+  "prevent_worse_entries": true
+
+Disable:
+  "prevent_worse_entries": false
+
+
+================================================================
+📊 EXAMPLES
+================================================================
+
+Example 1: BUY Protection
+--------------------------
+Existing: BUY XAUUSD at 2650, 2655, 2660
+Highest: 2660
+
+New BUY at 2665 → ❌ BLOCKED (higher than 2660)
+New BUY at 2658 → ✅ ALLOWED (lower than 2660)
+New BUY at 2645 → ✅ ALLOWED (lower than 2660)
+
+Example 2: SELL Protection
+---------------------------
+Existing: SELL XAUUSD at 2670, 2665, 2672
+Lowest: 2665
+
+New SELL at 2660 → ❌ BLOCKED (lower than 2665)
+New SELL at 2668 → ✅ ALLOWED (higher than 2665)
+New SELL at 2675 → ✅ ALLOWED (higher than 2665)
+
+
+================================================================
+🎯 BENEFITS
+================================================================
+
+✓ Better average entry prices
+✓ Prevents chasing the market
+✓ Reduces drawdown risk
+✓ More disciplined trading
+✓ Improved profitability
+
+
+================================================================
+📝 LOG MESSAGES
+================================================================
+
+When BLOCKED:
+-------------
+🚫 PRICE LEVEL PROTECTION: Cannot place BUY at X - higher than highest existing BUY at Y
+❌ TRADE REJECTED by price level protection
+
+When ALLOWED:
+-------------
+✅ Price level check passed: BUY allowed - below highest existing BUY at Y
+
+
+================================================================
+⚠️ IMPORTANT
+================================================================
+
+• Works per symbol (XAUUSD separate from XAGUSD)
+• Only checks same direction (BUY vs BUY, SELL vs SELL)
+• Only checks bot's own positions (magic number)
+• First position always allowed (no existing positions)
+
+
+================================================================
+🔧 TROUBLESHOOTING
+================================================================
+
+Too many rejections?
+→ Close some existing positions
+→ Wait for better price levels
+→ Temporarily disable if needed
+
+Not working?
+→ Check config: prevent_worse_entries = true
+→ Restart bot after config change
+→ Check logs for price level messages
+
+
+================================================================
+✅ STATUS: ACTIVE BY DEFAULT
+================================================================
+

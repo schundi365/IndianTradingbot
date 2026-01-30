@@ -1,0 +1,317 @@
+✅ NEW FEATURES ADDED TO CONFIGURATION
+================================================================
+
+📅 Date: January 30, 2026
+🎯 Features: Symbol-specific TPs, Trailing TP, Scalping Mode
+
+================================================================
+✅ WHAT'S BEEN ADDED
+================================================================
+
+All new settings have been added to bot_config.json and are ready to use!
+
+1. ✅ SYMBOL-SPECIFIC TP LEVELS
+   ----------------------------
+   Different TP levels for different symbols:
+   
+   "symbol_tp_levels": {
+       "XAGUSD": [1.5, 2.5, 4.0],  // Silver - wider TPs
+       "XAUUSD": [1.5, 2.0, 3.0],  // Gold - moderate TPs
+       "EURUSD": [1.2, 2.0, 2.5]   // Forex - tighter TPs
+   }
+   
+   BENEFIT: Each symbol gets optimal TP levels based on its characteristics
+
+2. ✅ TRAILING TAKE PROFIT
+   -----------------------
+   TP trails price when in profit:
+   
+   "enable_trailing_tp": true,
+   "trailing_tp_ratio": 0.5
+   
+   BENEFIT: Maximizes winners by letting TP follow price upward
+
+3. ✅ SCALPING MODE
+   ----------------
+   Close positions quickly when profitable:
+   
+   "use_scalping_mode": false,
+   "scalping_profit_target": 0.5,
+   "scalping_max_hold_time": 30
+   
+   BENEFIT: Quick profits, reduced exposure time
+
+
+================================================================
+📝 HOW TO USE THESE FEATURES NOW
+================================================================
+
+METHOD 1: Edit bot_config.json Directly
+----------------------------------------
+1. Open bot_config.json in text editor
+2. Find the settings you want to change
+3. Update the values
+4. Save and restart bot
+
+EXAMPLES:
+
+Enable Scalping Mode:
+  "use_scalping_mode": true,
+  "scalping_profit_target": 0.5,    // Close at 0.5% profit
+  "scalping_max_hold_time": 30      // Or after 30 minutes
+
+Add More Symbol-Specific TPs:
+  "symbol_tp_levels": {
+      "XAGUSD": [1.5, 2.5, 4.0],
+      "XAUUSD": [1.5, 2.0, 3.0],
+      "EURUSD": [1.2, 2.0, 2.5],
+      "GBPJPY": [2.0, 3.0, 5.0]     // Add new symbol
+  }
+
+Adjust Trailing TP:
+  "enable_trailing_tp": true,
+  "trailing_tp_ratio": 0.3          // More aggressive trailing
+
+
+================================================================
+🎯 FEATURE DETAILS
+================================================================
+
+1. SYMBOL-SPECIFIC TP LEVELS
+   --------------------------
+   What it does:
+   - Each symbol can have custom TP levels
+   - Overrides default tp_levels for that symbol
+   - Falls back to default if symbol not specified
+   
+   Example:
+   - XAGUSD uses [1.5, 2.5, 4.0] (wider for silver volatility)
+   - EURUSD uses [1.2, 2.0, 2.5] (tighter for forex)
+   - GBPUSD uses default [1.5, 2.5, 4.0] (not specified)
+   
+   When to use:
+   - Volatile symbols need wider TPs (XAGUSD, GBPJPY)
+   - Stable symbols need tighter TPs (EURUSD, USDCHF)
+   - Customize based on symbol behavior
+
+
+2. TRAILING TAKE PROFIT
+   ---------------------
+   What it does:
+   - When position is in profit, TP trails price
+   - TP moves further away as price moves in your favor
+   - Never moves closer (only extends)
+   
+   How it works:
+   - trailing_tp_ratio: 0.5 means TP trails at 0.5× ATR distance
+   - Lower ratio = more aggressive (trails closer)
+   - Higher ratio = more conservative (trails further)
+   
+   Example:
+   - Entry: $2,600, TP: $2,630 (initial)
+   - Price moves to $2,650
+   - TP trails to $2,680 (extended)
+   - Price moves to $2,700
+   - TP trails to $2,730 (extended again)
+   
+   When to use:
+   - Strong trending markets
+   - When you want to maximize winners
+   - When you don't want to manually adjust TPs
+
+
+3. SCALPING MODE
+   -------------
+   What it does:
+   - Closes positions quickly when profitable
+   - Two exit conditions:
+     a) Profit target reached (e.g., 0.5%)
+     b) Max hold time reached (e.g., 30 minutes)
+   
+   How it works:
+   - scalping_profit_target: Close when profit reaches X%
+   - scalping_max_hold_time: Close after X minutes if profitable
+   - Only closes profitable positions
+   
+   Example:
+   - Entry: $2,600
+   - Profit target: 0.5% = $13 profit
+   - Max hold time: 30 minutes
+   
+   Scenario 1: Profit target reached in 10 minutes
+   → Position closes at $13 profit
+   
+   Scenario 2: 30 minutes passed, $8 profit
+   → Position closes at $8 profit (time limit)
+   
+   Scenario 3: 30 minutes passed, -$5 loss
+   → Position stays open (not profitable)
+   
+   When to use:
+   - Fast-moving markets
+   - When you want quick profits
+   - When you want to reduce exposure time
+   - M1 or M5 timeframes
+
+
+================================================================
+⚙️ CONFIGURATION REFERENCE
+================================================================
+
+SYMBOL-SPECIFIC TP LEVELS:
+--------------------------
+"symbol_tp_levels": {
+    "SYMBOL": [TP1, TP2, TP3]
+}
+
+- SYMBOL: Must match MT5 symbol exactly (e.g., "XAUUSD")
+- TP1, TP2, TP3: Must be in ascending order
+- Values are multipliers of risk distance
+- If symbol not specified, uses default tp_levels
+
+Examples:
+  "XAGUSD": [1.5, 2.5, 4.0]   // Wide TPs for silver
+  "EURUSD": [1.2, 2.0, 2.5]   // Tight TPs for forex
+  "GBPJPY": [2.0, 3.0, 5.0]   // Very wide for volatile pair
+
+
+TRAILING TP:
+------------
+"enable_trailing_tp": true/false
+"trailing_tp_ratio": 0.1 to 1.0
+
+- enable_trailing_tp: Turn feature on/off
+- trailing_tp_ratio: Distance TP trails from price
+  - 0.1 = Very aggressive (trails very close)
+  - 0.5 = Balanced (recommended)
+  - 1.0 = Conservative (trails far away)
+
+Examples:
+  Aggressive: 0.3
+  Balanced: 0.5
+  Conservative: 0.7
+
+
+SCALPING MODE:
+--------------
+"use_scalping_mode": true/false
+"scalping_profit_target": 0.1 to 5.0 (%)
+"scalping_max_hold_time": 5 to 120 (minutes)
+
+- use_scalping_mode: Turn feature on/off
+- scalping_profit_target: % profit to close position
+- scalping_max_hold_time: Minutes to hold before closing if profitable
+
+Examples:
+  Quick scalping: 0.3%, 15 minutes
+  Balanced: 0.5%, 30 minutes
+  Patient: 1.0%, 60 minutes
+
+
+================================================================
+⚠️ IMPORTANT NOTES
+================================================================
+
+1. BOT CODE NEEDS UPDATES
+   -----------------------
+   These settings are in the config, but the bot code needs to be
+   updated to actually USE them. See DASHBOARD_CONTROLS_IMPLEMENTATION_PLAN.txt
+   for implementation details.
+
+2. DASHBOARD UI COMING SOON
+   -------------------------
+   Currently, you must edit bot_config.json manually.
+   Dashboard controls will be added in a future update.
+
+3. RESTART REQUIRED
+   -----------------
+   After changing config, restart the bot to apply changes.
+
+4. SYMBOL NAMES MUST MATCH
+   ------------------------
+   Symbol names in symbol_tp_levels must exactly match MT5 symbols.
+   Check MT5 for exact spelling (e.g., "XAUUSD" not "GOLD").
+
+5. SCALPING MODE BEST FOR SHORT TIMEFRAMES
+   ----------------------------------------
+   Scalping mode works best on M1, M5, M15 timeframes.
+   On M30 or H1, consider using regular TP levels instead.
+
+
+================================================================
+📋 QUICK EXAMPLES
+================================================================
+
+EXAMPLE 1: Enable Scalping Mode for Quick Profits
+--------------------------------------------------
+{
+    "use_scalping_mode": true,
+    "scalping_profit_target": 0.5,
+    "scalping_max_hold_time": 30
+}
+
+Result: Positions close when they reach 0.5% profit or after 30 minutes
+
+
+EXAMPLE 2: Add Custom TPs for Volatile Pairs
+---------------------------------------------
+{
+    "symbol_tp_levels": {
+        "XAGUSD": [2.0, 3.0, 5.0],
+        "GBPJPY": [2.0, 3.0, 5.0],
+        "EURJPY": [1.8, 2.8, 4.5]
+    }
+}
+
+Result: Volatile pairs get wider TPs to catch bigger moves
+
+
+EXAMPLE 3: Enable Aggressive Trailing TP
+-----------------------------------------
+{
+    "enable_trailing_tp": true,
+    "trailing_tp_ratio": 0.3
+}
+
+Result: TP trails close to price, maximizing winners in strong trends
+
+
+EXAMPLE 4: Combine All Features
+--------------------------------
+{
+    "symbol_tp_levels": {
+        "XAGUSD": [1.5, 2.5, 4.0],
+        "XAUUSD": [1.5, 2.0, 3.0]
+    },
+    "enable_trailing_tp": true,
+    "trailing_tp_ratio": 0.5,
+    "use_scalping_mode": false
+}
+
+Result: Custom TPs per symbol + trailing TP, no scalping
+
+
+================================================================
+✅ SUMMARY
+================================================================
+
+Configuration Status: ✅ READY
+Bot Implementation: ⏳ PENDING
+Dashboard UI: ⏳ PENDING
+
+What You Can Do Now:
+  ✅ Edit bot_config.json to use these features
+  ✅ Add symbol-specific TP levels
+  ✅ Enable/disable trailing TP
+  ✅ Enable/disable scalping mode
+  ✅ Customize all settings
+
+What's Coming:
+  ⏳ Bot code to implement these features
+  ⏳ Dashboard UI controls
+  ⏳ Full integration
+
+For implementation details, see:
+  DASHBOARD_CONTROLS_IMPLEMENTATION_PLAN.txt
+
+================================================================

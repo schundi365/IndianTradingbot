@@ -1,0 +1,619 @@
+🎯 DASHBOARD CONTROLS IMPLEMENTATION PLAN
+================================================================
+
+📅 Date: January 30, 2026
+🎯 Goal: Add dashboard controls for advanced TP/SL settings and scalping mode
+
+================================================================
+✅ CONFIGURATION ALREADY ADDED
+================================================================
+
+The following settings have been added to bot_config.json:
+
+1. ✅ Symbol-Specific TP Levels
+   ----------------------------
+   "symbol_tp_levels": {
+       "XAGUSD": [1.5, 2.5, 4.0],
+       "XAUUSD": [1.5, 2.0, 3.0],
+       "EURUSD": [1.2, 2.0, 2.5]
+   }
+
+2. ✅ Trailing TP Settings
+   -----------------------
+   "enable_trailing_tp": true,
+   "trailing_tp_ratio": 0.5
+
+3. ✅ Scalping Mode Settings
+   -------------------------
+   "use_scalping_mode": false,
+   "scalping_profit_target": 0.5,
+   "scalping_max_hold_time": 30
+
+
+================================================================
+📋 WHAT NEEDS TO BE IMPLEMENTED
+================================================================
+
+PHASE 1: Backend Support (Bot Code)
+------------------------------------
+1. ✅ Config already supports symbol_tp_levels
+2. ⏳ Bot needs to USE symbol_tp_levels when placing trades
+3. ⏳ Bot needs to implement trailing TP logic
+4. ⏳ Bot needs to implement scalping mode logic
+
+PHASE 2: Dashboard UI (Frontend)
+---------------------------------
+1. ⏳ Add UI controls for symbol-specific TP levels
+2. ⏳ Add UI controls for trailing TP settings
+3. ⏳ Add UI controls for scalping mode
+4. ⏳ Add validation for new settings
+
+PHASE 3: API Endpoints (Backend)
+---------------------------------
+1. ⏳ Update /api/config endpoint to handle new settings
+2. ⏳ Add validation for symbol_tp_levels
+3. ⏳ Add validation for trailing_tp_ratio
+4. ⏳ Add validation for scalping settings
+
+
+================================================================
+📝 DETAILED IMPLEMENTATION STEPS
+================================================================
+
+STEP 1: Update Bot to Use Symbol-Specific TP Levels
+----------------------------------------------------
+File: src/mt5_trading_bot.py
+
+Current code uses: self.config.get('tp_levels', [1.5, 2.5, 4.0])
+
+Need to change to:
+```python
+def get_tp_levels_for_symbol(self, symbol):
+    """Get TP levels for specific symbol"""
+    symbol_tp_levels = self.config.get('symbol_tp_levels', {})
+    
+    # Check if symbol has custom TP levels
+    if symbol in symbol_tp_levels:
+        return symbol_tp_levels[symbol]
+    
+    # Fall back to default TP levels
+    return self.config.get('tp_levels', [1.5, 2.5, 4.0])
+```
+
+Then update all places that use tp_levels to call this method:
+```python
+# OLD:
+tp_levels = self.config.get('tp_levels', [1.5, 2.5, 4.0])
+
+# NEW:
+tp_levels = self.get_tp_levels_for_symbol(symbol)
+```
+
+
+STEP 2: Implement Trailing TP Logic
+------------------------------------
+File: src/mt5_trading_bot.py
+
+Add to manage_positions() method:
+```python
+def manage_positions(self):
+    """Check and manage all open positions"""
+    positions = mt5.positions_get(magic=self.magic_number)
+    
+    if positions is None or len(positions) == 0:
+        return
+    
+    for position in positions:
+        # ... existing code ...
+        
+        # Trailing TP logic
+        if self.config.get('enable_trailing_tp', False):
+            self.update_trailing_tp(position)
+        
+        # ... rest of code ...
+
+def update_trailing_tp(self, position):
+    """Update trailing take profit"""
+    if position.profit <= 0:
+        return  # Only trail when in profit
+    
+    symbol = position.symbol
+    current_price = position.price_current
+    current_tp = position.tp
+    direction = 1 if position.type == mt5.ORDER_TYPE_BUY else -1
+    
+    # Get trailing ratio
+    trailing_ratio = self.config.get('trailing_tp_ratio', 0.5)
+    
+    # Get ATR for distance calculation
+    df = self.get_historical_data(symbol, self.timeframe, 50)
+    if df is None:
+        return
+    
+    df = self.calculate_indicators(df)
+    atr = df['atr'].iloc[-1]
+    
+    # Calculate trailing distance
+    trail_distance = atr * trailing_ratio
+    
+    # Calculate new TP
+    if direction == 1:  # Long position
+        # TP should trail below current price
+        new_tp = current_price + trail_distance
+        
+        # Only move TP further away (never closer)
+        if new_tp > current_tp:
+            self.modify_position_tp(position.ticket, new_tp, 
+                                   f"Trailing TP: {new_tp:.5f}")
+    
+    else:  # Short position
+        # TP should trail above current price
+        new_tp = current_price - trail_distance
+        
+        # Only move TP further away (never closer)
+        if new_tp < current_tp:
+            self.modify_position_tp(position.ticket, new_tp,
+                                   f"Trailing TP: {new_tp:.5f}")
+
+def modify_position_tp(self, ticket, new_tp, reason):
+    """Modify position take profit"""
+    position = mt5.positions_get(ticket=ticket)
+    if not position or len(position) == 0:
+        return False
+    
+    position = position[0]
+    
+    request = {
+        "action": mt5.TRADE_ACTION_SLTP,
+        "position": ticket,
+        "sl": position.sl,
+        "tp": new_tp,
+    }
+    
+    result = mt5.order_send(request)
+    
+    if result.retcode == mt5.TRADE_RETCODE_DONE:
+        logging.info(f"✅ {reason}")
+        return True
+    else:
+        logging.warning(f"❌ Failed to update TP: {result.comment}")
+        return False
+```
+
+
+STEP 3: Implement Scalping Mode Logic
+--------------------------------------
+File: src/mt5_trading_bot.py
+
+Add to manage_positions() method:
+```python
+def manage_positions(self):
+    """Check and manage all open positions"""
+    positions = mt5.positions_get(magic=self.magic_number)
+    
+    if positions is None or len(positions) == 0:
+        return
+    
+    for position in positions:
+        # ... existing code ...
+        
+        # Scalping mode - close profitable positions quickly
+        if self.config.get('use_scalping_mode', False):
+            if self.check_scalping_exit(position):
+                continue  # Position was closed
+        
+        # ... rest of code ...
+
+def check_scalping_exit(self, position):
+    """Check if position should be closed in scalping mode"""
+    # Get scalping settings
+    profit_target = self.config.get('scalping_profit_target', 0.5)  # % profit
+    max_hold_time = self.config.get('scalping_max_hold_time', 30)  # minutes
+    
+    # Check if position is profitable
+    if position.profit <= 0:
+        return False
+    
+    # Calculate profit percentage
+    profit_pct = (position.profit / (position.volume * position.price_open)) * 100
+    
+    # Check if profit target reached
+    if profit_pct >= profit_target:
+        logging.info(f"🎯 Scalping exit: {position.symbol} profit {profit_pct:.2f}% >= target {profit_target}%")
+        return self.close_position(position.ticket, "Scalping profit target reached")
+    
+    # Check hold time
+    from datetime import datetime, timedelta
+    position_age = datetime.now() - datetime.fromtimestamp(position.time)
+    max_hold = timedelta(minutes=max_hold_time)
+    
+    if position_age >= max_hold and position.profit > 0:
+        logging.info(f"⏰ Scalping exit: {position.symbol} held {position_age.seconds//60} min >= {max_hold_time} min")
+        return self.close_position(position.ticket, "Scalping max hold time reached")
+    
+    return False
+
+def close_position(self, ticket, reason):
+    """Close a position"""
+    position = mt5.positions_get(ticket=ticket)
+    if not position or len(position) == 0:
+        return False
+    
+    position = position[0]
+    
+    # Determine order type
+    if position.type == mt5.ORDER_TYPE_BUY:
+        order_type = mt5.ORDER_TYPE_SELL
+        price = mt5.symbol_info_tick(position.symbol).bid
+    else:
+        order_type = mt5.ORDER_TYPE_BUY
+        price = mt5.symbol_info_tick(position.symbol).ask
+    
+    request = {
+        "action": mt5.TRADE_ACTION_DEAL,
+        "position": ticket,
+        "symbol": position.symbol,
+        "volume": position.volume,
+        "type": order_type,
+        "price": price,
+        "magic": self.magic_number,
+        "comment": reason,
+    }
+    
+    result = mt5.order_send(request)
+    
+    if result.retcode == mt5.TRADE_RETCODE_DONE:
+        logging.info(f"✅ Position closed: {position.symbol} | {reason} | Profit: ${position.profit:.2f}")
+        return True
+    else:
+        logging.warning(f"❌ Failed to close position: {result.comment}")
+        return False
+```
+
+
+STEP 4: Add Dashboard UI Controls
+----------------------------------
+File: templates/dashboard.html
+
+Add new section in settings panel:
+
+```html
+<!-- Advanced TP/SL Settings -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Advanced TP/SL Settings</h5>
+    </div>
+    <div class="card-body">
+        <!-- Trailing TP -->
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="enable_trailing_tp" name="enable_trailing_tp">
+                Enable Trailing Take Profit
+            </label>
+            <small class="form-text text-muted">
+                TP trails price when in profit to maximize winners
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="trailing_tp_ratio">Trailing TP Ratio</label>
+            <input type="number" class="form-control" id="trailing_tp_ratio" 
+                   name="trailing_tp_ratio" min="0.1" max="1.0" step="0.1" value="0.5">
+            <small class="form-text text-muted">
+                How close TP trails to price (0.1=aggressive, 1.0=conservative)
+            </small>
+        </div>
+        
+        <!-- Symbol-Specific TP Levels -->
+        <div class="form-group">
+            <label>Symbol-Specific TP Levels</label>
+            <button type="button" class="btn btn-sm btn-secondary" 
+                    onclick="showSymbolTPModal()">
+                Configure
+            </button>
+            <small class="form-text text-muted">
+                Set custom TP levels for specific symbols
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Scalping Mode -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Scalping Mode</h5>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="use_scalping_mode" name="use_scalping_mode">
+                Enable Scalping Mode
+            </label>
+            <small class="form-text text-muted">
+                Close positions quickly when profit target reached
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="scalping_profit_target">Profit Target (%)</label>
+            <input type="number" class="form-control" id="scalping_profit_target" 
+                   name="scalping_profit_target" min="0.1" max="5.0" step="0.1" value="0.5">
+            <small class="form-text text-muted">
+                Close position when profit reaches this percentage
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="scalping_max_hold_time">Max Hold Time (minutes)</label>
+            <input type="number" class="form-control" id="scalping_max_hold_time" 
+                   name="scalping_max_hold_time" min="5" max="120" step="5" value="30">
+            <small class="form-text text-muted">
+                Close profitable positions after this time
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Symbol-Specific TP Levels -->
+<div class="modal fade" id="symbolTPModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Symbol-Specific TP Levels</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="symbolTPList">
+                    <!-- Dynamically populated -->
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addSymbolTP()">
+                    Add Symbol
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveSymbolTP()">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+Add JavaScript functions:
+
+```javascript
+// Symbol-Specific TP Levels
+let symbolTPLevels = {};
+
+function showSymbolTPModal() {
+    // Load current symbol TP levels
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(config => {
+            symbolTPLevels = config.symbol_tp_levels || {};
+            renderSymbolTPList();
+            $('#symbolTPModal').modal('show');
+        });
+}
+
+function renderSymbolTPList() {
+    const container = document.getElementById('symbolTPList');
+    container.innerHTML = '';
+    
+    for (const [symbol, levels] of Object.entries(symbolTPLevels)) {
+        const row = document.createElement('div');
+        row.className = 'form-row mb-2';
+        row.innerHTML = `
+            <div class="col-md-3">
+                <input type="text" class="form-control" value="${symbol}" readonly>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" value="${levels[0]}" 
+                       onchange="updateSymbolTP('${symbol}', 0, this.value)" step="0.1">
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" value="${levels[1]}" 
+                       onchange="updateSymbolTP('${symbol}', 1, this.value)" step="0.1">
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" value="${levels[2]}" 
+                       onchange="updateSymbolTP('${symbol}', 2, this.value)" step="0.1">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-danger btn-sm" onclick="removeSymbolTP('${symbol}')">
+                    Remove
+                </button>
+            </div>
+        `;
+        container.appendChild(row);
+    }
+}
+
+function addSymbolTP() {
+    const symbol = prompt('Enter symbol (e.g., XAUUSD):');
+    if (symbol) {
+        symbolTPLevels[symbol.toUpperCase()] = [1.5, 2.5, 4.0];
+        renderSymbolTPList();
+    }
+}
+
+function updateSymbolTP(symbol, index, value) {
+    symbolTPLevels[symbol][index] = parseFloat(value);
+}
+
+function removeSymbolTP(symbol) {
+    delete symbolTPLevels[symbol];
+    renderSymbolTPList();
+}
+
+function saveSymbolTP() {
+    // Save to config
+    const config = {
+        symbol_tp_levels: symbolTPLevels
+    };
+    
+    fetch('/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Symbol TP levels saved successfully!');
+            $('#symbolTPModal').modal('hide');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// Update saveConfig() function to include new settings
+function saveConfig() {
+    const config = {
+        // ... existing config fields ...
+        
+        // New fields
+        enable_trailing_tp: document.getElementById('enable_trailing_tp').checked,
+        trailing_tp_ratio: parseFloat(document.getElementById('trailing_tp_ratio').value),
+        use_scalping_mode: document.getElementById('use_scalping_mode').checked,
+        scalping_profit_target: parseFloat(document.getElementById('scalping_profit_target').value),
+        scalping_max_hold_time: parseInt(document.getElementById('scalping_max_hold_time').value),
+        symbol_tp_levels: symbolTPLevels
+    };
+    
+    // ... rest of save logic ...
+}
+```
+
+
+STEP 5: Update API Validation
+------------------------------
+File: web_dashboard.py
+
+Add validation in /api/config endpoint:
+
+```python
+# Validate trailing TP
+if 'trailing_tp_ratio' in new_config:
+    trailing_tp_ratio = new_config.get('trailing_tp_ratio', 0.5)
+    if trailing_tp_ratio < 0.1 or trailing_tp_ratio > 1.0:
+        return jsonify({'status': 'error', 
+                       'message': 'Trailing TP ratio must be between 0.1 and 1.0'})
+
+# Validate scalping settings
+if 'scalping_profit_target' in new_config:
+    scalping_target = new_config.get('scalping_profit_target', 0.5)
+    if scalping_target < 0.1 or scalping_target > 5.0:
+        return jsonify({'status': 'error', 
+                       'message': 'Scalping profit target must be between 0.1% and 5.0%'})
+
+if 'scalping_max_hold_time' in new_config:
+    scalping_time = new_config.get('scalping_max_hold_time', 30)
+    if scalping_time < 5 or scalping_time > 120:
+        return jsonify({'status': 'error', 
+                       'message': 'Scalping max hold time must be between 5 and 120 minutes'})
+
+# Validate symbol-specific TP levels
+if 'symbol_tp_levels' in new_config:
+    symbol_tp_levels = new_config.get('symbol_tp_levels', {})
+    for symbol, levels in symbol_tp_levels.items():
+        if not isinstance(levels, list) or len(levels) != 3:
+            return jsonify({'status': 'error', 
+                           'message': f'Symbol {symbol} must have exactly 3 TP levels'})
+        if not (levels[0] < levels[1] < levels[2]):
+            return jsonify({'status': 'error', 
+                           'message': f'Symbol {symbol} TP levels must be in ascending order'})
+```
+
+
+================================================================
+📊 CURRENT STATUS
+================================================================
+
+✅ COMPLETED:
+-------------
+1. Configuration structure added to bot_config.json
+2. Symbol-specific TP levels: XAGUSD, XAUUSD, EURUSD
+3. Trailing TP settings: enable_trailing_tp, trailing_tp_ratio
+4. Scalping mode settings: use_scalping_mode, scalping_profit_target, scalping_max_hold_time
+
+⏳ PENDING:
+-----------
+1. Bot code to USE symbol-specific TP levels
+2. Bot code to implement trailing TP logic
+3. Bot code to implement scalping mode logic
+4. Dashboard UI controls for all new settings
+5. API validation for new settings
+
+
+================================================================
+🎯 IMPLEMENTATION PRIORITY
+================================================================
+
+HIGH PRIORITY (Core Functionality):
+------------------------------------
+1. Bot uses symbol-specific TP levels
+2. Scalping mode implementation
+3. Dashboard UI for scalping mode
+
+MEDIUM PRIORITY (Enhancement):
+-------------------------------
+1. Trailing TP implementation
+2. Dashboard UI for trailing TP
+3. Dashboard UI for symbol-specific TP levels
+
+LOW PRIORITY (Polish):
+----------------------
+1. Advanced validation
+2. UI improvements
+3. Documentation
+
+
+================================================================
+📝 QUICK START GUIDE
+================================================================
+
+FOR NOW (Manual Configuration):
+--------------------------------
+Users can edit bot_config.json directly to use these features:
+
+1. Symbol-Specific TP Levels:
+   "symbol_tp_levels": {
+       "XAGUSD": [1.5, 2.5, 4.0],
+       "XAUUSD": [1.5, 2.0, 3.0]
+   }
+
+2. Trailing TP:
+   "enable_trailing_tp": true,
+   "trailing_tp_ratio": 0.5
+
+3. Scalping Mode:
+   "use_scalping_mode": true,
+   "scalping_profit_target": 0.5,
+   "scalping_max_hold_time": 30
+
+AFTER IMPLEMENTATION:
+----------------------
+Users will be able to configure all settings through the dashboard UI.
+
+
+================================================================
+✅ SUMMARY
+================================================================
+
+Configuration: ✅ READY (added to bot_config.json)
+Bot Code: ⏳ NEEDS IMPLEMENTATION
+Dashboard UI: ⏳ NEEDS IMPLEMENTATION
+API Validation: ⏳ NEEDS IMPLEMENTATION
+
+Users can currently use these features by editing bot_config.json directly.
+Full dashboard integration requires implementing the steps above.
+
+================================================================

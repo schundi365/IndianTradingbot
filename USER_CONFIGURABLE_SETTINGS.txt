@@ -1,0 +1,368 @@
+✅ USER-CONFIGURABLE SETTINGS GUIDE
+================================================================
+
+All settings can be modified by editing bot_config.json
+
+================================================================
+📝 HOW TO EDIT SETTINGS
+================================================================
+
+1. Open bot_config.json in any text editor
+2. Find the setting you want to change
+3. Update the value
+4. Save the file
+5. Restart bot or wait for auto-reload
+
+
+================================================================
+🎯 KEY SETTINGS YOU CAN MODIFY
+================================================================
+
+1. TAKE PROFIT LEVELS
+   -------------------
+   Location: "tp_levels": [1.5, 2.5, 4.0]
+   
+   What it does: Sets how far TPs are from entry
+   - 1.5 = TP1 at 1.5× risk distance
+   - 2.5 = TP2 at 2.5× risk distance
+   - 4.0 = TP3 at 4.0× risk distance
+   
+   Examples:
+   - More conservative: [1.0, 1.5, 2.0]
+   - More aggressive: [2.0, 3.0, 5.0]
+   - Current (recommended): [1.5, 2.5, 4.0]
+
+
+2. PARTIAL CLOSE PERCENTAGES
+   --------------------------
+   Location: "partial_close_percent": [40, 30, 30]
+   
+   What it does: How much to close at each TP
+   - 40% closes at TP1
+   - 30% closes at TP2
+   - 30% closes at TP3
+   
+   Examples:
+   - Lock profit early: [50, 30, 20]
+   - Let winners run: [30, 30, 40]
+   - Current (balanced): [40, 30, 30]
+
+
+3. ATR MULTIPLIER (STOP LOSS WIDTH)
+   ---------------------------------
+   Location: "atr_multiplier": 2.0
+   
+   What it does: How wide stops are
+   - 1.0 = Very tight stops (more stop-outs)
+   - 2.0 = Wider stops (fewer stop-outs)
+   - 3.0 = Very wide stops (rare stop-outs)
+   
+   Examples:
+   - Tight stops: 1.5
+   - Medium stops: 2.0
+   - Wide stops: 2.5
+   - Current (recommended): 2.0
+
+
+4. SYMBOL-SPECIFIC ATR MULTIPLIERS
+   --------------------------------
+   Location: "symbol_atr_multipliers": {"XAGUSD": 3.0}
+   
+   What it does: Custom stop width per symbol
+   - Overrides default atr_multiplier for specific symbols
+   - Useful for volatile pairs that need wider stops
+   
+   Examples:
+   Add more symbols:
+   {
+       "XAGUSD": 3.0,
+       "GBPJPY": 2.5,
+       "EURJPY": 2.5,
+       "XAUUSD": 2.2
+   }
+   
+   Current: Only XAGUSD has custom multiplier (3.0)
+
+
+5. TRAILING TAKE PROFIT
+   ---------------------
+   Location: "enable_trailing_tp": true
+   Location: "trailing_tp_ratio": 0.5
+   
+   What it does: TP trails price when in profit
+   - enable_trailing_tp: true/false to enable/disable
+   - trailing_tp_ratio: How close TP trails (0.0-1.0)
+   
+   Examples:
+   - Aggressive trailing: 0.3 (trails close to price)
+   - Conservative trailing: 0.7 (trails far from price)
+   - Disabled: "enable_trailing_tp": false
+   - Current (balanced): 0.5
+
+
+6. TRAILING STOP LOSS
+   -------------------
+   Location: "enable_trailing_stop": true
+   Location: "trail_distance": 0.8
+   
+   What it does: SL trails price when in profit
+   - enable_trailing_stop: true/false
+   - trail_distance: Distance in ATR multiples
+   
+   Examples:
+   - Tight trailing: 0.5
+   - Loose trailing: 1.2
+   - Current: 0.8
+
+
+7. MOVING AVERAGE PERIODS
+   -----------------------
+   Location: "fast_ma_period": 10
+   Location: "slow_ma_period": 30
+   
+   What it does: MA crossover signal generation
+   - Smaller = More signals, more noise
+   - Larger = Fewer signals, more reliable
+   
+   Examples:
+   - Fast signals: 5, 15
+   - Slow signals: 20, 50
+   - Current: 10, 30
+
+
+8. FILTERS (RSI, MACD, ADX)
+   -------------------------
+   Location: "use_rsi": true
+   Location: "use_macd": true
+   Location: "use_adx": true
+   
+   What it does: Enable/disable filters
+   - true = Filter is active (fewer signals)
+   - false = Filter is disabled (more signals)
+   
+   Examples:
+   - Disable all filters for more signals:
+     "use_rsi": false,
+     "use_macd": false,
+     "use_adx": false
+   
+   - Current: All enabled
+
+
+9. RSI THRESHOLDS
+   ---------------
+   Location: "rsi_overbought": 75
+   Location: "rsi_oversold": 25
+   
+   What it does: RSI filter thresholds
+   - Higher overbought = More permissive (more signals)
+   - Lower oversold = More permissive (more signals)
+   
+   Examples:
+   - Very permissive: 90, 10
+   - Standard: 70, 30
+   - Current (permissive): 75, 25
+
+
+10. CONFIDENCE THRESHOLD
+    --------------------
+    Location: "min_confidence": 0.45
+    
+    What it does: Minimum signal confidence to trade
+    - 0.0 = Trade all signals
+    - 0.5 = Trade only 50%+ confidence
+    - 1.0 = Trade only 100% confidence
+    
+    Examples:
+    - Very permissive: 0.25
+    - Balanced: 0.45
+    - Conservative: 0.60
+    - Current: 0.45
+
+
+11. MAX TRADES LIMITS
+    ------------------
+    Location: "max_daily_trades": 999
+    Location: "max_trades_total": 999
+    Location: "max_trades_per_symbol": 10
+    
+    What it does: Limits on trading activity
+    - max_daily_trades: Max trades per day
+    - max_trades_total: Max open positions
+    - max_trades_per_symbol: Max per symbol
+    
+    Examples:
+    - Conservative: 50, 20, 3
+    - Aggressive: 999, 999, 10
+    - Current: 999, 999, 10
+
+
+12. RISK MANAGEMENT
+    ----------------
+    Location: "risk_percent": 1
+    Location: "max_daily_loss": 5
+    Location: "max_drawdown_percent": 15
+    
+    What it does: Risk limits
+    - risk_percent: % of account per trade
+    - max_daily_loss: Stop trading if lose X%
+    - max_drawdown_percent: Stop if drawdown > X%
+    
+    Examples:
+    - Conservative: 0.5, 3, 10
+    - Aggressive: 2, 10, 20
+    - Current: 1, 5, 15
+
+
+13. ADAPTIVE FEATURES
+    ------------------
+    Location: "use_dynamic_tp": true
+    Location: "use_dynamic_sl": true
+    Location: "use_adaptive_risk": true
+    
+    What it does: Enable adaptive features
+    - use_dynamic_tp: TP extends when trend accelerates
+    - use_dynamic_sl: SL tightens when trend reverses
+    - use_adaptive_risk: Risk adjusts to market conditions
+    
+    Examples:
+    - All enabled (recommended): true, true, true
+    - All disabled: false, false, false
+    - Current: All enabled
+
+
+================================================================
+📋 COMPLETE EXAMPLE CONFIGURATIONS
+================================================================
+
+CONSERVATIVE (Fewer trades, tighter stops):
+--------------------------------------------
+{
+    "tp_levels": [1.0, 1.5, 2.0],
+    "atr_multiplier": 1.5,
+    "min_confidence": 0.60,
+    "use_rsi": true,
+    "use_macd": true,
+    "use_adx": true,
+    "risk_percent": 0.5,
+    "max_daily_loss": 3
+}
+
+
+AGGRESSIVE (More trades, wider stops):
+---------------------------------------
+{
+    "tp_levels": [2.0, 3.0, 5.0],
+    "atr_multiplier": 2.5,
+    "min_confidence": 0.25,
+    "use_rsi": false,
+    "use_macd": false,
+    "use_adx": false,
+    "risk_percent": 2,
+    "max_daily_loss": 10
+}
+
+
+CURRENT (RECOMMENDED - Balanced):
+----------------------------------
+{
+    "tp_levels": [1.5, 2.5, 4.0],
+    "atr_multiplier": 2.0,
+    "symbol_atr_multipliers": {"XAGUSD": 3.0},
+    "min_confidence": 0.45,
+    "use_rsi": true,
+    "use_macd": true,
+    "use_adx": true,
+    "risk_percent": 1,
+    "max_daily_loss": 5,
+    "enable_trailing_tp": true,
+    "trailing_tp_ratio": 0.5
+}
+
+
+================================================================
+🔧 QUICK EDIT EXAMPLES
+================================================================
+
+EXAMPLE 1: Make TPs even wider
+-------------------------------
+Find: "tp_levels": [1.5, 2.5, 4.0]
+Change to: "tp_levels": [2.0, 3.0, 5.0]
+
+
+EXAMPLE 2: Add wider stops for GBPJPY
+--------------------------------------
+Find: "symbol_atr_multipliers": {"XAGUSD": 3.0}
+Change to: "symbol_atr_multipliers": {"XAGUSD": 3.0, "GBPJPY": 2.5}
+
+
+EXAMPLE 3: Disable trailing TP
+-------------------------------
+Find: "enable_trailing_tp": true
+Change to: "enable_trailing_tp": false
+
+
+EXAMPLE 4: More aggressive trailing
+------------------------------------
+Find: "trailing_tp_ratio": 0.5
+Change to: "trailing_tp_ratio": 0.3
+
+
+EXAMPLE 5: Disable all filters for more signals
+------------------------------------------------
+Find: "use_rsi": true
+Change to: "use_rsi": false
+
+Find: "use_macd": true
+Change to: "use_macd": false
+
+Find: "use_adx": true
+Change to: "use_adx": false
+
+
+================================================================
+⚠️ IMPORTANT TIPS
+================================================================
+
+1. ALWAYS BACKUP BEFORE EDITING
+   -----------------------------
+   Copy bot_config.json to bot_config_backup.json before making changes
+
+2. VALIDATE JSON SYNTAX
+   ---------------------
+   Use a JSON validator (jsonlint.com) to check syntax after editing
+   Invalid JSON will cause bot to fail on startup
+
+3. RESTART BOT AFTER CHANGES
+   --------------------------
+   Stop bot (Ctrl+C) and restart to apply changes immediately
+
+4. TEST CHANGES CAREFULLY
+   -----------------------
+   Start with small changes and monitor results
+   Don't change too many settings at once
+
+5. KEEP NOTES
+   -----------
+   Document what you changed and why
+   Makes it easier to revert if needed
+
+
+================================================================
+✅ SUMMARY
+================================================================
+
+ALL settings in bot_config.json are user-configurable:
+  ✅ Take profit levels
+  ✅ Stop loss width (ATR multiplier)
+  ✅ Symbol-specific stops
+  ✅ Trailing TP/SL
+  ✅ Moving average periods
+  ✅ Filters (RSI, MACD, ADX)
+  ✅ Risk management
+  ✅ Trade limits
+  ✅ Adaptive features
+
+Simply edit bot_config.json and restart the bot!
+
+================================================================
