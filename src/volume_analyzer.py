@@ -15,17 +15,40 @@ class VolumeAnalyzer:
     
     def __init__(self, config):
         """
-        Initialize Volume Analyzer
+        Initialize Volume Analyzer with improved default settings
         
         Args:
             config: Bot configuration dictionary
         """
         self.use_volume_filter = config.get('use_volume_filter', True)
-        self.min_volume_ma = config.get('min_volume_ma', 1.2)
-        self.volume_ma_period = config.get('volume_ma_period', 20)
-        self.obv_period = config.get('obv_period', 14)
         
-        logger.info(f"Volume Analyzer initialized: Filter={self.use_volume_filter}, Min MA={self.min_volume_ma}x")
+        # IMPROVEMENT: Better default settings
+        self.min_volume_ma = config.get('min_volume_ma', 0.7)  # Only reject VERY low volume
+        self.normal_volume_ma = config.get('normal_volume_ma', 1.0)  # Normal threshold
+        self.high_volume_ma = config.get('high_volume_ma', 1.5)  # High volume threshold
+        self.very_high_volume_ma = config.get('very_high_volume_ma', 2.0)  # Exceptional volume
+        
+        self.volume_ma_period = config.get('volume_ma_period', 20)
+        self.volume_ma_min_period = config.get('volume_ma_min_period', 10)  # Fallback for insufficient data
+        
+        # Enhanced OBV settings
+        self.obv_period = config.get('obv_period', 14)  # Keep for compatibility
+        self.obv_period_short = config.get('obv_period_short', 10)
+        self.obv_period_long = config.get('obv_period_long', 30)
+        
+        # Divergence settings
+        self.divergence_lookback = config.get('divergence_lookback', 20)
+        self.divergence_threshold = config.get('divergence_threshold', 0.85)  # 15% volume drop
+        
+        logger.info(f"Volume Analyzer initialized with improved settings:")
+        logger.info(f"  Filter Enabled: {self.use_volume_filter}")
+        logger.info(f"  Min Volume Threshold: {self.min_volume_ma}x (only reject very low)")
+        logger.info(f"  Normal Volume: {self.normal_volume_ma}x")
+        logger.info(f"  High Volume: {self.high_volume_ma}x")
+        logger.info(f"  Very High Volume: {self.very_high_volume_ma}x")
+        logger.info(f"  Volume MA Period: {self.volume_ma_period} (min: {self.volume_ma_min_period})")
+        logger.info(f"  OBV Periods: Short={self.obv_period_short}, Long={self.obv_period_long}")
+        logger.info(f"  Divergence: Lookback={self.divergence_lookback}, Threshold={self.divergence_threshold}")
     
     def calculate_volume_ma(self, df):
         """
@@ -41,7 +64,7 @@ class VolumeAnalyzer:
     
     def is_above_average_volume(self, df):
         """
-        Check if current volume is above average
+        Check if current volume is above average with adaptive period handling
         
         Args:
             df: DataFrame with 'tick_volume' column
@@ -49,11 +72,22 @@ class VolumeAnalyzer:
         Returns:
             bool: True if current volume > average * min_volume_ma
         """
-        if len(df) < self.volume_ma_period:
-            logger.warning("Not enough data for volume analysis")
-            return True  # Don't filter if insufficient data
+        # IMPROVEMENT #1: Adaptive Data Requirements
+        min_required = 10  # Minimum bars needed
         
-        volume_ma = self.calculate_volume_ma(df)
+        if len(df) < min_required:
+            logger.warning(f"Insufficient data for volume analysis: {len(df)} bars < {min_required}")
+            return True  # Can't analyze, don't filter
+        
+        # Use adaptive period based on available data
+        if len(df) < self.volume_ma_period:
+            # Use shorter period
+            actual_period = max(min_required, len(df) - 2)
+            logger.info(f"Using adaptive volume period: {actual_period} (not enough for {self.volume_ma_period})")
+        else:
+            actual_period = self.volume_ma_period
+        
+        volume_ma = df['tick_volume'].rolling(window=actual_period).mean()
         current_volume = df['tick_volume'].iloc[-1]
         avg_volume = volume_ma.iloc[-1]
         
@@ -61,28 +95,79 @@ class VolumeAnalyzer:
             return True
         
         volume_ratio = current_volume / avg_volume
-        threshold = self.min_volume_ma
-        is_above = volume_ratio >= threshold
+        
+        # IMPROVEMENT #2: Tiered Volume Classification
+        volume_class = self.classify_volume_strength(volume_ratio)
         
         # DETAILED LOGGING
         logger.info("="*80)
         logger.info("📊 VOLUME FILTER CHECK - DETAILED CALCULATIONS")
         logger.info("="*80)
-        logger.info(f"Current Volume:        {current_volume:.0f}")
-        logger.info(f"Average Volume (MA{self.volume_ma_period}): {avg_volume:.0f}")
-        logger.info(f"Volume Ratio:          {volume_ratio:.2f}x")
-        logger.info(f"Required Threshold:    {threshold:.2f}x")
-        logger.info(f"Comparison:            {current_volume:.0f} / {avg_volume:.0f} = {volume_ratio:.2f}x")
-        logger.info(f"Check:                 {volume_ratio:.2f}x >= {threshold:.2f}x?")
-        if is_above:
-            logger.info(f"✅ VOLUME FILTER PASSED: {volume_ratio:.2f}x >= {threshold:.2f}x")
+        logger.info(f"Data Points Available:  {len(df)} bars")
+        logger.info(f"Volume MA Period Used:  {actual_period} bars")
+        logger.info(f"Current Volume:         {current_volume:.0f}")
+        logger.info(f"Average Volume (MA{actual_period}):  {avg_volume:.0f}")
+        logger.info(f"Volume Ratio:           {volume_ratio:.2f}x")
+        logger.info(f"Volume Classification:  {volume_class['level']}")
+        logger.info(f"Volume Description:     {volume_class['description']}")
+        logger.info(f"Confidence Impact:      {volume_class['score']:+.2%}")
+        
+        if volume_class['passes']:
+            logger.info(f"✅ VOLUME FILTER PASSED: {volume_class['level']} volume")
+            logger.info(f"   Volume {volume_ratio:.2f}x is acceptable for trading")
         else:
-            logger.info(f"❌ VOLUME FILTER REJECTED: {volume_ratio:.2f}x < {threshold:.2f}x")
-            logger.info(f"   Current volume is only {volume_ratio:.1%} of average")
-            logger.info(f"   Need at least {threshold:.1%} of average to pass")
+            logger.info(f"❌ VOLUME FILTER REJECTED: {volume_class['level']} volume")
+            logger.info(f"   Volume {volume_ratio:.2f}x is too low for reliable signals")
         logger.info("="*80)
         
-        return is_above
+        return volume_class['passes']
+    
+    def classify_volume_strength(self, volume_ratio):
+        """
+        Classify volume into tiers with graduated thresholds
+        
+        Args:
+            volume_ratio: Current volume / Average volume
+            
+        Returns:
+            dict: Volume classification with level, score, description, and passes flag
+        """
+        # IMPROVEMENT #2: Tiered Volume Thresholds
+        if volume_ratio >= 2.0:
+            return {
+                'level': 'VERY_HIGH',
+                'score': 0.15,  # Big confidence boost
+                'description': 'Exceptional volume spike',
+                'passes': True
+            }
+        elif volume_ratio >= 1.5:
+            return {
+                'level': 'HIGH',
+                'score': 0.10,
+                'description': 'Above average volume',
+                'passes': True
+            }
+        elif volume_ratio >= 1.0:
+            return {
+                'level': 'NORMAL',
+                'score': 0.05,  # Small boost
+                'description': 'Normal trading volume',
+                'passes': True  # Don't reject normal volume!
+            }
+        elif volume_ratio >= 0.7:
+            return {
+                'level': 'LOW',
+                'score': 0.00,  # No boost
+                'description': 'Below average volume',
+                'passes': True  # Still allow (just no boost)
+            }
+        else:  # < 0.7x
+            return {
+                'level': 'VERY_LOW',
+                'score': -0.05,  # Small penalty
+                'description': 'Very low volume - unreliable signals',
+                'passes': False  # Only reject if VERY low
+            }
     
     def get_volume_trend(self, df, periods=5):
         """
@@ -223,6 +308,72 @@ class VolumeAnalyzer:
         
         return 'none'
     
+    def get_candle_pressure(self, df):
+        """
+        Determine if volume is buying or selling pressure based on candle color
+        
+        Args:
+            df: DataFrame with OHLC and volume data
+            
+        Returns:
+            dict: Candle pressure analysis with type, strength, and boost
+        """
+        if len(df) < 20:
+            return {
+                'type': 'NEUTRAL',
+                'strength': 'NONE',
+                'boost': 0.00,
+                'description': 'Insufficient data for candle pressure analysis'
+            }
+        
+        current = df.iloc[-1]
+        current_volume = current['tick_volume']
+        
+        # Check candle color
+        candle_body = current['close'] - current['open']
+        is_bullish = candle_body > 0
+        
+        # Check volume relative to average
+        avg_volume = df['tick_volume'].rolling(20).mean().iloc[-1]
+        volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
+        
+        # Analyze pressure based on candle color and volume
+        if is_bullish and volume_ratio > 1.2:
+            return {
+                'type': 'BUYING',
+                'strength': 'STRONG' if volume_ratio > 1.5 else 'MODERATE',
+                'boost': 0.10 if volume_ratio > 1.5 else 0.05,
+                'description': f'Bullish candle with {volume_ratio:.1f}x volume'
+            }
+        elif not is_bullish and volume_ratio > 1.2:
+            return {
+                'type': 'SELLING',
+                'strength': 'STRONG' if volume_ratio > 1.5 else 'MODERATE',
+                'boost': 0.10 if volume_ratio > 1.5 else 0.05,
+                'description': f'Bearish candle with {volume_ratio:.1f}x volume'
+            }
+        elif is_bullish:
+            return {
+                'type': 'BUYING',
+                'strength': 'WEAK',
+                'boost': 0.02,
+                'description': f'Bullish candle with normal volume ({volume_ratio:.1f}x)'
+            }
+        elif not is_bullish:
+            return {
+                'type': 'SELLING',
+                'strength': 'WEAK',
+                'boost': 0.02,
+                'description': f'Bearish candle with normal volume ({volume_ratio:.1f}x)'
+            }
+        else:
+            return {
+                'type': 'NEUTRAL',
+                'strength': 'NONE',
+                'boost': 0.00,
+                'description': 'Doji candle - neutral pressure'
+            }
+    
     def calculate_volume_profile(self, df, num_bins=20):
         """
         Calculate Volume Profile (Volume at Price levels)
@@ -270,141 +421,163 @@ class VolumeAnalyzer:
     
     def get_volume_confirmation(self, df, signal_type):
         """
-        Get comprehensive volume confirmation for a trade signal
+        Get comprehensive volume confirmation with weighted scoring system
         
         Args:
             df: DataFrame with price and volume data
             signal_type: 'buy' or 'sell'
             
         Returns:
-            dict: Volume confirmation data
+            dict: Volume confirmation data with weighted scoring
         """
         confirmation = {
             'above_average': False,
             'volume_trend': 'neutral',
             'obv_signal': 'neutral',
             'divergence': 'none',
+            'candle_pressure': {},
             'confirmed': False,
-            'confidence_boost': 0.0
+            'confidence_boost': 0.0,
+            'score': 0.5,  # Start neutral
+            'reasons': []
         }
         
         logger.info("-"*80)
-        logger.info(f"🔍 VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
+        logger.info(f"🔍 ENHANCED VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
         logger.info("-"*80)
         
-        # 1. Check if volume is above average
-        confirmation['above_average'] = self.is_above_average_volume(df)
-        logger.info(f"1. Above Average Volume: {confirmation['above_average']}")
+        # IMPROVEMENT #3: Weighted Scoring System
+        score = 0.5  # Start neutral
+        reasons = []
         
-        # 2. Get volume trend
+        # 1. Volume strength analysis (0 to +0.20)
+        volume_ratio = self.get_volume_ratio(df)
+        vol_class = self.classify_volume_strength(volume_ratio)
+        score += vol_class['score']
+        reasons.append(f"Volume: {vol_class['level']} ({vol_class['score']:+.2f})")
+        confirmation['above_average'] = vol_class['passes']
+        
+        # 2. Volume trend (±0.05)
         confirmation['volume_trend'] = self.get_volume_trend(df)
-        logger.info(f"2. Volume Trend: {confirmation['volume_trend']}")
+        if confirmation['volume_trend'] == 'increasing':
+            score += 0.05
+            reasons.append("Trend: Increasing (+0.05)")
+        elif confirmation['volume_trend'] == 'decreasing':
+            score -= 0.05
+            reasons.append("Trend: Decreasing (-0.05)")
+        else:
+            reasons.append("Trend: Neutral (0.00)")
         
-        # 3. Get OBV signal
+        # 3. OBV alignment (±0.10)
         confirmation['obv_signal'] = self.get_obv_signal(df)
-        logger.info(f"3. OBV Signal: {confirmation['obv_signal']}")
+        if signal_type == 'buy' and confirmation['obv_signal'] == 'bullish':
+            score += 0.10
+            reasons.append("OBV: Bullish (+0.10)")
+        elif signal_type == 'sell' and confirmation['obv_signal'] == 'bearish':
+            score += 0.10
+            reasons.append("OBV: Bearish (+0.10)")
+        elif confirmation['obv_signal'] == 'neutral':
+            reasons.append("OBV: Neutral (0.00)")
+        else:
+            score -= 0.05  # Slight penalty for contradiction
+            reasons.append(f"OBV: Contradicts (-0.05)")
         
-        # 4. Check for divergence
+        # 4. Divergence analysis (±0.15)
         confirmation['divergence'] = self.check_volume_divergence(df)
-        logger.info(f"4. Divergence: {confirmation['divergence']}")
+        if signal_type == 'buy' and confirmation['divergence'] == 'bullish_divergence':
+            score += 0.15
+            reasons.append("Divergence: Bullish (+0.15)")
+        elif signal_type == 'sell' and confirmation['divergence'] == 'bearish_divergence':
+            score += 0.15
+            reasons.append("Divergence: Bearish (+0.15)")
+        elif confirmation['divergence'] != 'none':
+            score -= 0.10  # Contradictory divergence
+            reasons.append("Divergence: Contradicts (-0.10)")
+        else:
+            reasons.append("Divergence: None (0.00)")
+        
+        # 5. IMPROVEMENT #6: Candle pressure analysis (±0.10)
+        confirmation['candle_pressure'] = self.get_candle_pressure(df)
+        pressure = confirmation['candle_pressure']
+        
+        if signal_type == 'buy' and pressure['type'] == 'BUYING':
+            score += pressure['boost']
+            reasons.append(f"Candle: {pressure['strength']} buying pressure (+{pressure['boost']:.2f})")
+        elif signal_type == 'sell' and pressure['type'] == 'SELLING':
+            score += pressure['boost']
+            reasons.append(f"Candle: {pressure['strength']} selling pressure (+{pressure['boost']:.2f})")
+        elif pressure['type'] != 'NEUTRAL':
+            score -= 0.05
+            reasons.append(f"Candle: Wrong pressure direction (-0.05)")
+        else:
+            reasons.append("Candle: Neutral pressure (0.00)")
+        
+        # Clamp score between 0.0 and 1.0
+        final_score = max(0.0, min(1.0, score))
+        
+        # IMPROVEMENT #3: Relaxed Confirmation Logic
+        # Decision based on volume level (not requiring all factors)
+        confirmation['confirmed'] = vol_class['passes']  # Based on volume level
+        confidence_boost = (final_score - 0.5) * 0.2  # Convert to ±0.10 boost
+        
+        # Store results
+        confirmation['score'] = final_score
+        confirmation['confidence_boost'] = confidence_boost
+        confirmation['reasons'] = reasons
+        
+        # Detailed logging
+        logger.info(f"📊 WEIGHTED SCORING BREAKDOWN:")
+        for reason in reasons:
+            logger.info(f"   • {reason}")
         
         logger.info("-"*80)
-        logger.info("📈 CALCULATING CONFIRMATION:")
+        logger.info(f"📈 FINAL VOLUME ANALYSIS RESULTS:")
+        logger.info(f"   Volume Score: {final_score:.2f}/1.00")
+        logger.info(f"   Volume Level: {vol_class['level']}")
+        logger.info(f"   Decision: {'PASS' if confirmation['confirmed'] else 'REJECT'}")
+        logger.info(f"   Confidence Boost: {confidence_boost:+.2%}")
+        logger.info(f"   Reasoning: {vol_class['description']}")
         
-        # 5. Determine if signal is confirmed
-        if signal_type == 'buy':
-            # Buy confirmation: above average volume, increasing trend, bullish OBV
-            positive_signals = 0
-            
-            if confirmation['above_average']:
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ Above average volume (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ Below average volume (0 signals)")
-            
-            if confirmation['volume_trend'] == 'increasing':
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ Volume increasing (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ Volume not increasing (0 signals)")
-            
-            if confirmation['obv_signal'] == 'bullish':
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ OBV bullish (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ OBV not bullish (0 signals)")
-            
-            if confirmation['divergence'] == 'bullish_divergence':
-                confirmation['confidence_boost'] += 0.10
-                logger.info(f"   ✅ Bullish divergence (+10% confidence)")
-            elif confirmation['divergence'] == 'bearish_divergence':
-                confirmation['confidence_boost'] -= 0.10
-                logger.info(f"   ⚠️  Bearish divergence (-10% confidence)")
-            
-            # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
-            confirmation['confirmed'] = positive_signals >= 2
-            
-            logger.info("-"*80)
-            logger.info(f"Total Positive Signals: {positive_signals}/3")
-            logger.info(f"Required for Confirmation: 2/3")
-            logger.info(f"Confidence Boost: {confirmation['confidence_boost']:+.1%}")
-            
-            if confirmation['confirmed']:
-                logger.info(f"✅ VOLUME CONFIRMATION PASSED ({positive_signals}/3 signals)")
-            else:
-                logger.info(f"❌ VOLUME CONFIRMATION FAILED ({positive_signals}/3 signals, need 2)")
-        
-        elif signal_type == 'sell':
-            # Sell confirmation: above average volume, increasing trend, bearish OBV
-            positive_signals = 0
-            
-            if confirmation['above_average']:
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ Above average volume (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ Below average volume (0 signals)")
-            
-            if confirmation['volume_trend'] == 'increasing':
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ Volume increasing (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ Volume not increasing (0 signals)")
-            
-            if confirmation['obv_signal'] == 'bearish':
-                confirmation['confidence_boost'] += 0.05
-                positive_signals += 1
-                logger.info(f"   ✅ OBV bearish (+1 signal, +5% confidence)")
-            else:
-                logger.info(f"   ❌ OBV not bearish (0 signals)")
-            
-            if confirmation['divergence'] == 'bearish_divergence':
-                confirmation['confidence_boost'] += 0.10
-                logger.info(f"   ✅ Bearish divergence (+10% confidence)")
-            elif confirmation['divergence'] == 'bullish_divergence':
-                confirmation['confidence_boost'] -= 0.10
-                logger.info(f"   ⚠️  Bullish divergence (-10% confidence)")
-            
-            # RELAXED CONFIRMATION: Confirmed if at least 2 positive signals
-            confirmation['confirmed'] = positive_signals >= 2
-            
-            logger.info("-"*80)
-            logger.info(f"Total Positive Signals: {positive_signals}/3")
-            logger.info(f"Required for Confirmation: 2/3")
-            logger.info(f"Confidence Boost: {confirmation['confidence_boost']:+.1%}")
-            
-            if confirmation['confirmed']:
-                logger.info(f"✅ VOLUME CONFIRMATION PASSED ({positive_signals}/3 signals)")
-            else:
-                logger.info(f"❌ VOLUME CONFIRMATION FAILED ({positive_signals}/3 signals, need 2)")
+        if confirmation['confirmed']:
+            logger.info(f"✅ VOLUME CONFIRMATION PASSED")
+            logger.info(f"   Volume conditions support the {signal_type.upper()} signal")
+        else:
+            logger.info(f"❌ VOLUME CONFIRMATION FAILED")
+            logger.info(f"   Volume too low for reliable {signal_type.upper()} signal")
         
         logger.info("="*80)
         
         return confirmation
+    
+    def get_volume_ratio(self, df):
+        """
+        Get current volume ratio vs average with adaptive period
+        
+        Args:
+            df: DataFrame with volume data
+            
+        Returns:
+            float: Volume ratio (current/average)
+        """
+        min_required = 10
+        
+        if len(df) < min_required:
+            return 1.0  # Neutral if insufficient data
+        
+        # Use adaptive period
+        if len(df) < self.volume_ma_period:
+            actual_period = max(min_required, len(df) - 2)
+        else:
+            actual_period = self.volume_ma_period
+        
+        volume_ma = df['tick_volume'].rolling(window=actual_period).mean()
+        current_volume = df['tick_volume'].iloc[-1]
+        avg_volume = volume_ma.iloc[-1]
+        
+        if pd.isna(avg_volume) or avg_volume == 0:
+            return 1.0
+        
+        return current_volume / avg_volume
     
     def should_trade(self, df, signal_type):
         """

@@ -114,83 +114,6 @@ class MT5TradingBot:
         self.positions = {}
         self.split_position_groups = {}  # Track groups of split positions
         
-        # Price level protection
-        self.prevent_worse_entries = config.get('prevent_worse_entries', True)
-        
-    def check_existing_position_prices(self, symbol, signal):
-        """
-        Check existing position prices to prevent placing orders at worse levels
-        
-        Args:
-            symbol (str): Trading symbol
-            signal (int): 1 for BUY, -1 for SELL
-            
-        Returns:
-            tuple: (can_trade, limit_price, reason)
-                can_trade (bool): Whether new position can be placed
-                limit_price (float): Price limit (highest buy or lowest sell)
-                reason (str): Explanation message
-        """
-        if not self.prevent_worse_entries:
-            return True, None, "Price level protection disabled"
-        
-        # Get existing positions for this symbol with our magic number
-        positions = mt5.positions_get(symbol=symbol, magic=self.magic_number)
-        
-        if not positions or len(positions) == 0:
-            return True, None, "No existing positions"
-        
-        # Get current price
-        tick = mt5.symbol_info_tick(symbol)
-        if tick is None:
-            return True, None, "Cannot get current price"
-        
-        current_price = tick.ask if signal == 1 else tick.bid
-        
-        if signal == 1:  # BUY signal
-            # Find highest existing BUY position price
-            buy_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_BUY]
-            
-            if not buy_positions:
-                return True, None, "No existing BUY positions"
-            
-            highest_buy_price = max(p.price_open for p in buy_positions)
-            
-            # Don't place BUY if current price is higher than highest existing BUY
-            if current_price > highest_buy_price:
-                reason = (f"Cannot place BUY at {current_price:.5f} - "
-                         f"higher than highest existing BUY at {highest_buy_price:.5f}")
-                logging.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
-                logging.info(f"   Existing BUY positions: {len(buy_positions)}")
-                logging.info(f"   Highest BUY price: {highest_buy_price:.5f}")
-                logging.info(f"   Current price: {current_price:.5f}")
-                logging.info(f"   Difference: {(current_price - highest_buy_price):.5f} ({((current_price - highest_buy_price) / highest_buy_price * 100):.2f}%)")
-                return False, highest_buy_price, reason
-            else:
-                return True, highest_buy_price, f"BUY allowed - below highest existing BUY at {highest_buy_price:.5f}"
-        
-        else:  # SELL signal
-            # Find lowest existing SELL position price
-            sell_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_SELL]
-            
-            if not sell_positions:
-                return True, None, "No existing SELL positions"
-            
-            lowest_sell_price = min(p.price_open for p in sell_positions)
-            
-            # Don't place SELL if current price is lower than lowest existing SELL
-            if current_price < lowest_sell_price:
-                reason = (f"Cannot place SELL at {current_price:.5f} - "
-                         f"lower than lowest existing SELL at {lowest_sell_price:.5f}")
-                logging.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
-                logging.info(f"   Existing SELL positions: {len(sell_positions)}")
-                logging.info(f"   Lowest SELL price: {lowest_sell_price:.5f}")
-                logging.info(f"   Current price: {current_price:.5f}")
-                logging.info(f"   Difference: {(lowest_sell_price - current_price):.5f} ({((lowest_sell_price - current_price) / lowest_sell_price * 100):.2f}%)")
-                return False, lowest_sell_price, reason
-            else:
-                return True, lowest_sell_price, f"SELL allowed - above lowest existing SELL at {lowest_sell_price:.5f}"
-        
     def connect(self):
         """Connect to MetaTrader5 with build 5549+ compatibility"""
         import os
@@ -676,7 +599,7 @@ class MT5TradingBot:
         else:
             logging.info(f"  ⚠️  RSI data not available - skipping RSI filter")
         
-        # Apply MACD confirmation (second most popular) - ENHANCED WITH THRESHOLD
+        # Apply MACD confirmation (second most popular)
         logging.info("-"*80)
         logging.info("🔍 MACD FILTER CHECK:")
         if not pd.isna(latest['macd_histogram']):
@@ -684,133 +607,37 @@ class MT5TradingBot:
             macd = latest['macd']
             macd_signal = latest['macd_signal']
             
-            # Enhanced MACD with meaningful threshold
-            MACD_THRESHOLD = self.config.get('macd_min_histogram', 0.0005)
-            
             logging.info(f"  MACD Line:         {macd:.6f}")
             logging.info(f"  MACD Signal Line:  {macd_signal:.6f}")
             logging.info(f"  MACD Histogram:    {histogram:.6f}")
-            logging.info(f"  MACD Threshold:    ±{MACD_THRESHOLD:.6f}")
             logging.info(f"  Histogram Position: {'POSITIVE' if histogram > 0 else 'NEGATIVE' if histogram < 0 else 'ZERO'}")
             
             if signal == 1:  # BUY
-                logging.info(f"  Checking: Histogram {histogram:.6f} > {MACD_THRESHOLD:.6f}?")
-                if histogram <= MACD_THRESHOLD:
+                logging.info(f"  Checking: Histogram {histogram:.6f} > 0?")
+                if histogram <= 0:
                     logging.info(f"  ❌ MACD FILTER REJECTED!")
-                    if histogram <= 0:
-                        logging.info(f"     Histogram {histogram:.6f} is negative - contradicts BUY signal")
-                    else:
-                        logging.info(f"     Histogram {histogram:.6f} is too weak (≤{MACD_THRESHOLD:.6f})")
-                        logging.info(f"     MACD momentum insufficient for reliable entry")
+                    logging.info(f"     Histogram {histogram:.6f} is not positive")
+                    logging.info(f"     MACD not confirming bullish momentum")
                     logging.info("="*80)
                     return 0
                 else:
                     logging.info(f"  ✅ MACD FILTER PASSED!")
-                    logging.info(f"     Histogram {histogram:.6f} shows strong bullish momentum")
-                    logging.info(f"     MACD confirms BUY signal with sufficient strength")
+                    logging.info(f"     Histogram {histogram:.6f} is positive")
+                    logging.info(f"     MACD confirms bullish momentum")
             elif signal == -1:  # SELL
-                logging.info(f"  Checking: Histogram {histogram:.6f} < -{MACD_THRESHOLD:.6f}?")
-                if histogram >= -MACD_THRESHOLD:
+                logging.info(f"  Checking: Histogram {histogram:.6f} < 0?")
+                if histogram >= 0:
                     logging.info(f"  ❌ MACD FILTER REJECTED!")
-                    if histogram >= 0:
-                        logging.info(f"     Histogram {histogram:.6f} is positive - contradicts SELL signal")
-                    else:
-                        logging.info(f"     Histogram {histogram:.6f} is too weak (≥-{MACD_THRESHOLD:.6f})")
-                        logging.info(f"     MACD momentum insufficient for reliable entry")
+                    logging.info(f"     Histogram {histogram:.6f} is not negative")
+                    logging.info(f"     MACD not confirming bearish momentum")
                     logging.info("="*80)
                     return 0
                 else:
                     logging.info(f"  ✅ MACD FILTER PASSED!")
-                    logging.info(f"     Histogram {histogram:.6f} shows strong bearish momentum")
-                    logging.info(f"     MACD confirms SELL signal with sufficient strength")
+                    logging.info(f"     Histogram {histogram:.6f} is negative")
+                    logging.info(f"     MACD confirms bearish momentum")
         else:
             logging.info(f"  ⚠️  MACD data not available - skipping MACD filter")
-        
-        # Apply ADX trend direction filter (MISSING FROM ORIGINAL - NOW ADDED)
-        logging.info("-"*80)
-        logging.info("🔍 ADX TREND DIRECTION FILTER:")
-        if self.config.get('use_adx', True):
-            # Calculate ADX and directional indicators if not already present
-            if 'adx' not in df.columns:
-                # Calculate ADX components
-                high_low = df['high'] - df['low']
-                high_close = np.abs(df['high'] - df['close'].shift())
-                low_close = np.abs(df['low'] - df['close'].shift())
-                tr = df[['high_low', 'high_close', 'low_close']].max(axis=1)
-                
-                # Directional Movement
-                plus_dm = np.where((df['high'] - df['high'].shift()) > (df['low'].shift() - df['low']), 
-                                 np.maximum(df['high'] - df['high'].shift(), 0), 0)
-                minus_dm = np.where((df['low'].shift() - df['low']) > (df['high'] - df['high'].shift()), 
-                                  np.maximum(df['low'].shift() - df['low'], 0), 0)
-                
-                # Smooth the values
-                adx_period = self.config.get('adx_period', 14)
-                tr_smooth = pd.Series(tr).rolling(window=adx_period).mean()
-                plus_dm_smooth = pd.Series(plus_dm).rolling(window=adx_period).mean()
-                minus_dm_smooth = pd.Series(minus_dm).rolling(window=adx_period).mean()
-                
-                # Calculate DI
-                df['plus_di'] = 100 * (plus_dm_smooth / tr_smooth)
-                df['minus_di'] = 100 * (minus_dm_smooth / tr_smooth)
-                
-                # Calculate DX and ADX
-                dx = 100 * np.abs(df['plus_di'] - df['minus_di']) / (df['plus_di'] + df['minus_di'])
-                df['adx'] = dx.rolling(window=adx_period).mean()
-            
-            if not pd.isna(latest['adx']):
-                adx = latest['adx']
-                plus_di = latest.get('plus_di', 0)
-                minus_di = latest.get('minus_di', 0)
-                
-                ADX_THRESHOLD = self.config.get('adx_min_strength', 25)
-                
-                logging.info(f"  ADX (Trend Strength): {adx:.2f}")
-                logging.info(f"  +DI (Bullish Force):  {plus_di:.2f}")
-                logging.info(f"  -DI (Bearish Force):  {minus_di:.2f}")
-                logging.info(f"  ADX Threshold:        {ADX_THRESHOLD}")
-                
-                if adx > ADX_THRESHOLD:
-                    logging.info(f"  ✅ Strong trend detected (ADX {adx:.2f} > {ADX_THRESHOLD})")
-                    
-                    if signal == 1:  # BUY
-                        if plus_di > minus_di:
-                            di_diff = plus_di - minus_di
-                            logging.info(f"  ✅ ADX FILTER PASSED!")
-                            logging.info(f"     Strong bullish trend confirmed")
-                            logging.info(f"     +DI {plus_di:.2f} > -DI {minus_di:.2f} (Difference: {di_diff:.2f})")
-                            logging.info(f"     ADX {adx:.2f} confirms trend strength")
-                        else:
-                            di_diff = minus_di - plus_di
-                            logging.info(f"  ❌ ADX FILTER REJECTED!")
-                            logging.info(f"     Trend direction contradicts BUY signal")
-                            logging.info(f"     -DI {minus_di:.2f} > +DI {plus_di:.2f} (Bearish by {di_diff:.2f})")
-                            logging.info(f"     Strong bearish trend detected - cannot BUY")
-                            logging.info("="*80)
-                            return 0
-                    elif signal == -1:  # SELL
-                        if minus_di > plus_di:
-                            di_diff = minus_di - plus_di
-                            logging.info(f"  ✅ ADX FILTER PASSED!")
-                            logging.info(f"     Strong bearish trend confirmed")
-                            logging.info(f"     -DI {minus_di:.2f} > +DI {plus_di:.2f} (Difference: {di_diff:.2f})")
-                            logging.info(f"     ADX {adx:.2f} confirms trend strength")
-                        else:
-                            di_diff = plus_di - minus_di
-                            logging.info(f"  ❌ ADX FILTER REJECTED!")
-                            logging.info(f"     Trend direction contradicts SELL signal")
-                            logging.info(f"     +DI {plus_di:.2f} > -DI {minus_di:.2f} (Bullish by {di_diff:.2f})")
-                            logging.info(f"     Strong bullish trend detected - cannot SELL")
-                            logging.info("="*80)
-                            return 0
-                else:
-                    logging.info(f"  ⚠️  Weak trend (ADX {adx:.2f} ≤ {ADX_THRESHOLD})")
-                    logging.info(f"     Trend not strong enough for reliable directional filter")
-                    logging.info(f"     Proceeding with caution - other filters must be strong")
-            else:
-                logging.info(f"  ⚠️  ADX data not available - skipping ADX filter")
-        else:
-            logging.info(f"  ⚠️  ADX filter disabled in configuration")
         
         # All filters passed
         logging.info("-"*80)
@@ -1432,18 +1259,6 @@ class MT5TradingBot:
         
         logging.info(f"🎯 {'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
         logging.info("")
-        
-        # === PRICE LEVEL PROTECTION ===
-        can_trade, limit_price, price_reason = self.check_existing_position_prices(symbol, signal)
-        
-        if not can_trade:
-            logging.warning(f"❌ TRADE REJECTED by price level protection")
-            logging.warning(f"   {price_reason}")
-            logging.info("="*80)
-            return
-        else:
-            if limit_price is not None:
-                logging.info(f"✅ Price level check passed: {price_reason}")
         
         # === VOLUME ANALYSIS ===
         confidence_adjustment = 0.0

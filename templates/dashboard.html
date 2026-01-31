@@ -638,6 +638,7 @@
                         <option value="profitable">✅ Profitable Balanced (H1) - Recommended</option>
                         <option value="conservative">🛡️ Conservative (H4) - Safest</option>
                         <option value="aggressive">⚡ Aggressive (M30) - Experienced</option>
+                        <option value="crypto">₿ Crypto Trading (H1) - High Volatility</option>
                         <option value="custom">🎨 Custom - Manual Settings</option>
                     </select>
                     <small style="color: rgba(255,255,255,0.9); display: block; margin-top: 8px;">
@@ -683,6 +684,25 @@
                                         <option value="GBPCAD">GBPCAD (Pound/CAD)</option>
                                     </optgroup>
                                     
+                                    <!-- Cryptocurrencies -->
+                                    <optgroup label="₿ Cryptocurrencies">
+                                        <option value="BTCUSD">BTCUSD (Bitcoin)</option>
+                                        <option value="ETHUSD">ETHUSD (Ethereum)</option>
+                                        <option value="LTCUSD">LTCUSD (Litecoin)</option>
+                                        <option value="XRPUSD">XRPUSD (Ripple)</option>
+                                        <option value="BCHUSD">BCHUSD (Bitcoin Cash)</option>
+                                        <option value="ADAUSD">ADAUSD (Cardano)</option>
+                                        <option value="DOTUSD">DOTUSD (Polkadot)</option>
+                                        <option value="LINKUSD">LINKUSD (Chainlink)</option>
+                                        <option value="XLMUSD">XLMUSD (Stellar)</option>
+                                        <option value="UNIUSD">UNIUSD (Uniswap)</option>
+                                        <option value="SOLUSD">SOLUSD (Solana)</option>
+                                        <option value="MATICUSD">MATICUSD (Polygon)</option>
+                                        <option value="AVAXUSD">AVAXUSD (Avalanche)</option>
+                                        <option value="DOGEUSD">DOGEUSD (Dogecoin)</option>
+                                        <option value="SHIBUSD">SHIBUSD (Shiba Inu)</option>
+                                    </optgroup>
+                                    
                                     <!-- Commodities - Energy -->
                                     <optgroup label="⚡ Commodities - Energy">
                                         <option value="XTIUSD">XTIUSD (Crude Oil WTI)</option>
@@ -706,6 +726,7 @@
                                 <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
                                     <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('metals')">Metals Only</button>
                                     <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('forex')">+ Forex Majors</button>
+                                    <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('crypto')">₿ Crypto</button>
                                     <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('all')">Select All</button>
                                     <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="selectSymbolGroup('none')">Clear All</button>
                                 </div>
@@ -749,6 +770,50 @@
                                 <label>Max Daily Loss (%)</label>
                                 <input type="number" id="max-daily-loss" value="3" step="0.5" min="1" max="10" onchange="validateDailyLoss()">
                                 <div class="validation-warning" id="daily-loss-warning">⚠️ Daily loss above 5% is very risky</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Analysis Bars</label>
+                                <input type="number" id="analysis-bars" value="200" step="10" min="50" max="1000" onchange="validateAnalysisBars()">
+                                <small style="color: #94a3b8;">Number of historical bars for signal analysis</small>
+                                <div class="validation-warning" id="analysis-bars-warning">⚠️ More bars = slower analysis but better accuracy</div>
+                                <div class="validation-error" id="analysis-bars-error">❌ Analysis bars must be between 50 and 1000</div>
+                                
+                                <!-- Analysis Bars Information Panel -->
+                                <div style="margin-top: 10px; padding: 12px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 8px; color: white; font-size: 13px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span style="font-size: 16px;">💡</span>
+                                        <strong>Analysis Bars Guide</strong>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                                        <div>
+                                            <strong>📊 Timeframe Recommendations:</strong><br>
+                                            • M1-M5: 50-100 bars<br>
+                                            • M15-M30: 100-200 bars<br>
+                                            • H1-H4: 200-300 bars<br>
+                                            • D1+: 300-500 bars
+                                        </div>
+                                        <div>
+                                            <strong>⚡ Performance Impact:</strong><br>
+                                            • 50-150: Fast analysis<br>
+                                            • 200-300: Balanced<br>
+                                            • 400-500: Slower but accurate<br>
+                                            • 500+: Research/backtesting
+                                        </div>
+                                    </div>
+                                    <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; margin-top: 8px;">
+                                        <strong>🎯 Rule of Thumb:</strong> Use 10-20x your timeframe in minutes as bar count<br>
+                                        <em>Example: H1 (60 min) → 200-300 bars optimal</em>
+                                    </div>
+                                </div>
+                                
+                                <!-- Symbol Data Availability Checker -->
+                                <div style="margin-top: 10px;">
+                                    <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;" onclick="checkSymbolDataAvailability()">
+                                        🔍 Check Symbol Data Availability
+                                    </button>
+                                    <div id="symbol-data-status" style="margin-top: 8px; display: none;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -941,6 +1006,13 @@
                                 <div class="form-group">
                                     <label>TP Level 3 (R:R)</label>
                                     <input type="number" id="tp-level-3" value="4.0" step="0.1" min="2" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Max Lot Size Per Order</label>
+                                    <input type="number" id="max-lot-per-order" value="0.5" step="0.01" min="0.01" max="10" onchange="validateMaxLotSize()">
+                                    <small style="color: #94a3b8;">Maximum lot size for individual orders (broker limit)</small>
+                                    <div class="validation-warning" id="max-lot-warning">⚠️ Large lot sizes may be rejected by broker</div>
+                                    <div class="validation-error" id="max-lot-error">❌ Max lot size must be between 0.01 and 10</div>
                                 </div>
                                 <div class="form-group">
                                     <label>Max Trades Total</label>
@@ -1467,6 +1539,7 @@
             const forexCrosses = ['EURJPY', 'GBPJPY', 'EURGBP', 'EURAUD', 'EURCAD', 'GBPAUD', 'GBPCAD'];
             const energy = ['XTIUSD', 'XBRUSD', 'XNGUSD'];
             const indices = ['US30', 'US500', 'NAS100', 'UK100', 'GER40', 'FRA40', 'JPN225', 'AUS200'];
+            const crypto = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'BCHUSD', 'ADAUSD', 'DOTUSD', 'LINKUSD', 'XLMUSD', 'UNIUSD', 'SOLUSD', 'MATICUSD', 'AVAXUSD', 'DOGEUSD', 'SHIBUSD'];
             
             // Clear all selections first
             for (let i = 0; i < options.length; i++) {
@@ -1490,6 +1563,14 @@
                     }
                 }
                 showToast('✅ Metals + Forex Majors selected (Balanced)', 'success');
+            } else if (group === 'crypto') {
+                // Select major cryptocurrencies
+                for (let i = 0; i < options.length; i++) {
+                    if (crypto.includes(options[i].value)) {
+                        options[i].selected = true;
+                    }
+                }
+                showToast('✅ Cryptocurrencies selected (High Volatility)', 'warning');
             } else if (group === 'all') {
                 // Select all
                 for (let i = 0; i < options.length; i++) {
@@ -1499,6 +1580,88 @@
             } else if (group === 'none') {
                 // Already cleared above
                 showToast('✅ All symbols cleared', 'success');
+            }
+        }
+        
+        // Symbol Data Availability Checker
+        async function checkSymbolDataAvailability() {
+            const button = event.target;
+            const statusDiv = document.getElementById('symbol-data-status');
+            const selectedSymbols = Array.from(document.getElementById('symbols').selectedOptions).map(o => o.value);
+            const analysisBars = parseInt(document.getElementById('analysis-bars').value);
+            const timeframe = parseInt(document.getElementById('timeframe').value);
+            
+            if (selectedSymbols.length === 0) {
+                statusDiv.innerHTML = '<div style="color: #f59e0b; padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px;">⚠️ Please select symbols first</div>';
+                statusDiv.style.display = 'block';
+                return;
+            }
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Checking...';
+            statusDiv.innerHTML = '<div style="color: #6366f1; padding: 8px;">🔍 Checking data availability for ' + selectedSymbols.length + ' symbols...</div>';
+            statusDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/symbols/data-availability', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbols: selectedSymbols,
+                        bars: analysisBars,
+                        timeframe: timeframe
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = '<div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 6px; padding: 10px; margin-top: 8px;">';
+                    html += '<div style="color: #10b981; font-weight: 600; margin-bottom: 8px;">📊 Data Availability Results:</div>';
+                    
+                    // Summary
+                    const available = data.results.filter(r => r.available).length;
+                    const total = data.results.length;
+                    html += `<div style="margin-bottom: 10px; color: #374151;"><strong>Summary:</strong> ${available}/${total} symbols have sufficient data</div>`;
+                    
+                    // Individual results
+                    html += '<div style="display: grid; gap: 6px;">';
+                    data.results.forEach(result => {
+                        const statusColor = result.available ? '#10b981' : '#ef4444';
+                        const statusIcon = result.available ? '✅' : '❌';
+                        const statusText = result.available ? 'Available' : 'Insufficient';
+                        
+                        html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 6px; background: rgba(255,255,255,0.5); border-radius: 4px;">`;
+                        html += `<span style="font-weight: 500;">${result.symbol}</span>`;
+                        html += `<span style="color: ${statusColor};">${statusIcon} ${result.bars_available}/${analysisBars} bars ${statusText}</span>`;
+                        html += `</div>`;
+                    });
+                    html += '</div>';
+                    
+                    // Recommendations
+                    const insufficient = data.results.filter(r => !r.available);
+                    if (insufficient.length > 0) {
+                        html += '<div style="margin-top: 10px; padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px; color: #92400e;">';
+                        html += '<strong>💡 Recommendations:</strong><br>';
+                        html += `• Reduce analysis bars to ${Math.min(...insufficient.map(r => r.bars_available))} or less<br>`;
+                        html += '• Or remove symbols with insufficient data<br>';
+                        html += '• Consider using higher timeframes for more historical data';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    statusDiv.innerHTML = html;
+                } else {
+                    statusDiv.innerHTML = `<div style="color: #ef4444; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">❌ Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div style="color: #ef4444; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">❌ Failed to check data availability. Make sure MT5 is connected.</div>';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '🔍 Check Symbol Data Availability';
             }
         }
         
@@ -1544,12 +1707,48 @@
             return true;
         }
         
+        function validateMaxLotSize() {
+            const maxLot = parseFloat(document.getElementById('max-lot-per-order').value);
+            const warning = document.getElementById('max-lot-warning');
+            const error = document.getElementById('max-lot-error');
+            
+            error.style.display = 'none';
+            warning.style.display = 'none';
+            
+            if (maxLot < 0.01 || maxLot > 10) {
+                error.style.display = 'block';
+                return false;
+            } else if (maxLot > 2) {
+                warning.style.display = 'block';
+            }
+            return true;
+        }
+        
+        function validateAnalysisBars() {
+            const bars = parseInt(document.getElementById('analysis-bars').value);
+            const warning = document.getElementById('analysis-bars-warning');
+            const error = document.getElementById('analysis-bars-error');
+            
+            error.style.display = 'none';
+            warning.style.display = 'none';
+            
+            if (bars < 50 || bars > 1000) {
+                error.style.display = 'block';
+                return false;
+            } else if (bars > 500) {
+                warning.style.display = 'block';
+            }
+            return true;
+        }
+        
         function validateAllInputs() {
             const riskValid = validateRisk();
             const confidenceValid = validateConfidence();
             const lossValid = validateDailyLoss();
+            const maxLotValid = validateMaxLotSize();
+            const analysisBarsValid = validateAnalysisBars();
             
-            return riskValid && confidenceValid && lossValid;
+            return riskValid && confidenceValid && lossValid && maxLotValid && analysisBarsValid;
         }
         
         // MT5 Connection Test
@@ -3051,6 +3250,7 @@
                 reward_ratio: 2.0,
                 min_confidence: 70,
                 max_daily_loss: 3,
+                analysis_bars: 200,
                 fast_ma: 20,
                 slow_ma: 50,
                 rsi_period: 14,
@@ -3078,6 +3278,7 @@
                 tp_level_1: 1.5,
                 tp_level_2: 2.5,
                 tp_level_3: 4.0,
+                max_lot_per_order: 0.5,
                 max_trades_total: 10,
                 max_trades_per_symbol: 3,
                 enable_trailing: 'true',
@@ -3095,6 +3296,7 @@
                 reward_ratio: 2.5,
                 min_confidence: 75,
                 max_daily_loss: 2,
+                analysis_bars: 300,
                 fast_ma: 20,
                 slow_ma: 50,
                 rsi_period: 14,
@@ -3122,6 +3324,7 @@
                 tp_level_1: 2.0,
                 tp_level_2: 3.0,
                 tp_level_3: 5.0,
+                max_lot_per_order: 0.3,
                 max_trades_total: 5,
                 max_trades_per_symbol: 2,
                 enable_trailing: 'true',
@@ -3139,6 +3342,7 @@
                 reward_ratio: 1.5,
                 min_confidence: 60,
                 max_daily_loss: 5,
+                analysis_bars: 150,
                 fast_ma: 10,
                 slow_ma: 30,
                 rsi_period: 14,
@@ -3166,6 +3370,7 @@
                 tp_level_1: 1.0,
                 tp_level_2: 1.5,
                 tp_level_3: 2.5,
+                max_lot_per_order: 1.0,
                 max_trades_total: 20,
                 max_trades_per_symbol: 5,
                 enable_trailing: 'true',
@@ -3176,6 +3381,52 @@
                 min_risk_multiplier: 0.5,
                 max_drawdown: 15,
                 max_daily_trades: 50
+            },
+            crypto: {
+                timeframe: '16385', // H1
+                risk_percent: 0.3,
+                reward_ratio: 2.5,
+                min_confidence: 65,
+                max_daily_loss: 4,
+                analysis_bars: 250,
+                fast_ma: 15,
+                slow_ma: 35,
+                rsi_period: 14,
+                rsi_overbought: 70,
+                rsi_oversold: 30,
+                macd_fast: 12,
+                macd_slow: 26,
+                macd_signal: 9,
+                macd_min_histogram: 0.0008,
+                atr_period: 14,
+                atr_multiplier: 1.8,
+                adx_min: 25,
+                use_rsi: 'true',
+                use_macd: 'true',
+                use_adx: 'true',
+                use_trend_filter: 'true',
+                trend_ma_period: 50,
+                enable_trading_hours: 'false',
+                trading_start_hour: 0,
+                trading_end_hour: 23,
+                avoid_news: 'true',
+                news_buffer: 120,
+                use_split_orders: 'true',
+                num_positions: 3,
+                tp_level_1: 2.0,
+                tp_level_2: 3.5,
+                tp_level_3: 6.0,
+                max_lot_per_order: 0.3,
+                max_trades_total: 8,
+                max_trades_per_symbol: 2,
+                enable_trailing: 'true',
+                trail_activation: 1.5,
+                trail_distance: 1.2,
+                enable_adaptive_risk: 'true',
+                max_risk_multiplier: 1.8,
+                min_risk_multiplier: 0.4,
+                max_drawdown: 12,
+                max_daily_trades: 15
             }
         };
         
@@ -3197,6 +3448,7 @@
             document.getElementById('reward-ratio').value = config.reward_ratio;
             document.getElementById('min-confidence').value = config.min_confidence;
             document.getElementById('max-daily-loss').value = config.max_daily_loss;
+            document.getElementById('analysis-bars').value = config.analysis_bars || 200;
             
             // Indicators
             document.getElementById('fast-ma').value = config.fast_ma;
@@ -3230,6 +3482,7 @@
             document.getElementById('tp-level-1').value = config.tp_level_1;
             document.getElementById('tp-level-2').value = config.tp_level_2;
             document.getElementById('tp-level-3').value = config.tp_level_3;
+            document.getElementById('max-lot-per-order').value = config.max_lot_per_order || 0.5;
             document.getElementById('max-trades-total').value = config.max_trades_total;
             document.getElementById('max-trades-per-symbol').value = config.max_trades_per_symbol;
             document.getElementById('enable-trailing').value = config.enable_trailing;
@@ -3253,11 +3506,14 @@
             validateRisk();
             validateConfidence();
             validateDailyLoss();
+            validateMaxLotSize();
+            validateAnalysisBars();
             
             const presetNames = {
                 profitable: 'Profitable Balanced',
                 conservative: 'Conservative',
-                aggressive: 'Aggressive'
+                aggressive: 'Aggressive',
+                crypto: 'Crypto Trading'
             };
             
             showToast(`✅ Loaded ${presetNames[preset]} preset`, 'success');
@@ -3286,6 +3542,7 @@
                 reward_ratio: parseFloat(document.getElementById('reward-ratio').value),
                 min_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
                 max_daily_loss: parseFloat(document.getElementById('max-daily-loss').value),
+                analysis_bars: parseInt(document.getElementById('analysis-bars').value),
                 
                 // Indicators
                 fast_ma_period: parseInt(document.getElementById('fast-ma').value),
@@ -3319,6 +3576,7 @@
                 tp_level_1: parseFloat(document.getElementById('tp-level-1').value),
                 tp_level_2: parseFloat(document.getElementById('tp-level-2').value),
                 tp_level_3: parseFloat(document.getElementById('tp-level-3').value),
+                max_lot_per_order: parseFloat(document.getElementById('max-lot-per-order').value),
                 max_trades_total: parseInt(document.getElementById('max-trades-total').value),
                 max_trades_per_symbol: parseInt(document.getElementById('max-trades-per-symbol').value),
                 enable_trailing_stop: document.getElementById('enable-trailing').value === 'true',

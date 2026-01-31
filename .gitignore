@@ -45,6 +45,7 @@ backtest_results/
 # Sensitive Configuration
 config_local.py
 .env
+*.txt
 *.key
 *.pem
 

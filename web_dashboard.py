@@ -140,6 +140,16 @@ def config_api():
             if min_risk_mult >= max_risk_mult:
                 return jsonify({'status': 'error', 'message': 'Min risk multiplier must be less than max'})
             
+            # Validate max lot per order
+            max_lot_per_order = new_config.get('max_lot_per_order', 0.5)
+            if max_lot_per_order < 0.01 or max_lot_per_order > 10:
+                return jsonify({'status': 'error', 'message': 'Max lot per order must be between 0.01 and 10'})
+            
+            # Validate analysis bars
+            analysis_bars = new_config.get('analysis_bars', 200)
+            if analysis_bars < 50 or analysis_bars > 1000:
+                return jsonify({'status': 'error', 'message': 'Analysis bars must be between 50 and 1000'})
+            
             # Validate volume filter settings
             if 'min_volume_ma' in new_config:
                 min_vol_ma = new_config.get('min_volume_ma', 1.2)
@@ -418,6 +428,18 @@ def trades_history():
             elif 'XAG' in symbol or 'SILVER' in symbol:
                 # Silver: 1 pip = 0.001
                 pips = price_diff * 1000
+            elif 'BTC' in symbol:
+                # Bitcoin: 1 pip = 1.0 (whole dollar moves)
+                pips = price_diff
+            elif 'ETH' in symbol:
+                # Ethereum: 1 pip = 0.1
+                pips = price_diff * 10
+            elif any(crypto in symbol for crypto in ['LTC', 'XRP', 'BCH', 'ADA', 'DOT', 'LINK', 'XLM', 'UNI', 'SOL', 'MATIC', 'AVAX']):
+                # Major altcoins: 1 pip = 0.01
+                pips = price_diff * 100
+            elif any(crypto in symbol for crypto in ['DOGE', 'SHIB']):
+                # Meme coins: 1 pip = 0.0001 (smaller moves)
+                pips = price_diff * 10000
             elif 'JPY' in symbol:
                 # JPY pairs: 1 pip = 0.01
                 pips = price_diff * 100
@@ -771,6 +793,136 @@ def charts_data():
     return jsonify(chart_data)
 
 
+@app.route('/api/symbols/data-availability', methods=['POST'])
+def check_symbol_data_availability():
+    """Check if selected symbols have sufficient historical data for analysis"""
+    try:
+        data = request.json
+        symbols = data.get('symbols', [])
+        requested_bars = data.get('bars', 200)
+        timeframe = data.get('timeframe', 16385)  # Default H1
+        
+        if not symbols:
+            return jsonify({'status': 'error', 'message': 'No symbols provided'})
+        
+        if not mt5.initialize():
+            return jsonify({'status': 'error', 'message': 'MT5 not connected. Please check MT5 is running.'})
+        
+        # Map timeframe values to MT5 constants
+        timeframe_map = {
+            1: mt5.TIMEFRAME_M1,
+            5: mt5.TIMEFRAME_M5,
+            15: mt5.TIMEFRAME_M15,
+            30: mt5.TIMEFRAME_M30,
+            16385: mt5.TIMEFRAME_H1,
+            16388: mt5.TIMEFRAME_H4,
+            16408: mt5.TIMEFRAME_D1
+        }
+        
+        mt5_timeframe = timeframe_map.get(timeframe, mt5.TIMEFRAME_H1)
+        
+        results = []
+        
+        for symbol in symbols:
+            try:
+                # Check if symbol exists
+                symbol_info = mt5.symbol_info(symbol)
+                if symbol_info is None:
+                    results.append({
+                        'symbol': symbol,
+                        'available': False,
+                        'bars_available': 0,
+                        'error': 'Symbol not found'
+                    })
+                    continue
+                
+                # Ensure symbol is visible in Market Watch
+                if not symbol_info.visible:
+                    if not mt5.symbol_select(symbol, True):
+                        results.append({
+                            'symbol': symbol,
+                            'available': False,
+                            'bars_available': 0,
+                            'error': 'Cannot select symbol'
+                        })
+                        continue
+                
+                # Get historical data to check availability
+                from datetime import datetime, timedelta
+                end_time = datetime.now()
+                
+                # Try to get the requested number of bars
+                rates = mt5.copy_rates_from(symbol, mt5_timeframe, end_time, requested_bars)
+                
+                if rates is None or len(rates) == 0:
+                    results.append({
+                        'symbol': symbol,
+                        'available': False,
+                        'bars_available': 0,
+                        'error': 'No historical data available'
+                    })
+                    continue
+                
+                bars_available = len(rates)
+                is_sufficient = bars_available >= requested_bars
+                
+                # Additional check: ensure data is recent (not too old)
+                if len(rates) > 0:
+                    latest_time = datetime.fromtimestamp(rates[-1]['time'])
+                    time_diff = datetime.now() - latest_time
+                    
+                    # If latest data is more than 1 day old for intraday or 1 week old for daily, flag as stale
+                    max_age = timedelta(days=1) if timeframe < 16408 else timedelta(days=7)
+                    if time_diff > max_age:
+                        results.append({
+                            'symbol': symbol,
+                            'available': False,
+                            'bars_available': bars_available,
+                            'error': f'Data is stale (last update: {latest_time.strftime("%Y-%m-%d %H:%M")})'
+                        })
+                        continue
+                
+                results.append({
+                    'symbol': symbol,
+                    'available': is_sufficient,
+                    'bars_available': bars_available,
+                    'error': None if is_sufficient else f'Only {bars_available} bars available, need {requested_bars}'
+                })
+                
+            except Exception as e:
+                logger.error(f"Error checking data for {symbol}: {str(e)}")
+                results.append({
+                    'symbol': symbol,
+                    'available': False,
+                    'bars_available': 0,
+                    'error': f'Check failed: {str(e)}'
+                })
+        
+        mt5.shutdown()
+        
+        # Summary statistics
+        total_symbols = len(results)
+        available_symbols = len([r for r in results if r['available']])
+        
+        logger.info(f"Data availability check completed: {available_symbols}/{total_symbols} symbols have sufficient data")
+        
+        return jsonify({
+            'status': 'success',
+            'results': results,
+            'summary': {
+                'total_symbols': total_symbols,
+                'available_symbols': available_symbols,
+                'requested_bars': requested_bars,
+                'timeframe': timeframe
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in data availability check: {str(e)}")
+        mt5.shutdown()
+        return jsonify({'status': 'error', 'message': f'Failed to check data availability: {str(e)}'})
+
+
 @app.route('/api/logs', methods=['GET'])
 def get_logs():
     """Get recent log entries"""
@@ -867,6 +1019,7 @@ def update_config_file(new_config):
         'reward_ratio': 'REWARD_RATIO',
         'min_confidence': 'MIN_TRADE_CONFIDENCE',
         'max_daily_loss': 'MAX_DAILY_LOSS',
+        'analysis_bars': 'ANALYSIS_BARS',
         'fast_ma_period': 'FAST_MA_PERIOD',
         'slow_ma_period': 'SLOW_MA_PERIOD',
         'rsi_period': 'RSI_PERIOD',
@@ -891,6 +1044,7 @@ def update_config_file(new_config):
         'news_buffer_minutes': 'NEWS_BUFFER_MINUTES',
         'use_split_orders': 'USE_SPLIT_ORDERS',
         'num_positions': 'NUM_POSITIONS',
+        'max_lot_per_order': 'MAX_LOT_PER_ORDER',
         'max_trades_total': 'MAX_TRADES_TOTAL',
         'max_trades_per_symbol': 'MAX_TRADES_PER_SYMBOL',
         'enable_trailing_stop': 'ENABLE_TRAILING_STOP',
