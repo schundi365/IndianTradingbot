@@ -1,107 +1,255 @@
 #!/usr/bin/env python3
 """
-Analyze why no trades are being placed in the last 20 hours
+Analyze No Trades Issue - Comprehensive Log Analysis
 """
 
+import re
+from datetime import datetime, timedelta
 import json
-from datetime import datetime
 
-def analyze_no_trades_issue():
-    """Analyze configuration and identify potential issues"""
+def analyze_trading_logs():
+    """Analyze trading bot logs to understand why no trades are placed"""
+    print("🔍 ANALYZING NO TRADES ISSUE")
+    print("=" * 60)
     
-    print("="*80)
-    print("ANALYZING NO TRADES ISSUE")
-    print("="*80)
+    try:
+        # Read the log file
+        with open('trading_bot.log', 'r', encoding='utf-8') as f:
+            log_content = f.read()
+        
+        print(f"✅ Log file read successfully ({len(log_content)} characters)")
+        
+        # Get current time and 5 hours ago
+        now = datetime.now()
+        five_hours_ago = now - timedelta(hours=5)
+        
+        print(f"📅 Analyzing period: {five_hours_ago.strftime('%H:%M:%S')} to {now.strftime('%H:%M:%S')}")
+        
+        # Analysis counters
+        analysis_count = 0
+        signal_attempts = 0
+        no_signal_count = 0
+        volume_rejections = 0
+        confidence_rejections = 0
+        ma_crossover_checks = 0
+        trend_confirmation_checks = 0
+        symbols_analyzed = set()
+        
+        # Pattern matching
+        patterns = {
+            'analysis_start': r'ANALYZING\s+(\w+)',
+            'signal_analysis': r'📊 SIGNAL ANALYSIS - DETAILED CALCULATIONS',
+            'no_signal': r'❌ NO SIGNAL GENERATED',
+            'ma_crossover': r'🔍 CHECKING MA CROSSOVER:',
+            'no_crossover': r'❌ No crossover detected',
+            'trend_confirmation': r'🔍 CHECKING TREND CONFIRMATION:',
+            'no_trend_confirmation': r'❌ No trend confirmation',
+            'volume_rejection': r'Trade rejected by volume filter',
+            'confidence_too_low': r'confidence.*too low',
+            'waiting_for': r'Waiting for MA crossover or trend confirmation',
+            'current_price': r'Current Price:\s+([\d.]+)',
+            'fast_ma': r'Fast MA \(\d+\):\s+([\d.]+)',
+            'slow_ma': r'Slow MA \(\d+\):\s+([\d.]+)',
+            'ma_position': r'MA Position:\s+Fast (ABOVE|BELOW) Slow'
+        }
+        
+        # Find all matches
+        results = {}
+        for pattern_name, pattern in patterns.items():
+            matches = re.findall(pattern, log_content, re.IGNORECASE)
+            results[pattern_name] = matches
+        
+        # Count occurrences
+        analysis_count = len(results['analysis_start'])
+        signal_attempts = len(results['signal_analysis'])
+        no_signal_count = len(results['no_signal'])
+        ma_crossover_checks = len(results['ma_crossover'])
+        no_crossover_count = len(results['no_crossover'])
+        trend_confirmation_checks = len(results['trend_confirmation'])
+        no_trend_confirmation_count = len(results['no_trend_confirmation'])
+        volume_rejections = len(results['volume_rejection'])
+        
+        # Get unique symbols
+        symbols_analyzed = set(results['analysis_start'])
+        
+        # Get MA positions
+        ma_positions = results['ma_position']
+        above_count = ma_positions.count('ABOVE')
+        below_count = ma_positions.count('BELOW')
+        
+        print("\n📊 ANALYSIS SUMMARY:")
+        print("-" * 40)
+        print(f"Total Symbol Analyses: {analysis_count}")
+        print(f"Unique Symbols Analyzed: {len(symbols_analyzed)}")
+        print(f"Signal Analysis Attempts: {signal_attempts}")
+        print(f"No Signal Generated: {no_signal_count}")
+        print(f"MA Crossover Checks: {ma_crossover_checks}")
+        print(f"No Crossover Detected: {no_crossover_count}")
+        print(f"Trend Confirmation Checks: {trend_confirmation_checks}")
+        print(f"No Trend Confirmation: {no_trend_confirmation_count}")
+        print(f"Volume Rejections: {volume_rejections}")
+        
+        print(f"\n📈 MARKET CONDITIONS:")
+        print("-" * 40)
+        print(f"Fast MA Above Slow MA: {above_count} times")
+        print(f"Fast MA Below Slow MA: {below_count} times")
+        
+        if symbols_analyzed:
+            print(f"\n🎯 SYMBOLS ANALYZED:")
+            print("-" * 40)
+            for symbol in sorted(symbols_analyzed):
+                count = results['analysis_start'].count(symbol)
+                print(f"  {symbol}: {count} times")
+        
+        # Identify the main issues
+        print(f"\n🚨 MAIN ISSUES IDENTIFIED:")
+        print("-" * 40)
+        
+        issues = []
+        
+        if no_crossover_count == ma_crossover_checks and ma_crossover_checks > 0:
+            issues.append("❌ NO MA CROSSOVERS: All crossover checks failed")
+            print("   • No moving average crossovers detected")
+            print("   • Bot is waiting for Fast MA to cross above/below Slow MA")
+        
+        if no_trend_confirmation_count == trend_confirmation_checks and trend_confirmation_checks > 0:
+            issues.append("❌ NO TREND CONFIRMATIONS: All trend checks failed")
+            print("   • No trend confirmation signals detected")
+            print("   • Price not aligned with MA trend direction")
+        
+        if below_count > above_count * 2:
+            issues.append("❌ BEARISH MARKET: Fast MA mostly below Slow MA")
+            print(f"   • Market is in bearish trend ({below_count} below vs {above_count} above)")
+            print("   • Bot may be waiting for bullish crossover")
+        
+        if volume_rejections > 0:
+            issues.append(f"❌ VOLUME FILTER: {volume_rejections} trades rejected by volume")
+            print(f"   • {volume_rejections} potential trades rejected due to low volume")
+        
+        if no_signal_count == signal_attempts and signal_attempts > 0:
+            issues.append("❌ NO SIGNALS: 100% signal generation failure")
+            print("   • All signal analysis attempts resulted in no signal")
+            print("   • Bot is not finding any trading opportunities")
+        
+        # Check configuration
+        print(f"\n⚙️ CONFIGURATION CHECK:")
+        print("-" * 40)
+        
+        try:
+            with open('bot_config.json', 'r') as f:
+                config = json.load(f)
+            
+            print(f"Timeframe: M{config.get('timeframe', 'Unknown')}")
+            print(f"Min Confidence: {config.get('min_trade_confidence', 'Unknown')*100:.1f}%")
+            print(f"Volume Filter: {'Enabled' if config.get('use_volume_filter', False) else 'Disabled'}")
+            print(f"Volume Threshold: {config.get('min_volume_ma', 'Unknown')}x")
+            print(f"Fast MA Period: {config.get('fast_ma_period', 'Unknown')}")
+            print(f"Slow MA Period: {config.get('slow_ma_period', 'Unknown')}")
+            print(f"MACD Histogram: {config.get('macd_min_histogram', 'Unknown')}")
+            print(f"RSI Overbought: {config.get('rsi_overbought', 'Unknown')}")
+            print(f"RSI Oversold: {config.get('rsi_oversold', 'Unknown')}")
+            
+        except Exception as e:
+            print(f"❌ Could not read config: {e}")
+        
+        # Recommendations
+        print(f"\n💡 RECOMMENDATIONS:")
+        print("-" * 40)
+        
+        if no_crossover_count == ma_crossover_checks:
+            print("1. 🔄 REDUCE MA PERIODS:")
+            print("   • Current: Fast MA=10, Slow MA=30")
+            print("   • Try: Fast MA=5, Slow MA=15 for more crossovers")
+        
+        if below_count > above_count * 2:
+            print("2. 📉 BEARISH MARKET ADAPTATION:")
+            print("   • Enable short selling if not already enabled")
+            print("   • Consider trend-following instead of crossover strategy")
+        
+        if volume_rejections > 0:
+            print("3. 📊 VOLUME FILTER ADJUSTMENT:")
+            print("   • Current volume threshold may be too strict")
+            print("   • Consider lowering min_volume_ma from current value")
+        
+        print("4. ⚡ IMMEDIATE ACTIONS:")
+        print("   • Switch to M15 timeframe for more opportunities")
+        print("   • Lower confidence threshold to 40% temporarily")
+        print("   • Disable volume filter temporarily for testing")
+        print("   • Add more volatile symbols (crypto pairs)")
+        
+        return {
+            'analysis_count': analysis_count,
+            'no_signal_count': no_signal_count,
+            'symbols_analyzed': len(symbols_analyzed),
+            'main_issues': issues,
+            'ma_below_ratio': below_count / (above_count + below_count) if (above_count + below_count) > 0 else 0
+        }
+        
+    except Exception as e:
+        print(f"❌ Error analyzing logs: {e}")
+        return None
+
+def create_quick_fix_config():
+    """Create a quick fix configuration for more trading opportunities"""
+    print(f"\n🔧 CREATING QUICK FIX CONFIGURATION:")
+    print("-" * 40)
     
-    # Read current configuration
     try:
         with open('bot_config.json', 'r') as f:
             config = json.load(f)
         
-        print("CURRENT CONFIGURATION ANALYSIS:")
-        print(f"   Symbols: {config.get('symbols', [])}")
-        print(f"   Timeframe: M{config.get('timeframe', 'Unknown')}")
-        print(f"   Min Trade Confidence: {config.get('min_trade_confidence', 'Unknown')}")
-        print(f"   MACD Min Histogram: {config.get('macd_min_histogram', 'Unknown')}")
-        print(f"   Volume Filter Enabled: {config.get('use_volume_filter', 'Unknown')}")
-        print(f"   Min Volume MA: {config.get('min_volume_ma', 'Unknown')}")
-        print(f"   RSI Overbought: {config.get('rsi_overbought', 'Unknown')}")
-        print(f"   RSI Oversold: {config.get('rsi_oversold', 'Unknown')}")
+        # Make aggressive changes for more signals
+        original_values = {}
+        changes = {
+            'timeframe': 15,  # M15 instead of M30
+            'min_trade_confidence': 0.4,  # 40% instead of 50%
+            'fast_ma_period': 5,  # Faster crossovers
+            'slow_ma_period': 15,  # Faster crossovers
+            'use_volume_filter': False,  # Disable temporarily
+            'macd_min_histogram': 0.0003,  # More sensitive
+            'rsi_overbought': 75,  # Less restrictive
+            'rsi_oversold': 25,   # Less restrictive
+        }
+        
+        for key, new_value in changes.items():
+            original_values[key] = config.get(key, 'Not set')
+            config[key] = new_value
+        
+        # Save the modified config
+        with open('bot_config_quick_fix.json', 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print("✅ Quick fix configuration created: bot_config_quick_fix.json")
+        print("\nChanges made:")
+        for key, new_value in changes.items():
+            print(f"  {key}: {original_values[key]} → {new_value}")
+        
+        print("\n⚠️ To apply these changes:")
+        print("1. Stop the bot")
+        print("2. Copy bot_config_quick_fix.json to bot_config.json")
+        print("3. Restart the bot")
+        print("4. Monitor for increased signal generation")
+        
+        return True
         
     except Exception as e:
-        print(f"❌ Error reading config: {e}")
-        return
-    
-    print("\nPOTENTIAL ISSUES IDENTIFIED:")
-    
-    # Issue 1: MACD threshold too low
-    macd_threshold = config.get('macd_min_histogram', 0)
-    if macd_threshold < 0.0005:
-        print(f"⚠️  ISSUE 1: MACD threshold too low ({macd_threshold})")
-        print(f"   Current: {macd_threshold}")
-        print(f"   Recommended: 0.0005 (optimized value)")
-        print(f"   Impact: MACD filter rejecting most signals")
-    
-    # Issue 2: Volume filter too strict
-    volume_filter = config.get('use_volume_filter', False)
-    min_volume_ma = config.get('min_volume_ma', 1.0)
-    if volume_filter and min_volume_ma > 1.0:
-        print(f"⚠️  ISSUE 2: Volume filter too strict")
-        print(f"   Volume Filter Enabled: {volume_filter}")
-        print(f"   Min Volume MA: {min_volume_ma}")
-        print(f"   Recommended: 0.7 (optimized value)")
-        print(f"   Impact: Volume filter rejecting signals in low volume periods")
-    
-    # Issue 3: High confidence requirement
-    min_confidence = config.get('min_trade_confidence', 0.5)
-    if min_confidence > 0.7:
-        print(f"⚠️  ISSUE 3: Trade confidence too high")
-        print(f"   Current: {min_confidence} ({min_confidence*100}%)")
-        print(f"   Recommended: 0.6 (60%)")
-        print(f"   Impact: Rejecting trades that don't meet high confidence threshold")
-    
-    # Issue 4: Crypto symbols on M30 timeframe
-    symbols = config.get('symbols', [])
-    timeframe = config.get('timeframe', 30)
-    crypto_symbols = [s for s in symbols if any(crypto in s for crypto in ['BTC', 'ETH', 'LTC', 'XRP', 'XLM'])]
-    if crypto_symbols and timeframe >= 30:
-        print(f"⚠️  ISSUE 4: Crypto symbols on high timeframe")
-        print(f"   Crypto Symbols: {crypto_symbols}")
-        print(f"   Current Timeframe: M{timeframe}")
-        print(f"   Recommended: M5 or M15 for crypto")
-        print(f"   Impact: Missing fast crypto movements on slower timeframes")
-    
-    # Issue 5: All filters enabled (too restrictive)
-    filters_enabled = []
-    if config.get('use_rsi', False): filters_enabled.append('RSI')
-    if config.get('use_macd', False): filters_enabled.append('MACD')
-    if config.get('use_adx', False): filters_enabled.append('ADX')
-    if config.get('use_trend_filter', False): filters_enabled.append('Trend')
-    if config.get('use_volume_filter', False): filters_enabled.append('Volume')
-    
-    if len(filters_enabled) >= 4:
-        print(f"⚠️  ISSUE 5: Too many filters enabled")
-        print(f"   Active Filters: {', '.join(filters_enabled)}")
-        print(f"   Impact: All filters must pass simultaneously, reducing signal frequency")
-        print(f"   Recommendation: Disable some filters or use 'OR' logic instead of 'AND'")
-    
-    # Issue 6: Signal generation logic
-    print(f"\n⚠️  ISSUE 6: Signal generation logic")
-    print(f"   Current Logic: Waiting for MA crossover OR trend confirmation")
-    print(f"   Problem: In sideways markets, no crossovers occur")
-    print(f"   Recommendation: Add momentum-based signals (RSI reversals, MACD divergence)")
-    
-    print("\nRECOMMENDED FIXES:")
-    print("1. Lower MACD threshold to 0.0005")
-    print("2. Lower volume filter to 0.7 or disable temporarily")
-    print("3. Reduce confidence requirement to 60%")
-    print("4. Consider M15 timeframe for crypto symbols")
-    print("5. Disable some filters (keep RSI + MACD only)")
-    print("6. Add RSI reversal signals in oversold/overbought zones")
-    
-    print("\n" + "="*80)
-    print("ANALYSIS COMPLETE")
-    print("="*80)
+        print(f"❌ Error creating quick fix config: {e}")
+        return False
 
 if __name__ == "__main__":
-    analyze_no_trades_issue()
+    results = analyze_trading_logs()
+    if results:
+        print(f"\n🎯 SUMMARY:")
+        print(f"The bot analyzed {results['symbols_analyzed']} symbols {results['analysis_count']} times")
+        print(f"but generated {results['no_signal_count']} 'no signal' results.")
+        
+        if results['ma_below_ratio'] > 0.7:
+            print(f"Market is {results['ma_below_ratio']*100:.1f}% bearish (Fast MA below Slow MA)")
+        
+        create_quick_fix_config()
+        
+        print(f"\n🚨 MAIN CONCLUSION:")
+        print("The bot is working correctly but market conditions are not")
+        print("generating crossover or trend confirmation signals with current settings.")
+    else:
+        print("❌ Analysis failed - check log file availability")

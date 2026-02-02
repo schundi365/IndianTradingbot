@@ -37,6 +37,10 @@ class ConfigManager:
         # Create backup directory if it doesn't exist
         self.backup_dir.mkdir(exist_ok=True)
         
+        # Set up logger
+        import logging
+        self.logger = logging.getLogger(__name__)
+        
         # Load or create configuration
         self.config = self._load_or_create_config()
     
@@ -59,7 +63,7 @@ class ConfigManager:
             'macd_fast': 12,
             'macd_slow': 26,
             'macd_signal': 9,
-            'macd_min_histogram': 0.0005,
+            'macd_min_histogram': 0.0003,
             'atr_period': 14,
             'atr_multiplier': 2,
             'adx_min_strength': 25,
@@ -109,25 +113,28 @@ class ConfigManager:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                 
-                # Merge with defaults to ensure all required keys exist
-                merged_config = defaults.copy()
-                merged_config.update(config)
+                # Start with JSON config and only add missing keys from defaults
+                merged_config = config.copy()
+                for key, value in defaults.items():
+                    if key not in merged_config:
+                        merged_config[key] = value
                 
-                logger.info(f"Configuration loaded from {self.config_file}")
+                self.logger.info(f"Configuration loaded from {self.config_file}")
+                self.logger.info(f"Loaded {len(config.get('symbols', []))} symbols from config file")
                 
-                # Save merged config back to ensure all keys are present
+                # Save merged config back only if we added missing keys
                 if len(merged_config) > len(config):
-                    logger.info(f"Added {len(merged_config) - len(config)} missing config keys")
+                    self.logger.info(f"Added {len(merged_config) - len(config)} missing config keys")
                     self.config = merged_config
                     self.save_config()
                 
                 return merged_config
             except Exception as e:
-                logger.error(f"Failed to load config: {e}")
-                logger.info("Creating default configuration")
+                self.logger.error(f"Failed to load config: {e}")
+                self.logger.info("Creating default configuration")
                 return self._create_default_config()
         else:
-            logger.info("No configuration file found, creating default")
+            self.logger.info("No configuration file found, creating default")
             return self._create_default_config()
     
     def _create_default_config(self):
@@ -155,11 +162,11 @@ class ConfigManager:
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
-            logger.info(f"Configuration saved to {self.config_file}")
+            self.logger.info(f"Configuration saved to {self.config_file}")
             self.config = config
             return True
         except Exception as e:
-            logger.error(f"Failed to save config: {e}")
+            self.logger.error(f"Failed to save config: {e}")
             return False
     
     def _create_backup(self):
@@ -177,12 +184,12 @@ class ConfigManager:
             with open(backup_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
             
-            logger.info(f"Configuration backup created: {backup_file}")
+            self.logger.info(f"Configuration backup created: {backup_file}")
             
             # Keep only last 10 backups
             self._cleanup_old_backups()
         except Exception as e:
-            logger.error(f"Failed to create backup: {e}")
+            self.logger.error(f"Failed to create backup: {e}")
     
     def _cleanup_old_backups(self, keep=10):
         """Keep only the most recent backups"""
@@ -191,9 +198,9 @@ class ConfigManager:
             if len(backups) > keep:
                 for backup in backups[:-keep]:
                     backup.unlink()
-                    logger.info(f"Deleted old backup: {backup}")
+                    self.logger.info(f"Deleted old backup: {backup}")
         except Exception as e:
-            logger.error(f"Failed to cleanup backups: {e}")
+            self.logger.error(f"Failed to cleanup backups: {e}")
     
     def get_config(self):
         """Get current configuration"""
@@ -212,7 +219,7 @@ class ConfigManager:
         try:
             # Validate updates
             if not self._validate_config(updates):
-                logger.error("Configuration validation failed")
+                self.logger.error("Configuration validation failed")
                 return False
             
             # Update configuration
@@ -221,7 +228,7 @@ class ConfigManager:
             # Save to file
             return self.save_config()
         except Exception as e:
-            logger.error(f"Failed to update config: {e}")
+            self.logger.error(f"Failed to update config: {e}")
             return False
     
     def _validate_config(self, config):
@@ -239,21 +246,21 @@ class ConfigManager:
             if 'risk_percent' in config:
                 risk = config['risk_percent']
                 if risk < 0.1 or risk > 5:
-                    logger.error(f"Invalid risk: {risk}")
+                    self.logger.error(f"Invalid risk: {risk}")
                     return False
             
             # Validate confidence
             if 'min_trade_confidence' in config:
                 confidence = config['min_trade_confidence']
                 if confidence < 0.2 or confidence > 0.9:
-                    logger.error(f"Invalid confidence: {confidence}")
+                    self.logger.error(f"Invalid confidence: {confidence}")
                     return False
             
             # Validate symbols
             if 'symbols' in config:
                 symbols = config['symbols']
                 if not symbols or len(symbols) == 0:
-                    logger.error("No symbols selected")
+                    self.logger.error("No symbols selected")
                     return False
             
             # Validate timeframe
@@ -261,24 +268,24 @@ class ConfigManager:
                 timeframe = config['timeframe']
                 valid_timeframes = [1, 5, 15, 30, 16385, 16388, 16408]
                 if timeframe not in valid_timeframes:
-                    logger.error(f"Invalid timeframe: {timeframe}")
+                    self.logger.error(f"Invalid timeframe: {timeframe}")
                     return False
             
             # Validate max daily loss percentage
             if 'max_daily_loss_percent' in config:
                 max_loss_percent = config['max_daily_loss_percent']
                 if max_loss_percent < 1 or max_loss_percent > 20:
-                    logger.error(f"Invalid max daily loss percentage: {max_loss_percent}")
+                    self.logger.error(f"Invalid max daily loss percentage: {max_loss_percent}")
                     return False
             
             return True
         except Exception as e:
-            logger.error(f"Validation error: {e}")
+            self.logger.error(f"Validation error: {e}")
             return False
     
     def reset_to_default(self):
         """Reset configuration to default values"""
-        logger.info("Resetting configuration to default")
+        self.logger.info("Resetting configuration to default")
         self.config = self._get_default_config()
         return self.save_config()
     
@@ -292,10 +299,10 @@ class ConfigManager:
         try:
             with open(export_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
-            logger.info(f"Configuration exported to {export_path}")
+            self.logger.info(f"Configuration exported to {export_path}")
             return True
         except Exception as e:
-            logger.error(f"Failed to export config: {e}")
+            self.logger.error(f"Failed to export config: {e}")
             return False
     
     def import_config(self, import_path):
@@ -312,13 +319,13 @@ class ConfigManager:
             if self._validate_config(config):
                 self.config = config
                 self.save_config()
-                logger.info(f"Configuration imported from {import_path}")
+                self.logger.info(f"Configuration imported from {import_path}")
                 return True
             else:
-                logger.error("Imported configuration is invalid")
+                self.logger.error("Imported configuration is invalid")
                 return False
         except Exception as e:
-            logger.error(f"Failed to import config: {e}")
+            self.logger.error(f"Failed to import config: {e}")
             return False
 
 

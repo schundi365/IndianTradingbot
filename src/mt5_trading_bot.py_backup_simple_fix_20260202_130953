@@ -904,8 +904,8 @@ class MT5TradingBot:
                 dx = 100 * np.abs(df['plus_di'] - df['minus_di']) / (df['plus_di'] + df['minus_di'])
                 df['adx'] = dx.rolling(window=adx_period).mean()
             
-            if 'adx' in df.columns and 'adx' in latest.index and not pd.isna(latest.get('adx', 0)):
-                adx = latest.get('adx', 0)
+            if 'adx' in df.columns and not pd.isna(latest['adx']):
+                adx = latest['adx']
                 plus_di = latest.get('plus_di', 0) if 'plus_di' in df.columns else 0 if 'plus_di' in df.columns else 0
                 minus_di = latest.get('minus_di', 0) if 'minus_di' in df.columns else 0 if 'minus_di' in df.columns else 0
                 

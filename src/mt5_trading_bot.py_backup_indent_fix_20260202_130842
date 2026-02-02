@@ -875,6 +875,23 @@ class MT5TradingBot:
         # Apply ADX trend direction filter (MISSING FROM ORIGINAL - NOW ADDED)
         logging.info("-"*80)
         logging.info("🔍 ADX TREND DIRECTION FILTER:")
+        # ADX SAFETY CHECK - Prevent KeyError
+        try:
+            if 'adx' in df.columns and len(df) > 0:
+                # Ensure ADX column exists and has valid data
+                if 'adx' in df.iloc[-1].index and not pd.isna(df.iloc[-1]['adx']):
+                    adx_available = True
+                else:
+                    adx_available = False
+                    logging.info(f"   ⚠️  ADX data not available or invalid - skipping ADX filter")
+            else:
+                adx_available = False
+                logging.info(f"   ⚠️  ADX column not found - skipping ADX filter")
+        except Exception as e:
+            adx_available = False
+            logging.error(f"   ❌ ADX safety check failed: {e}")
+        
+        if adx_available:
         if self.config.get('use_adx', True):
             # Calculate ADX and directional indicators if not already present
             if 'adx' not in df.columns:
@@ -904,10 +921,10 @@ class MT5TradingBot:
                 dx = 100 * np.abs(df['plus_di'] - df['minus_di']) / (df['plus_di'] + df['minus_di'])
                 df['adx'] = dx.rolling(window=adx_period).mean()
             
-            if 'adx' in df.columns and 'adx' in latest.index and not pd.isna(latest.get('adx', 0)):
+            if 'adx' in df.columns and 'adx' in latest.index and not pd.isna(latest['adx']):
                 adx = latest.get('adx', 0)
-                plus_di = latest.get('plus_di', 0) if 'plus_di' in df.columns else 0 if 'plus_di' in df.columns else 0
-                minus_di = latest.get('minus_di', 0) if 'minus_di' in df.columns else 0 if 'minus_di' in df.columns else 0
+                plus_di = latest.get('plus_di', 0) if 'plus_di' in df.columns else 0
+                minus_di = latest.get('minus_di', 0) if 'minus_di' in df.columns else 0
                 
                 ADX_THRESHOLD = self.config.get('adx_min_strength', 25)
                 
