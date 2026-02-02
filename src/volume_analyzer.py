@@ -6,8 +6,68 @@ Implements volume filtering, confirmation, and indicators (OBV, Volume Profile)
 import numpy as np
 import pandas as pd
 import logging
+import time
+import inspect
+from pathlib import Path
 
-logger = logging.getLogger(__name__)
+# Enhanced logging for volume analyzer
+class VolumePerformanceLogger:
+    """Enhanced logger for volume analyzer with performance tracking"""
+    
+    def __init__(self, name):
+        self.logger = logging.getLogger(name)
+        self.operation_times = {}
+    
+    def start_operation(self, operation_name):
+        """Start timing an operation"""
+        self.operation_times[operation_name] = time.time()
+    
+    def end_operation(self, operation_name, message=""):
+        """End timing an operation and log the duration"""
+        if operation_name in self.operation_times:
+            duration = time.time() - self.operation_times[operation_name]
+            del self.operation_times[operation_name]
+            
+            # Get caller info
+            frame = inspect.currentframe().f_back
+            filename = Path(frame.f_code.co_filename).name
+            line_number = frame.f_lineno
+            
+            self.logger.info(f"⏱️ {operation_name} completed in {duration:.3f}s {message}")
+            return duration
+        return 0
+    
+    def info(self, message):
+        """Enhanced info logging with caller context"""
+        frame = inspect.currentframe().f_back
+        filename = Path(frame.f_code.co_filename).name
+        line_number = frame.f_lineno
+        enhanced_message = f"[{filename}:{line_number}] {message}"
+        self.logger.info(enhanced_message)
+    
+    def warning(self, message):
+        """Enhanced warning logging with caller context"""
+        frame = inspect.currentframe().f_back
+        filename = Path(frame.f_code.co_filename).name
+        line_number = frame.f_lineno
+        enhanced_message = f"[{filename}:{line_number}] {message}"
+        self.logger.warning(enhanced_message)
+    
+    def error(self, message):
+        """Enhanced error logging with caller context"""
+        frame = inspect.currentframe().f_back
+        filename = Path(frame.f_code.co_filename).name
+        line_number = frame.f_lineno
+        enhanced_message = f"[{filename}:{line_number}] {message}"
+        self.logger.error(enhanced_message)
+    
+    def debug(self, message):
+        """Enhanced debug logging with caller context"""
+        frame = inspect.currentframe().f_back
+        filename = Path(frame.f_code.co_filename).name
+        line_number = frame.f_lineno
+        enhanced_message = f"[{filename}:{line_number}] {message}"
+        self.logger.debug(enhanced_message)
 
 
 class VolumeAnalyzer:
@@ -20,6 +80,10 @@ class VolumeAnalyzer:
         Args:
             config: Bot configuration dictionary
         """
+        # Initialize enhanced logger
+        self.logger = VolumePerformanceLogger(f"{__name__}.VolumeAnalyzer")
+        self.logger.start_operation("Volume Analyzer Initialization")
+        
         self.use_volume_filter = config.get('use_volume_filter', True)
         
         # IMPROVEMENT: Better default settings
@@ -40,15 +104,17 @@ class VolumeAnalyzer:
         self.divergence_lookback = config.get('divergence_lookback', 20)
         self.divergence_threshold = config.get('divergence_threshold', 0.85)  # 15% volume drop
         
-        logger.info(f"Volume Analyzer initialized with improved settings:")
-        logger.info(f"  Filter Enabled: {self.use_volume_filter}")
-        logger.info(f"  Min Volume Threshold: {self.min_volume_ma}x (only reject very low)")
-        logger.info(f"  Normal Volume: {self.normal_volume_ma}x")
-        logger.info(f"  High Volume: {self.high_volume_ma}x")
-        logger.info(f"  Very High Volume: {self.very_high_volume_ma}x")
-        logger.info(f"  Volume MA Period: {self.volume_ma_period} (min: {self.volume_ma_min_period})")
-        logger.info(f"  OBV Periods: Short={self.obv_period_short}, Long={self.obv_period_long}")
-        logger.info(f"  Divergence: Lookback={self.divergence_lookback}, Threshold={self.divergence_threshold}")
+        self.logger.info(f"Volume Analyzer initialized with improved settings:")
+        self.logger.info(f"  Filter Enabled: {self.use_volume_filter}")
+        self.logger.info(f"  Min Volume Threshold: {self.min_volume_ma}x (only reject very low)")
+        self.logger.info(f"  Normal Volume: {self.normal_volume_ma}x")
+        self.logger.info(f"  High Volume: {self.high_volume_ma}x")
+        self.logger.info(f"  Very High Volume: {self.very_high_volume_ma}x")
+        self.logger.info(f"  Volume MA Period: {self.volume_ma_period} (min: {self.volume_ma_min_period})")
+        self.logger.info(f"  OBV Periods: Short={self.obv_period_short}, Long={self.obv_period_long}")
+        self.logger.info(f"  Divergence: Lookback={self.divergence_lookback}, Threshold={self.divergence_threshold}")
+        
+        self.logger.end_operation("Volume Analyzer Initialization")
     
     def calculate_volume_ma(self, df):
         """
@@ -72,18 +138,21 @@ class VolumeAnalyzer:
         Returns:
             bool: True if current volume > average * min_volume_ma
         """
+        self.logger.start_operation("Volume Analysis")
+        
         # IMPROVEMENT #1: Adaptive Data Requirements
         min_required = 10  # Minimum bars needed
         
         if len(df) < min_required:
-            logger.warning(f"Insufficient data for volume analysis: {len(df)} bars < {min_required}")
+            self.logger.warning(f"Insufficient data for volume analysis: {len(df)} bars < {min_required}")
+            self.logger.end_operation("Volume Analysis", "- Insufficient data, allowing trade")
             return True  # Can't analyze, don't filter
         
         # Use adaptive period based on available data
         if len(df) < self.volume_ma_period:
             # Use shorter period
             actual_period = max(min_required, len(df) - 2)
-            logger.info(f"Using adaptive volume period: {actual_period} (not enough for {self.volume_ma_period})")
+            self.logger.info(f"Using adaptive volume period: {actual_period} (not enough for {self.volume_ma_period})")
         else:
             actual_period = self.volume_ma_period
         
@@ -92,6 +161,7 @@ class VolumeAnalyzer:
         avg_volume = volume_ma.iloc[-1]
         
         if pd.isna(avg_volume) or avg_volume == 0:
+            self.logger.end_operation("Volume Analysis", "- No average volume data, allowing trade")
             return True
         
         volume_ratio = current_volume / avg_volume
@@ -99,26 +169,28 @@ class VolumeAnalyzer:
         # IMPROVEMENT #2: Tiered Volume Classification
         volume_class = self.classify_volume_strength(volume_ratio)
         
-        # DETAILED LOGGING
-        logger.info("="*80)
-        logger.info("📊 VOLUME FILTER CHECK - DETAILED CALCULATIONS")
-        logger.info("="*80)
-        logger.info(f"Data Points Available:  {len(df)} bars")
-        logger.info(f"Volume MA Period Used:  {actual_period} bars")
-        logger.info(f"Current Volume:         {current_volume:.0f}")
-        logger.info(f"Average Volume (MA{actual_period}):  {avg_volume:.0f}")
-        logger.info(f"Volume Ratio:           {volume_ratio:.2f}x")
-        logger.info(f"Volume Classification:  {volume_class['level']}")
-        logger.info(f"Volume Description:     {volume_class['description']}")
-        logger.info(f"Confidence Impact:      {volume_class['score']:+.2%}")
+        # DETAILED LOGGING WITH ENHANCED LOGGER
+        self.logger.info("="*80)
+        self.logger.info("📊 VOLUME FILTER CHECK - DETAILED CALCULATIONS")
+        self.logger.info("="*80)
+        self.logger.info(f"Data Points Available:  {len(df)} bars")
+        self.logger.info(f"Volume MA Period Used:  {actual_period} bars")
+        self.logger.info(f"Current Volume:         {current_volume:.0f}")
+        self.logger.info(f"Average Volume (MA{actual_period}):  {avg_volume:.0f}")
+        self.logger.info(f"Volume Ratio:           {volume_ratio:.2f}x")
+        self.logger.info(f"Volume Classification:  {volume_class['level']}")
+        self.logger.info(f"Volume Description:     {volume_class['description']}")
+        self.logger.info(f"Confidence Impact:      {volume_class['score']:+.2%}")
         
         if volume_class['passes']:
-            logger.info(f"✅ VOLUME FILTER PASSED: {volume_class['level']} volume")
-            logger.info(f"   Volume {volume_ratio:.2f}x is acceptable for trading")
+            self.logger.info(f"✅ VOLUME FILTER PASSED: {volume_class['level']} volume")
+            self.logger.info(f"   Volume {volume_ratio:.2f}x is acceptable for trading")
+            self.logger.end_operation("Volume Analysis", f"- {volume_class['level']} volume, trade allowed")
         else:
-            logger.info(f"❌ VOLUME FILTER REJECTED: {volume_class['level']} volume")
-            logger.info(f"   Volume {volume_ratio:.2f}x is too low for reliable signals")
-        logger.info("="*80)
+            self.logger.info(f"❌ VOLUME FILTER REJECTED: {volume_class['level']} volume")
+            self.logger.info(f"   Volume {volume_ratio:.2f}x is too low for reliable signals")
+            self.logger.end_operation("Volume Analysis", f"- {volume_class['level']} volume, trade rejected")
+        self.logger.info("="*80)
         
         return volume_class['passes']
     
@@ -297,13 +369,13 @@ class VolumeAnalyzer:
         # Bearish divergence: new high with lower volume
         if current_price >= price_high * 0.999:  # Near high
             if current_volume < volume_at_high * 0.8:  # 20% less volume
-                logger.info("Bearish divergence detected: New high with lower volume")
+                self.logger.info("Bearish divergence detected: New high with lower volume")
                 return 'bearish_divergence'
         
         # Bullish divergence: new low with lower volume
         if current_price <= price_low * 1.001:  # Near low
             if current_volume < volume_at_low * 0.8:  # 20% less volume
-                logger.info("Bullish divergence detected: New low with lower volume")
+                self.logger.info("Bullish divergence detected: New low with lower volume")
                 return 'bullish_divergence'
         
         return 'none'
@@ -442,9 +514,9 @@ class VolumeAnalyzer:
             'reasons': []
         }
         
-        logger.info("-"*80)
-        logger.info(f"🔍 ENHANCED VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
-        logger.info("-"*80)
+        self.logger.info("-"*80)
+        self.logger.info(f"🔍 ENHANCED VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
+        self.logger.info("-"*80)
         
         # IMPROVEMENT #3: Weighted Scoring System
         score = 0.5  # Start neutral
@@ -526,26 +598,26 @@ class VolumeAnalyzer:
         confirmation['reasons'] = reasons
         
         # Detailed logging
-        logger.info(f"📊 WEIGHTED SCORING BREAKDOWN:")
+        self.logger.info(f"📊 WEIGHTED SCORING BREAKDOWN:")
         for reason in reasons:
-            logger.info(f"   • {reason}")
+            self.logger.info(f"   • {reason}")
         
-        logger.info("-"*80)
-        logger.info(f"📈 FINAL VOLUME ANALYSIS RESULTS:")
-        logger.info(f"   Volume Score: {final_score:.2f}/1.00")
-        logger.info(f"   Volume Level: {vol_class['level']}")
-        logger.info(f"   Decision: {'PASS' if confirmation['confirmed'] else 'REJECT'}")
-        logger.info(f"   Confidence Boost: {confidence_boost:+.2%}")
-        logger.info(f"   Reasoning: {vol_class['description']}")
+        self.logger.info("-"*80)
+        self.logger.info(f"📈 FINAL VOLUME ANALYSIS RESULTS:")
+        self.logger.info(f"   Volume Score: {final_score:.2f}/1.00")
+        self.logger.info(f"   Volume Level: {vol_class['level']}")
+        self.logger.info(f"   Decision: {'PASS' if confirmation['confirmed'] else 'REJECT'}")
+        self.logger.info(f"   Confidence Boost: {confidence_boost:+.2%}")
+        self.logger.info(f"   Reasoning: {vol_class['description']}")
         
         if confirmation['confirmed']:
-            logger.info(f"✅ VOLUME CONFIRMATION PASSED")
-            logger.info(f"   Volume conditions support the {signal_type.upper()} signal")
+            self.logger.info(f"✅ VOLUME CONFIRMATION PASSED")
+            self.logger.info(f"   Volume conditions support the {signal_type.upper()} signal")
         else:
-            logger.info(f"❌ VOLUME CONFIRMATION FAILED")
-            logger.info(f"   Volume too low for reliable {signal_type.upper()} signal")
+            self.logger.info(f"❌ VOLUME CONFIRMATION FAILED")
+            self.logger.info(f"   Volume too low for reliable {signal_type.upper()} signal")
         
-        logger.info("="*80)
+        self.logger.info("="*80)
         
         return confirmation
     
@@ -600,7 +672,7 @@ class VolumeAnalyzer:
         confidence_adjustment = confirmation['confidence_boost']
         
         if not should_trade:
-            logger.info(f"Trade rejected by volume filter: {signal_type}")
+            self.logger.info(f"Trade rejected by volume filter: {signal_type}")
         
         return should_trade, confidence_adjustment
 

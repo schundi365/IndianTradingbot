@@ -1,0 +1,1831 @@
+"""
+MT5 Gold & Silver Trading Bot
+Automated trading with dynamic stop loss, trailing stops, and take profit
+"""
+
+import MetaTrader5 as mt5
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import time
+import logging
+import sys
+from pathlib import Path
+
+# Determine base directory (works for both script and executable)
+if getattr(sys, 'frozen', False):
+    # Running as executable
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # Running as script
+    BASE_DIR = Path(__file__).parent.parent
+
+# Log file path
+LOG_FILE = BASE_DIR / 'trading_bot.log'
+
+# Import adaptive risk management
+try:
+    from src.adaptive_risk_manager import AdaptiveRiskManager, integrate_adaptive_risk
+    ADAPTIVE_RISK_AVAILABLE = True
+except ImportError:
+    ADAPTIVE_RISK_AVAILABLE = False
+    logging.warning("Adaptive Risk Manager not available")
+
+# Import volume analyzer
+try:
+    from src.volume_analyzer import VolumeAnalyzer
+    VOLUME_ANALYZER_AVAILABLE = True
+except ImportError:
+    VOLUME_ANALYZER_AVAILABLE = False
+    logging.warning("Volume Analyzer not available")
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+class MT5TradingBot:
+    def __init__(self, config):
+        """
+        Initialize the MT5 Trading Bot
+        
+        Args:
+            config (dict): Configuration dictionary with trading parameters
+        """
+        self.config = config
+        self.symbols = config['symbols']  # e.g., ['XAUUSD', 'XAGUSD']
+        self.timeframe = config['timeframe']  # e.g., mt5.TIMEFRAME_H1
+        self.magic_number = config['magic_number']
+        self.lot_size = config['lot_size']
+        
+        # Risk management parameters
+        self.risk_percent = config.get('risk_percent', 1.0)  # % of account to risk
+        self.reward_ratio = config.get('reward_ratio', 2.0)  # Risk:Reward ratio
+        
+        # Moving average parameters
+        self.fast_ma_period = config.get('fast_ma_period', 20)
+        self.slow_ma_period = config.get('slow_ma_period', 50)
+        self.atr_period = config.get('atr_period', 14)
+        self.atr_multiplier = config.get('atr_multiplier', 2.0)
+        
+        # MACD parameters
+        self.macd_fast = config.get('macd_fast', 12)
+        self.macd_slow = config.get('macd_slow', 26)
+        self.macd_signal = config.get('macd_signal', 9)
+        
+        # Trailing parameters
+        self.trail_activation = config.get('trail_activation', 1.5)  # ATR multiplier to activate
+        self.trail_distance = config.get('trail_distance', 1.0)  # ATR multiplier for trail distance
+        
+        # Split orders configuration
+        self.use_split_orders = config.get('use_split_orders', True)
+        self.num_positions = config.get('num_positions', 3)  # Split into 3 positions
+        self.tp_levels = config.get('tp_levels', [1.5, 2.5, 4.0])  # R:R ratios for each TP
+        self.partial_close_percent = config.get('partial_close_percent', [40, 30, 30])  # % of total for each level
+        
+        # Max lots per order
+        self.max_lot_per_order = config.get('max_lot_per_order', 0.5)
+        
+        # Adaptive risk management
+        self.use_adaptive_risk = config.get('use_adaptive_risk', True)
+        if self.use_adaptive_risk and ADAPTIVE_RISK_AVAILABLE:
+            self.adaptive_risk_manager = AdaptiveRiskManager(config)
+            self.logger.info("Adaptive Risk Management enabled")
+        else:
+            self.adaptive_risk_manager = None
+            if self.use_adaptive_risk and not ADAPTIVE_RISK_AVAILABLE:
+                self.logger.warning("Adaptive Risk requested but module not available")
+        
+        # Volume analyzer
+        self.use_volume_filter = config.get('use_volume_filter', True)
+        if self.use_volume_filter and VOLUME_ANALYZER_AVAILABLE:
+            self.volume_analyzer = VolumeAnalyzer(config)
+            self.logger.info("Volume Analysis enabled")
+        else:
+            self.volume_analyzer = None
+            if self.use_volume_filter and not VOLUME_ANALYZER_AVAILABLE:
+                self.logger.warning("Volume filter requested but module not available")
+        
+        self.positions = {}
+        self.split_position_groups = {}  # Track groups of split positions
+        
+        # Price level protection
+        self.prevent_worse_entries = config.get('prevent_worse_entries', True)
+        
+    def check_existing_position_prices(self, symbol, signal):
+        """
+        Check existing position prices to prevent placing orders at worse levels
+        
+        Args:
+            symbol (str): Trading symbol
+            signal (int): 1 for BUY, -1 for SELL
+            
+        Returns:
+            tuple: (can_trade, limit_price, reason)
+                can_trade (bool): Whether new position can be placed
+                limit_price (float): Price limit (highest buy or lowest sell)
+                reason (str): Explanation message
+        """
+        if not self.prevent_worse_entries:
+            return True, None, "Price level protection disabled"
+        
+        # Get existing positions for this symbol with our magic number
+        positions = mt5.positions_get(symbol=symbol, magic=self.magic_number)
+        
+        if not positions or len(positions) == 0:
+            return True, None, "No existing positions"
+        
+        # Get current price
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            return True, None, "Cannot get current price"
+        
+        current_price = tick.ask if signal == 1 else tick.bid
+        
+        if signal == 1:  # BUY signal
+            # Find highest existing BUY position price
+            buy_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_BUY]
+            
+            if not buy_positions:
+                return True, None, "No existing BUY positions"
+            
+            highest_buy_price = max(p.price_open for p in buy_positions)
+            
+            # Don't place BUY if current price is higher than highest existing BUY
+            if current_price > highest_buy_price:
+                reason = (f"Cannot place BUY at {current_price:.5f} - "
+                         f"higher than highest existing BUY at {highest_buy_price:.5f}")
+                self.logger.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
+                self.logger.info(f"   Existing BUY positions: {len(buy_positions)}")
+                self.logger.info(f"   Highest BUY price: {highest_buy_price:.5f}")
+                self.logger.info(f"   Current price: {current_price:.5f}")
+                self.logger.info(f"   Difference: {(current_price - highest_buy_price):.5f} ({((current_price - highest_buy_price) / highest_buy_price * 100):.2f}%)")
+                return False, highest_buy_price, reason
+            else:
+                return True, highest_buy_price, f"BUY allowed - below highest existing BUY at {highest_buy_price:.5f}"
+        
+        else:  # SELL signal
+            # Find lowest existing SELL position price
+            sell_positions = [p for p in positions if p.type == mt5.POSITION_TYPE_SELL]
+            
+            if not sell_positions:
+                return True, None, "No existing SELL positions"
+            
+            lowest_sell_price = min(p.price_open for p in sell_positions)
+            
+            # Don't place SELL if current price is lower than lowest existing SELL
+            if current_price < lowest_sell_price:
+                reason = (f"Cannot place SELL at {current_price:.5f} - "
+                         f"lower than lowest existing SELL at {lowest_sell_price:.5f}")
+                self.logger.warning(f"🚫 PRICE LEVEL PROTECTION: {reason}")
+                self.logger.info(f"   Existing SELL positions: {len(sell_positions)}")
+                self.logger.info(f"   Lowest SELL price: {lowest_sell_price:.5f}")
+                self.logger.info(f"   Current price: {current_price:.5f}")
+                self.logger.info(f"   Difference: {(lowest_sell_price - current_price):.5f} ({((lowest_sell_price - current_price) / lowest_sell_price * 100):.2f}%)")
+                return False, lowest_sell_price, reason
+            else:
+                return True, lowest_sell_price, f"SELL allowed - above lowest existing SELL at {lowest_sell_price:.5f}"
+        
+    
+
+        
+    def connect(self):
+        """Connect to MetaTrader5 with build 5549+ compatibility"""
+        import os
+        import platform
+        
+        # Try standard initialization first
+        if not mt5.initialize():
+            # Try alternative initialization for build 5549+
+            if platform.system() == 'Windows':
+                self.logger.info("Standard MT5 initialization failed, trying with path parameter...")
+                
+                # Try common MT5 installation paths
+                username = os.environ.get('USERNAME', '')
+                mt5_paths = [
+                    r"C:\Program Files\MetaTrader 5\terminal64.exe",
+                    r"C:\Program Files (x86)\MetaTrader 5\terminal64.exe",
+                ]
+                
+                # Try to find MT5 in user's AppData
+                appdata = os.environ.get('APPDATA', '')
+                if appdata:
+                    import glob
+                    terminal_paths = glob.glob(os.path.join(appdata, 'MetaQuotes', 'Terminal', '*', 'terminal64.exe'))
+                    mt5_paths.extend(terminal_paths)
+                
+                initialized = False
+                for path in mt5_paths:
+                    if os.path.exists(path):
+                        self.logger.info(f"Trying MT5 path: {path}")
+                        if mt5.initialize(path=path):
+                            self.logger.info(f"MT5 initialized successfully with path: {path}")
+                            initialized = True
+                            break
+                
+                if not initialized:
+                    self.logger.error(f"MT5 initialization failed: {mt5.last_error()}")
+                    self.logger.error("Tried paths: " + ", ".join(mt5_paths))
+                    return False
+            else:
+                self.logger.error(f"MT5 initialization failed: {mt5.last_error()}")
+                return False
+        
+        self.logger.info(f"MT5 initialized successfully")
+        
+        # Get version info
+        version_info = mt5.version()
+        if version_info:
+            self.logger.info(f"MT5 version: {version_info}")
+        
+        # Get terminal info including build number
+        terminal_info = mt5.terminal_info()
+        if terminal_info:
+            self.logger.info(f"MT5 build: {terminal_info.build}")
+            self.logger.info(f"MT5 company: {terminal_info.company}")
+            if terminal_info.build >= 5549:
+                self.logger.info("MT5 build 5549+ detected - enhanced compatibility mode active")
+        
+        # Get account info
+        account_info = mt5.account_info()
+        if account_info:
+            self.logger.info(f"Account balance: {account_info.balance}")
+            self.logger.info(f"Account equity: {account_info.equity}")
+            self.logger.info(f"Account server: {account_info.server}")
+        
+        return True
+    
+    def disconnect(self):
+        """Disconnect from MetaTrader5"""
+        mt5.shutdown()
+        self.logger.info("MT5 connection closed")
+    
+    
+
+    
+    def get_historical_data(self, symbol, timeframe, bars=200):
+        """
+        Fetch historical price data from MT5 with improved error handling
+        
+        Args:
+            symbol (str): Trading symbol
+            timeframe: MT5 timeframe constant
+            bars (int): Number of bars to fetch
+            
+        Returns:
+            pd.DataFrame: Historical price data
+        """
+        # Try up to 3 times with retry logic
+        max_retries = 3
+        for attempt in range(max_retries):
+            rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
+            
+            if rates is not None and len(rates) > 0:
+                df = pd.DataFrame(rates)
+                df['time'] = pd.to_datetime(df['time'], unit='s')
+                return df
+            
+            # Check error type
+            error = mt5.last_error()
+            error_code = error[0] if error else 0
+            
+            # If IPC error (-10004 or -10001), try to reconnect
+            if error_code in [-10004, -10001]:
+                self.logger.warning(f"IPC connection error for {symbol} (code: {error_code}), attempting to reconnect MT5...")
+                mt5.shutdown()
+                time.sleep(2)
+                if mt5.initialize():
+                    self.logger.info("MT5 reconnected successfully")
+                    continue  # Retry immediately after reconnect
+                else:
+                    self.logger.error("Failed to reconnect MT5")
+                    return None
+            
+            # If failed, log and retry
+            if attempt < max_retries - 1:
+                self.logger.warning(f"Failed to get data for {symbol} (attempt {attempt + 1}/{max_retries}), retrying...")
+                time.sleep(2)  # Wait 2 seconds before retry
+            else:
+                self.logger.error(f"Failed to get data for {symbol} after {max_retries} attempts. Error: {error}")
+        
+        return None
+    
+    def calculate_indicators(self, df):
+        """
+        Calculate technical indicators (Enhanced with RSI)
+        WITH DETAILED CALCULATION LOGGING
+        
+        Args:
+            df (pd.DataFrame): Price data
+            
+        Returns:
+            pd.DataFrame: Data with calculated indicators
+        """
+        # FORCE DETAILED LOGGING TO APPEAR
+        self.logger.info("🔥🔥🔥 DETAILED INDICATOR CALCULATION STARTING 🔥🔥🔥")
+        self.logger.info("="*80)
+        
+        # Log raw data summary
+        self.logger.info(f"📊 Raw Data Summary:")
+        self.logger.info(f"   Data Points: {len(df)} bars")
+        self.logger.info(f"   Date Range: {df.index[0]} to {df.index[-1]}")
+        self.logger.info(f"   Price Range: {df['low'].min():.5f} - {df['high'].max():.5f}")
+        self.logger.info(f"   Latest OHLC: O={df['open'].iloc[-1]:.5f}, H={df['high'].iloc[-1]:.5f}, L={df['low'].iloc[-1]:.5f}, C={df['close'].iloc[-1]:.5f}")
+        if 'volume' in df.columns:
+            self.logger.info(f"   Volume Range: {df['volume'].min():.0f} - {df['volume'].max():.0f}")
+            self.logger.info(f"   Latest Volume: {df['volume'].iloc[-1]:.0f}")
+        
+        # Moving Averages
+        self.logger.info(f"\n📈 MOVING AVERAGES:")
+        df['fast_ma'] = df['close'].rolling(window=self.fast_ma_period).mean()
+        df['slow_ma'] = df['close'].rolling(window=self.slow_ma_period).mean()
+        
+        # Log MA calculations
+        latest_fast_ma = df['fast_ma'].iloc[-1]
+        latest_slow_ma = df['slow_ma'].iloc[-1]
+        latest_close = df['close'].iloc[-1]
+        
+        self.logger.info(f"   Fast MA ({self.fast_ma_period} periods): {latest_fast_ma:.5f}")
+        self.logger.info(f"   Slow MA ({self.slow_ma_period} periods): {latest_slow_ma:.5f}")
+        self.logger.info(f"   MA Spread: {abs(latest_fast_ma - latest_slow_ma):.5f} points")
+        self.logger.info(f"   MA Spread %: {abs(latest_fast_ma - latest_slow_ma) / latest_close * 100:.3f}%")
+        self.logger.info(f"   Price vs Fast MA: {latest_close - latest_fast_ma:+.5f} ({(latest_close - latest_fast_ma) / latest_close * 100:+.3f}%)")
+        self.logger.info(f"   Price vs Slow MA: {latest_close - latest_slow_ma:+.5f} ({(latest_close - latest_slow_ma) / latest_close * 100:+.3f}%)")
+        
+        # ATR (Average True Range) for volatility-based stops
+        self.logger.info(f"\n📊 AVERAGE TRUE RANGE (ATR):")
+        df['high_low'] = df['high'] - df['low']
+        df['high_close'] = np.abs(df['high'] - df['close'].shift())
+        df['low_close'] = np.abs(df['low'] - df['close'].shift())
+        df['tr'] = df[['high_low', 'high_close', 'low_close']].max(axis=1)
+        df['atr'] = df['tr'].rolling(window=self.atr_period).mean()
+        
+        # Log ATR calculations
+        latest_atr = df['atr'].iloc[-1]
+        latest_tr = df['tr'].iloc[-1]
+        atr_avg_5 = df['atr'].tail(5).mean()
+        atr_avg_20 = df['atr'].tail(20).mean()
+        
+        self.logger.info(f"   ATR Period: {self.atr_period}")
+        self.logger.info(f"   Current True Range: {latest_tr:.5f}")
+        self.logger.info(f"   Current ATR: {latest_atr:.5f}")
+        self.logger.info(f"   ATR (5-bar avg): {atr_avg_5:.5f}")
+        self.logger.info(f"   ATR (20-bar avg): {atr_avg_20:.5f}")
+        self.logger.info(f"   ATR as % of price: {latest_atr / latest_close * 100:.3f}%")
+        self.logger.info(f"   ATR Multiplier (SL): {self.atr_multiplier}x = {latest_atr * self.atr_multiplier:.5f} points")
+        
+        # Volatility analysis
+        if latest_atr > atr_avg_20 * 1.5:
+            self.logger.info(f"   🔥 HIGH VOLATILITY: ATR {latest_atr:.5f} > 20-bar avg {atr_avg_20:.5f} * 1.5")
+        elif latest_atr < atr_avg_20 * 0.7:
+            self.logger.info(f"   😴 LOW VOLATILITY: ATR {latest_atr:.5f} < 20-bar avg {atr_avg_20:.5f} * 0.7")
+        else:
+            self.logger.info(f"   📊 NORMAL VOLATILITY: ATR within normal range")
+        
+        # RSI (Relative Strength Index) - Popular filter for gold/silver
+        self.logger.info(f"\n📈 RELATIVE STRENGTH INDEX (RSI):")
+        delta = df['close'].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+        rs = avg_gain / avg_loss
+        df['rsi'] = 100 - (100 / (1 + rs))
+        
+        # Log RSI calculations
+        latest_rsi = df['rsi'].iloc[-1]
+        rsi_avg_5 = df['rsi'].tail(5).mean()
+        rsi_change = df['rsi'].iloc[-1] - df['rsi'].iloc[-2]
+        
+        self.logger.info(f"   RSI Period: 14")
+        self.logger.info(f"   Current RSI: {latest_rsi:.2f}")
+        self.logger.info(f"   RSI (5-bar avg): {rsi_avg_5:.2f}")
+        self.logger.info(f"   RSI Change: {rsi_change:+.2f}")
+        self.logger.info(f"   Latest Gain: {gain.iloc[-1]:.5f}")
+        self.logger.info(f"   Latest Loss: {loss.iloc[-1]:.5f}")
+        self.logger.info(f"   Avg Gain (14): {avg_gain.iloc[-1]:.5f}")
+        self.logger.info(f"   Avg Loss (14): {avg_loss.iloc[-1]:.5f}")
+        self.logger.info(f"   RS Ratio: {rs.iloc[-1]:.3f}")
+        
+        # RSI interpretation
+        if latest_rsi > 70:
+            self.logger.info(f"   🔴 OVERBOUGHT: RSI {latest_rsi:.2f} > 70")
+        elif latest_rsi < 30:
+            self.logger.info(f"   🟢 OVERSOLD: RSI {latest_rsi:.2f} < 30")
+        elif latest_rsi > 50:
+            self.logger.info(f"   📈 BULLISH ZONE: RSI {latest_rsi:.2f} > 50")
+        else:
+            self.logger.info(f"   📉 BEARISH ZONE: RSI {latest_rsi:.2f} < 50")
+        
+        # Enhanced MACD (already configured in config, but calculate properly)
+        self.logger.info(f"\n📊 MACD (Moving Average Convergence Divergence):")
+        ema_fast = df['close'].ewm(span=self.macd_fast, adjust=False).mean()
+        ema_slow = df['close'].ewm(span=self.macd_slow, adjust=False).mean()
+        df['macd'] = ema_fast - ema_slow
+        df['macd_signal'] = df['macd'].ewm(span=self.macd_signal, adjust=False).mean()
+        df['macd_histogram'] = df['macd'] - df['macd_signal']
+        
+        # Log MACD calculations
+        latest_macd = df['macd'].iloc[-1]
+        latest_signal = df['macd_signal'].iloc[-1]
+        latest_histogram = df['macd_histogram'].iloc[-1]
+        macd_change = df['macd'].iloc[-1] - df['macd'].iloc[-2]
+        histogram_change = df['macd_histogram'].iloc[-1] - df['macd_histogram'].iloc[-2]
+        
+        self.logger.info(f"   MACD Fast EMA: {self.macd_fast} periods")
+        self.logger.info(f"   MACD Slow EMA: {self.macd_slow} periods")
+        self.logger.info(f"   MACD Signal: {self.macd_signal} periods")
+        self.logger.info(f"   Fast EMA: {ema_fast.iloc[-1]:.5f}")
+        self.logger.info(f"   Slow EMA: {ema_slow.iloc[-1]:.5f}")
+        self.logger.info(f"   MACD Line: {latest_macd:.6f}")
+        self.logger.info(f"   Signal Line: {latest_signal:.6f}")
+        self.logger.info(f"   Histogram: {latest_histogram:.6f}")
+        self.logger.info(f"   MACD Change: {macd_change:+.6f}")
+        self.logger.info(f"   Histogram Change: {histogram_change:+.6f}")
+        
+        # MACD interpretation
+        if latest_histogram > 0:
+            self.logger.info(f"   📈 BULLISH: Histogram {latest_histogram:.6f} > 0 (MACD above Signal)")
+        else:
+            self.logger.info(f"   📉 BEARISH: Histogram {latest_histogram:.6f} < 0 (MACD below Signal)")
+        
+        if histogram_change > 0:
+            self.logger.info(f"   🚀 STRENGTHENING: Histogram increasing ({histogram_change:+.6f})")
+        else:
+            self.logger.info(f"   📉 WEAKENING: Histogram decreasing ({histogram_change:+.6f})")
+        
+        # Trend direction
+        self.logger.info(f"\n🎯 TREND ANALYSIS:")
+        df['ma_trend'] = np.where(df['fast_ma'] > df['slow_ma'], 1, -1)
+        
+        # MA crossover signals
+        df['ma_cross'] = 0
+        df.loc[(df['fast_ma'] > df['slow_ma']) & 
+               (df['fast_ma'].shift(1) <= df['slow_ma'].shift(1)), 'ma_cross'] = 1  # Bullish cross
+        df.loc[(df['fast_ma'] < df['slow_ma']) & 
+               (df['fast_ma'].shift(1) >= df['slow_ma'].shift(1)), 'ma_cross'] = -1  # Bearish cross
+        
+        # Log trend analysis
+        current_trend = df['ma_trend'].iloc[-1]
+        previous_trend = df['ma_trend'].iloc[-2]
+        crossover = df['ma_cross'].iloc[-1]
+        
+        self.logger.info(f"   Current Trend: {current_trend} ({'BULLISH' if current_trend == 1 else 'BEARISH'})")
+        self.logger.info(f"   Previous Trend: {previous_trend} ({'BULLISH' if previous_trend == 1 else 'BEARISH'})")
+        self.logger.info(f"   Trend Change: {'YES' if current_trend != previous_trend else 'NO'}")
+        self.logger.info(f"   MA Crossover: {crossover} ({'BULLISH' if crossover == 1 else 'BEARISH' if crossover == -1 else 'NONE'})")
+        
+        # Calculate trend strength
+        ma_separation = abs(latest_fast_ma - latest_slow_ma) / latest_close * 100
+        if ma_separation > 0.5:
+            self.logger.info(f"   💪 STRONG TREND: MA separation {ma_separation:.3f}% > 0.5%")
+        elif ma_separation > 0.2:
+            self.logger.info(f"   📊 MODERATE TREND: MA separation {ma_separation:.3f}% (0.2-0.5%)")
+        else:
+            self.logger.info(f"   😐 WEAK TREND: MA separation {ma_separation:.3f}% < 0.2%")
+        
+        # Price action analysis
+        self.logger.info(f"\n📊 PRICE ACTION ANALYSIS:")
+        price_change = df['close'].iloc[-1] - df['close'].iloc[-2]
+        price_change_pct = price_change / df['close'].iloc[-2] * 100
+        candle_body = abs(df['close'].iloc[-1] - df['open'].iloc[-1])
+        candle_range = df['high'].iloc[-1] - df['low'].iloc[-1]
+        body_ratio = candle_body / candle_range if candle_range > 0 else 0
+        
+        self.logger.info(f"   Price Change: {price_change:+.5f} ({price_change_pct:+.3f}%)")
+        self.logger.info(f"   Candle Body: {candle_body:.5f}")
+        self.logger.info(f"   Candle Range: {candle_range:.5f}")
+        self.logger.info(f"   Body/Range Ratio: {body_ratio:.3f} ({body_ratio*100:.1f}%)")
+        
+        if body_ratio > 0.7:
+            self.logger.info(f"   💪 STRONG CANDLE: Body ratio {body_ratio:.3f} > 0.7")
+        elif body_ratio > 0.4:
+            self.logger.info(f"   📊 MODERATE CANDLE: Body ratio {body_ratio:.3f} (0.4-0.7)")
+        else:
+            self.logger.info(f"   😐 WEAK CANDLE: Body ratio {body_ratio:.3f} < 0.4 (indecision)")
+        
+        # Market structure analysis
+        self.logger.info(f"\n🏗️ MARKET STRUCTURE:")
+        recent_highs = df['high'].tail(5)
+        recent_lows = df['low'].tail(5)
+        higher_highs = (recent_highs.iloc[-1] > recent_highs.iloc[-2] > recent_highs.iloc[-3])
+        lower_lows = (recent_lows.iloc[-1] < recent_lows.iloc[-2] < recent_lows.iloc[-3])
+        
+        self.logger.info(f"   Recent 5-bar High: {recent_highs.max():.5f}")
+        self.logger.info(f"   Recent 5-bar Low: {recent_lows.min():.5f}")
+        self.logger.info(f"   Higher Highs Pattern: {'YES' if higher_highs else 'NO'}")
+        self.logger.info(f"   Lower Lows Pattern: {'YES' if lower_lows else 'NO'}")
+        
+        if higher_highs and not lower_lows:
+            self.logger.info(f"   📈 UPTREND STRUCTURE: Higher highs forming")
+        elif lower_lows and not higher_highs:
+            self.logger.info(f"   📉 DOWNTREND STRUCTURE: Lower lows forming")
+        else:
+            self.logger.info(f"   📊 SIDEWAYS STRUCTURE: Mixed signals")
+        
+        self.logger.info(f"\n🔥🔥🔥 DETAILED INDICATOR CALCULATION COMPLETE 🔥🔥🔥")
+        self.logger.info("="*80)
+        
+        return df
+
+    def calculate_stop_loss(self, entry_price, direction, atr):
+        """
+        Calculate stop loss based on ATR
+        
+        Args:
+            entry_price (float): Entry price
+            direction (int): 1 for buy, -1 for sell
+            atr (float): Average True Range value
+            
+        Returns:
+            float: Stop loss price
+        """
+        if direction == 1:  # Buy
+            sl = entry_price - (self.atr_multiplier * atr)
+        else:  # Sell
+            sl = entry_price + (self.atr_multiplier * atr)
+        
+        return sl
+    
+    def calculate_take_profit(self, entry_price, stop_loss, direction):
+        """
+        Calculate take profit based on risk:reward ratio
+        
+        Args:
+            entry_price (float): Entry price
+            stop_loss (float): Stop loss price
+            direction (int): 1 for buy, -1 for sell
+            
+        Returns:
+            float: Take profit price
+        """
+        risk = abs(entry_price - stop_loss)
+        reward = risk * self.reward_ratio
+        
+        if direction == 1:  # Buy
+            tp = entry_price + reward
+        else:  # Sell
+            tp = entry_price - reward
+        
+        return tp
+    
+    def calculate_multiple_take_profits(self, entry_price, stop_loss, direction, ratios=None):
+        """
+        Calculate multiple take profit levels for partial closing
+        
+        Args:
+            entry_price (float): Entry price
+            stop_loss (float): Stop loss price
+            direction (int): 1 for buy, -1 for sell
+            ratios (list): List of risk:reward ratios (uses self.tp_levels if None)
+            
+        Returns:
+            list: List of take profit prices
+        """
+        if ratios is None:
+            ratios = self.tp_levels
+        
+        risk = abs(entry_price - stop_loss)
+        tp_prices = []
+        
+        for ratio in ratios:
+            reward = risk * ratio
+            
+            if direction == 1:  # Buy
+                tp = entry_price + reward
+            else:  # Sell
+                tp = entry_price - reward
+            
+            tp_prices.append(tp)
+        
+        return tp_prices
+    
+    def calculate_position_size(self, symbol, entry_price, stop_loss):
+        """
+        Calculate position size based on risk percentage and available funds
+        
+        Args:
+            symbol (str): Trading symbol
+            entry_price (float): Entry price
+            stop_loss (float): Stop loss price
+            
+        Returns:
+            float: Total position size in lots
+        """
+        account_info = mt5.account_info()
+        if not account_info:
+            return self.lot_size
+        
+        # Use free margin instead of balance for more accurate available funds
+        account_balance = account_info.balance
+        free_margin = account_info.margin_free
+        
+        # Calculate based on risk percentage of balance
+        risk_amount = account_balance * (self.risk_percent / 100)
+        
+        # Get symbol info for pip value calculation
+        symbol_info = mt5.symbol_info(symbol)
+        if not symbol_info:
+            return self.lot_size
+        
+        pip_value = symbol_info.trade_tick_value
+        stop_loss_pips = abs(entry_price - stop_loss) / symbol_info.point
+        
+        if stop_loss_pips == 0:
+            return self.lot_size
+        
+        # Calculate lot size based on risk
+        lot_size = risk_amount / (stop_loss_pips * pip_value)
+        
+        # Check if we have enough margin for this lot size
+        # Estimate required margin
+        leverage = account_info.leverage if account_info.leverage > 0 else 100
+        contract_size = symbol_info.trade_contract_size
+        estimated_margin = (lot_size * contract_size * entry_price) / leverage
+        
+        # If not enough margin, reduce lot size
+        if estimated_margin > free_margin * 0.8:  # Use max 80% of free margin
+            lot_size = (free_margin * 0.8 * leverage) / (contract_size * entry_price)
+            self.logger.warning(f"Lot size reduced due to margin constraints: {lot_size:.2f}")
+        
+        # Round to symbol's volume step
+        lot_size = round(lot_size / symbol_info.volume_step) * symbol_info.volume_step
+        
+        # Ensure within min/max limits
+        lot_size = max(symbol_info.volume_min, min(lot_size, symbol_info.volume_max))
+        
+        self.logger.info(f"Calculated lot size: {lot_size} (Balance: {account_balance}, Free Margin: {free_margin})")
+        
+        return lot_size
+    
+    def split_lot_size(self, total_lot_size, num_splits=None, percentages=None):
+        """
+        Split total lot size into smaller orders
+        
+        Args:
+            total_lot_size (float): Total lot size to split
+            num_splits (int): Number of splits (uses self.num_positions if None)
+            percentages (list): Percentage allocation for each split (uses self.partial_close_percent if None)
+            
+        Returns:
+            list: List of lot sizes for each split
+        """
+        if num_splits is None:
+            num_splits = self.num_positions
+        
+        if percentages is None:
+            percentages = self.partial_close_percent
+        
+        # Ensure percentages sum to 100
+        if sum(percentages) != 100:
+            # Normalize
+            total = sum(percentages)
+            percentages = [p / total * 100 for p in percentages]
+        
+        lot_sizes = []
+        for i, percent in enumerate(percentages[:num_splits]):
+            lot = total_lot_size * (percent / 100)
+            
+            # Ensure each lot doesn't exceed max per order
+            if lot > self.max_lot_per_order:
+                lot = self.max_lot_per_order
+            
+            # Round to volume step
+            lot_sizes.append(lot)
+        
+        return lot_sizes
+    
+    def check_entry_signal(self, df):
+        """
+        Check for entry signals with RSI and MACD filtering
+        WITH DETAILED CALCULATION LOGGING
+        
+        Args:
+            df (pd.DataFrame): Price data with indicators
+            
+        Returns:
+            int: 1 for buy, -1 for sell, 0 for no signal
+        """
+        if len(df) < 2:
+            self.logger.info("❌ Not enough data for signal check (need at least 2 bars)")
+            return 0
+        
+        latest = df.iloc[-1]
+        previous = df.iloc[-2]
+        
+        # Log detailed market data
+        self.logger.info("="*80)
+        self.logger.info("📊 SIGNAL ANALYSIS - DETAILED CALCULATIONS")
+        self.logger.info("="*80)
+        self.logger.info(f"Current Price:     {latest['close']:.5f}")
+        self.logger.info(f"Fast MA ({self.fast_ma_period}):      {latest['fast_ma']:.5f}")
+        self.logger.info(f"Slow MA ({self.slow_ma_period}):      {latest['slow_ma']:.5f}")
+        self.logger.info(f"MA Distance:       {abs(latest['fast_ma'] - latest['slow_ma']):.5f} points")
+        self.logger.info(f"MA Position:       Fast {'ABOVE' if latest['fast_ma'] > latest['slow_ma'] else 'BELOW'} Slow")
+        self.logger.info(f"Price vs Fast MA:  {latest['close'] - latest['fast_ma']:+.5f} ({'above' if latest['close'] > latest['fast_ma'] else 'below'})")
+        self.logger.info(f"Price vs Slow MA:  {latest['close'] - latest['slow_ma']:+.5f} ({'above' if latest['close'] > latest['slow_ma'] else 'below'})")
+        self.logger.info("-"*80)
+        
+        # Check for MA crossover
+        signal = 0
+        self.logger.info("🔍 CHECKING MA CROSSOVER:")
+        self.logger.info(f"  Previous: Fast MA={previous['fast_ma']:.5f}, Slow MA={previous['slow_ma']:.5f}")
+        self.logger.info(f"  Current:  Fast MA={latest['fast_ma']:.5f}, Slow MA={latest['slow_ma']:.5f}")
+        
+        if latest['ma_cross'] == 1:
+            self.logger.info(f"  ✅ BULLISH CROSSOVER DETECTED!")
+            self.logger.info(f"     Fast MA crossed ABOVE Slow MA")
+            self.logger.info(f"     Previous: Fast {previous['fast_ma']:.5f} <= Slow {previous['slow_ma']:.5f}")
+            self.logger.info(f"     Current:  Fast {latest['fast_ma']:.5f} > Slow {latest['slow_ma']:.5f}")
+            signal = 1
+        elif latest['ma_cross'] == -1:
+            self.logger.info(f"  ✅ BEARISH CROSSOVER DETECTED!")
+            self.logger.info(f"     Fast MA crossed BELOW Slow MA")
+            self.logger.info(f"     Previous: Fast {previous['fast_ma']:.5f} >= Slow {previous['slow_ma']:.5f}")
+            self.logger.info(f"     Current:  Fast {latest['fast_ma']:.5f} < Slow {latest['slow_ma']:.5f}")
+            signal = -1
+        else:
+            self.logger.info(f"  ❌ No crossover detected")
+            self.logger.info(f"     MA Cross value: {latest['ma_cross']}")
+        
+        # Additional confirmation: price above/below both MAs
+        if signal == 0:
+            self.logger.info("-"*80)
+            self.logger.info("🔍 CHECKING TREND CONFIRMATION:")
+            self.logger.info(f"  Current MA Trend:  {latest['ma_trend']} (1=bullish, -1=bearish)")
+            self.logger.info(f"  Previous MA Trend: {previous['ma_trend']}")
+            self.logger.info(f"  Price > Fast MA:   {latest['close'] > latest['fast_ma']}")
+            self.logger.info(f"  Price > Slow MA:   {latest['close'] > latest['slow_ma']}")
+            self.logger.info(f"  Price < Fast MA:   {latest['close'] < latest['fast_ma']}")
+            self.logger.info(f"  Price < Slow MA:   {latest['close'] < latest['slow_ma']}")
+            
+            if (latest['close'] > latest['fast_ma'] and 
+                latest['close'] > latest['slow_ma'] and 
+                latest['ma_trend'] == 1 and previous['ma_trend'] == -1):
+                self.logger.info(f"  ✅ BULLISH TREND CONFIRMATION!")
+                self.logger.info(f"     Price above both MAs AND trend changed to bullish")
+                signal = 1
+            elif (latest['close'] < latest['fast_ma'] and 
+                  latest['close'] < latest['slow_ma'] and 
+                  latest['ma_trend'] == -1 and previous['ma_trend'] == 1):
+                self.logger.info(f"  ✅ BEARISH TREND CONFIRMATION!")
+                self.logger.info(f"     Price below both MAs AND trend changed to bearish")
+                signal = -1
+            else:
+                self.logger.info(f"  ❌ No trend confirmation")
+                self.logger.info(f"     Conditions not met for trend-based signal")
+        
+        if signal == 0:
+            self.logger.info("-"*80)
+            self.logger.info("❌ NO SIGNAL GENERATED")
+            self.logger.info("   Waiting for MA crossover or trend confirmation...")
+            self.logger.info("="*80)
+            return 0
+        
+        # Log signal detected
+        signal_type = "BUY" if signal == 1 else "SELL"
+        self.logger.info("-"*80)
+        self.logger.info(f"🎯 {signal_type} SIGNAL DETECTED - Now checking filters...")
+        self.logger.info("-"*80)
+        
+        # Apply RSI filter (most popular enhancement)
+        self.logger.info("🔍 RSI FILTER CHECK:")
+        if not pd.isna(latest['rsi']):
+            rsi = latest['rsi']
+            rsi_overbought = self.config.get('rsi_overbought', 75)
+            rsi_oversold = self.config.get('rsi_oversold', 25)
+            
+            self.logger.info(f"  Current RSI: {rsi:.2f}")
+            self.logger.info(f"  RSI Overbought threshold: {rsi_overbought}")
+            self.logger.info(f"  RSI Oversold threshold: {rsi_oversold}")
+            
+            if signal == 1:  # BUY
+                self.logger.info(f"  Checking BUY: RSI range 50-{rsi_overbought}")
+                
+                # Check if overbought (too high)
+                if rsi > rsi_overbought:
+                    self.logger.info(f"  ❌ RSI FILTER REJECTED!")
+                    self.logger.info(f"     RSI {rsi:.2f} is too overbought (>{rsi_overbought})")
+                    self.logger.info(f"     Market may be overextended - skipping trade")
+                    self.logger.info("="*80)
+                    return 0
+                
+                # NEW: Check for minimum bullish strength (momentum confirmation)
+                if rsi < 50:
+                    self.logger.info(f"  ❌ RSI FILTER REJECTED!")
+                    self.logger.info(f"     RSI {rsi:.2f} is too weak for BUY (<50)")
+                    self.logger.info(f"     Not enough bullish momentum - skipping trade")
+                    self.logger.info("="*80)
+                    return 0
+                
+                # RSI is in the sweet spot: 50-70 (or whatever overbought is set to)
+                self.logger.info(f"  ✅ RSI FILTER PASSED!")
+                self.logger.info(f"     RSI {rsi:.2f} shows good bullish momentum (50-{rsi_overbought})")
+            elif signal == -1:  # SELL
+                self.logger.info(f"  Checking SELL: RSI range {rsi_oversold}-50")
+                
+                # Check if oversold (too low)
+                if rsi < rsi_oversold:
+                    self.logger.info(f"  ❌ RSI FILTER REJECTED!")
+                    self.logger.info(f"     RSI {rsi:.2f} is too oversold (<{rsi_oversold})")
+                    self.logger.info(f"     Market may be overextended - skipping trade")
+                    self.logger.info("="*80)
+                    return 0
+                
+                # NEW: Check for maximum bearish strength (momentum confirmation)
+                if rsi > 50:
+                    self.logger.info(f"  ❌ RSI FILTER REJECTED!")
+                    self.logger.info(f"     RSI {rsi:.2f} is too strong for SELL (>50)")
+                    self.logger.info(f"     Not enough bearish momentum - skipping trade")
+                    self.logger.info("="*80)
+                    return 0
+                
+                # RSI is in the sweet spot: 30-50 (or whatever oversold is set to)
+                self.logger.info(f"  ✅ RSI FILTER PASSED!")
+                self.logger.info(f"     RSI {rsi:.2f} shows good bearish momentum ({rsi_oversold}-50)")
+        else:
+            self.logger.info(f"  ⚠️  RSI data not available - skipping RSI filter")
+        
+        # Apply MACD confirmation (second most popular) - ENHANCED WITH THRESHOLD
+        self.logger.info("-"*80)
+        self.logger.info("🔍 MACD FILTER CHECK:")
+        if not pd.isna(latest['macd_histogram']):
+            histogram = latest['macd_histogram']
+            macd = latest['macd']
+            macd_signal = latest['macd_signal']
+            
+            # Enhanced MACD with meaningful threshold
+            MACD_THRESHOLD = self.config.get('macd_min_histogram', 0.0005)
+            
+            self.logger.info(f"  MACD Line:         {macd:.6f}")
+            self.logger.info(f"  MACD Signal Line:  {macd_signal:.6f}")
+            self.logger.info(f"  MACD Histogram:    {histogram:.6f}")
+            self.logger.info(f"  MACD Threshold:    ±{MACD_THRESHOLD:.6f}")
+            self.logger.info(f"  Histogram Position: {'POSITIVE' if histogram > 0 else 'NEGATIVE' if histogram < 0 else 'ZERO'}")
+            
+            if signal == 1:  # BUY
+                self.logger.info(f"  Checking: Histogram {histogram:.6f} > {MACD_THRESHOLD:.6f}?")
+                if histogram <= MACD_THRESHOLD:
+                    self.logger.info(f"  ❌ MACD FILTER REJECTED!")
+                    if histogram <= 0:
+                        self.logger.info(f"     Histogram {histogram:.6f} is negative - contradicts BUY signal")
+                    else:
+                        self.logger.info(f"     Histogram {histogram:.6f} is too weak (≤{MACD_THRESHOLD:.6f})")
+                        self.logger.info(f"     MACD momentum insufficient for reliable entry")
+                    self.logger.info("="*80)
+                    return 0
+                else:
+                    self.logger.info(f"  ✅ MACD FILTER PASSED!")
+                    self.logger.info(f"     Histogram {histogram:.6f} shows strong bullish momentum")
+                    self.logger.info(f"     MACD confirms BUY signal with sufficient strength")
+            elif signal == -1:  # SELL
+                self.logger.info(f"  Checking: Histogram {histogram:.6f} < -{MACD_THRESHOLD:.6f}?")
+                if histogram >= -MACD_THRESHOLD:
+                    self.logger.info(f"  ❌ MACD FILTER REJECTED!")
+                    if histogram >= 0:
+                        self.logger.info(f"     Histogram {histogram:.6f} is positive - contradicts SELL signal")
+                    else:
+                        self.logger.info(f"     Histogram {histogram:.6f} is too weak (≥-{MACD_THRESHOLD:.6f})")
+                        self.logger.info(f"     MACD momentum insufficient for reliable entry")
+                    self.logger.info("="*80)
+                    return 0
+                else:
+                    self.logger.info(f"  ✅ MACD FILTER PASSED!")
+                    self.logger.info(f"     Histogram {histogram:.6f} shows strong bearish momentum")
+                    self.logger.info(f"     MACD confirms SELL signal with sufficient strength")
+        else:
+            self.logger.info(f"  ⚠️  MACD data not available - skipping MACD filter")
+        
+        # Apply ADX trend direction filter (MISSING FROM ORIGINAL - NOW ADDED)
+        self.logger.info("-"*80)
+        self.logger.info("🔍 ADX TREND DIRECTION FILTER:")
+        if self.config.get('use_adx', True):
+            # Calculate ADX and directional indicators if not already present
+            if 'adx' not in df.columns:
+                # Calculate ADX components
+                high_low = df['high'] - df['low']
+                high_close = np.abs(df['high'] - df['close'].shift())
+                low_close = np.abs(df['low'] - df['close'].shift())
+                tr = df[['high_low', 'high_close', 'low_close']].max(axis=1)
+                
+                # Directional Movement
+                plus_dm = np.where((df['high'] - df['high'].shift()) > (df['low'].shift() - df['low']), 
+                                 np.maximum(df['high'] - df['high'].shift(), 0), 0)
+                minus_dm = np.where((df['low'].shift() - df['low']) > (df['high'] - df['high'].shift()), 
+                                  np.maximum(df['low'].shift() - df['low'], 0), 0)
+                
+                # Smooth the values
+                adx_period = self.config.get('adx_period', 14)
+                tr_smooth = pd.Series(tr).rolling(window=adx_period).mean()
+                plus_dm_smooth = pd.Series(plus_dm).rolling(window=adx_period).mean()
+                minus_dm_smooth = pd.Series(minus_dm).rolling(window=adx_period).mean()
+                
+                # Calculate DI
+                df['plus_di'] = 100 * (plus_dm_smooth / tr_smooth)
+                df['minus_di'] = 100 * (minus_dm_smooth / tr_smooth)
+                
+                # Calculate DX and ADX
+                dx = 100 * np.abs(df['plus_di'] - df['minus_di']) / (df['plus_di'] + df['minus_di'])
+                df['adx'] = dx.rolling(window=adx_period).mean()
+            
+            if not pd.isna(latest['adx']):
+                adx = latest['adx']
+                plus_di = latest.get('plus_di', 0)
+                minus_di = latest.get('minus_di', 0)
+                
+                ADX_THRESHOLD = self.config.get('adx_min_strength', 25)
+                
+                self.logger.info(f"  ADX (Trend Strength): {adx:.2f}")
+                self.logger.info(f"  +DI (Bullish Force):  {plus_di:.2f}")
+                self.logger.info(f"  -DI (Bearish Force):  {minus_di:.2f}")
+                self.logger.info(f"  ADX Threshold:        {ADX_THRESHOLD}")
+                
+                if adx > ADX_THRESHOLD:
+                    self.logger.info(f"  ✅ Strong trend detected (ADX {adx:.2f} > {ADX_THRESHOLD})")
+                    
+                    if signal == 1:  # BUY
+                        if plus_di > minus_di:
+                            di_diff = plus_di - minus_di
+                            self.logger.info(f"  ✅ ADX FILTER PASSED!")
+                            self.logger.info(f"     Strong bullish trend confirmed")
+                            self.logger.info(f"     +DI {plus_di:.2f} > -DI {minus_di:.2f} (Difference: {di_diff:.2f})")
+                            self.logger.info(f"     ADX {adx:.2f} confirms trend strength")
+                        else:
+                            di_diff = minus_di - plus_di
+                            self.logger.info(f"  ❌ ADX FILTER REJECTED!")
+                            self.logger.info(f"     Trend direction contradicts BUY signal")
+                            self.logger.info(f"     -DI {minus_di:.2f} > +DI {plus_di:.2f} (Bearish by {di_diff:.2f})")
+                            self.logger.info(f"     Strong bearish trend detected - cannot BUY")
+                            self.logger.info("="*80)
+                            return 0
+                    elif signal == -1:  # SELL
+                        if minus_di > plus_di:
+                            di_diff = minus_di - plus_di
+                            self.logger.info(f"  ✅ ADX FILTER PASSED!")
+                            self.logger.info(f"     Strong bearish trend confirmed")
+                            self.logger.info(f"     -DI {minus_di:.2f} > +DI {plus_di:.2f} (Difference: {di_diff:.2f})")
+                            self.logger.info(f"     ADX {adx:.2f} confirms trend strength")
+                        else:
+                            di_diff = plus_di - minus_di
+                            self.logger.info(f"  ❌ ADX FILTER REJECTED!")
+                            self.logger.info(f"     Trend direction contradicts SELL signal")
+                            self.logger.info(f"     +DI {plus_di:.2f} > -DI {minus_di:.2f} (Bullish by {di_diff:.2f})")
+                            self.logger.info(f"     Strong bullish trend detected - cannot SELL")
+                            self.logger.info("="*80)
+                            return 0
+                else:
+                    self.logger.info(f"  ⚠️  Weak trend (ADX {adx:.2f} ≤ {ADX_THRESHOLD})")
+                    self.logger.info(f"     Trend not strong enough for reliable directional filter")
+                    self.logger.info(f"     Proceeding with caution - other filters must be strong")
+            else:
+                self.logger.info(f"  ⚠️  ADX data not available - skipping ADX filter")
+        else:
+            self.logger.info(f"  ⚠️  ADX filter disabled in configuration")
+        
+        # All filters passed
+        self.logger.info("-"*80)
+        self.logger.info(f"✅ ALL FILTERS PASSED - {signal_type} SIGNAL CONFIRMED!")
+        self.logger.info(f"   Signal will proceed to risk management and position opening")
+        self.logger.info("="*80)
+        
+        return signal
+    
+    def open_position(self, symbol, direction, entry_price, stop_loss, take_profit, lot_size):
+        """
+        Open a position in MT5 (single order - legacy method)
+        
+        Args:
+            symbol (str): Trading symbol
+            direction (int): 1 for buy, -1 for sell
+            entry_price (float): Entry price
+            stop_loss (float): Stop loss price
+            take_profit (float): Take profit price
+            lot_size (float): Position size
+            
+        Returns:
+            bool: True if successful
+        """
+        symbol_info = mt5.symbol_info(symbol)
+        if not symbol_info:
+            self.logger.error(f"Symbol {symbol} not found")
+            return False
+        
+        if not symbol_info.visible:
+            if not mt5.symbol_select(symbol, True):
+                self.logger.error(f"Failed to select {symbol}")
+                return False
+        
+        # Prepare request
+        order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
+        price = mt5.symbol_info_tick(symbol).ask if direction == 1 else mt5.symbol_info_tick(symbol).bid
+        
+        # Get correct filling mode for this symbol
+        filling_mode = self.get_filling_mode(symbol)
+        
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": symbol,
+            "volume": lot_size,
+            "type": order_type,
+            "price": price,
+            "sl": stop_loss,
+            "tp": take_profit,
+            "deviation": 10,
+            "magic": self.magic_number,
+            "comment": f"MT5Bot_{direction}",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": filling_mode,
+        }
+        
+        # Send order
+        result = mt5.order_send(request)
+        
+        if result.retcode != mt5.TRADE_RETCODE_DONE:
+            self.logger.error(f"Order failed: {result.retcode}, {result.comment}")
+            return False
+        
+        self.logger.info(f"Position opened: {symbol} {direction} at {price}, SL: {stop_loss}, TP: {take_profit}")
+        
+        # Store position info for trailing
+        self.positions[result.order] = {
+            'symbol': symbol,
+            'direction': direction,
+            'entry_price': price,
+            'initial_sl': stop_loss,
+            'initial_tp': take_profit,
+            'ticket': result.order
+        }
+        
+        return True
+    
+    def get_filling_mode(self, symbol):
+        """
+        Get the appropriate filling mode for the symbol
+        
+        Args:
+            symbol (str): Trading symbol
+            
+        Returns:
+            int: MT5 filling mode constant
+        """
+        symbol_info = mt5.symbol_info(symbol)
+        if symbol_info is None:
+            return mt5.ORDER_FILLING_FOK
+        
+        # Check which filling modes are supported
+        filling_mode = symbol_info.filling_mode
+        
+        # Try filling modes in order of preference
+        if filling_mode & 1:  # FOK (Fill or Kill)
+            return mt5.ORDER_FILLING_FOK
+        elif filling_mode & 2:  # IOC (Immediate or Cancel)
+            return mt5.ORDER_FILLING_IOC
+        else:  # Return (market execution)
+            return mt5.ORDER_FILLING_RETURN
+    
+    def open_split_positions(self, symbol, direction, entry_price, stop_loss, total_lot_size):
+        """
+        Open multiple positions with different take profit levels
+        
+        Args:
+            symbol (str): Trading symbol
+            direction (int): 1 for buy, -1 for sell
+            entry_price (float): Entry price
+            stop_loss (float): Stop loss price
+            total_lot_size (float): Total lot size to split
+            
+        Returns:
+            tuple: (success, group_id, tickets)
+        """
+        import uuid
+        import time
+        
+        symbol_info = mt5.symbol_info(symbol)
+        if not symbol_info:
+            self.logger.error(f"Symbol {symbol} not found")
+            return False, None, []
+        
+        if not symbol_info.visible:
+            if not mt5.symbol_select(symbol, True):
+                self.logger.error(f"Failed to select {symbol}")
+                return False, None, []
+        
+        # Calculate split lot sizes
+        lot_sizes = self.split_lot_size(total_lot_size)
+        
+        # Calculate multiple TP levels
+        tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, direction)
+        
+        # Round prices
+        digits = symbol_info.digits
+        stop_loss = round(stop_loss, digits)
+        tp_prices = [round(tp, digits) for tp in tp_prices]
+        
+        # Generate unique group ID for this set of positions
+        group_id = str(uuid.uuid4())[:8]
+        
+        self.logger.info(f"Opening split positions for {symbol}:")
+        self.logger.info(f"  Group ID: {group_id}")
+        self.logger.info(f"  Total lots: {total_lot_size}, Split into: {lot_sizes}")
+        self.logger.info(f"  TP levels: {tp_prices}")
+        
+        tickets = []
+        order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
+        
+        # Get correct filling mode for this symbol
+        filling_mode = self.get_filling_mode(symbol)
+        
+        # Open each position with its respective TP level
+        for i, (lot, tp) in enumerate(zip(lot_sizes, tp_prices)):
+            # Round lot size to volume step
+            lot = round(lot / symbol_info.volume_step) * symbol_info.volume_step
+            
+            # Ensure within limits
+            lot = max(symbol_info.volume_min, min(lot, symbol_info.volume_max))
+            
+            if lot < symbol_info.volume_min:
+                self.logger.warning(f"Lot size {lot} too small for position {i+1}, skipping")
+                continue
+            
+            # Get current price
+            tick = mt5.symbol_info_tick(symbol)
+            if tick is None:
+                self.logger.error(f"Failed to get tick data for {symbol} - symbol may not be available")
+                self.logger.error(f"MT5 error: {mt5.last_error()}")
+                continue
+            
+            price = tick.ask if direction == 1 else tick.bid
+            
+            request = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": lot,
+                "type": order_type,
+                "price": price,
+                "sl": stop_loss,
+                "tp": tp,
+                "deviation": 20,
+                "magic": self.magic_number,
+                "comment": f"MT5Bot_Split_{group_id}_{i+1}",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": filling_mode,
+            }
+            
+            # Send order
+            result = mt5.order_send(request)
+            
+            if result.retcode != mt5.TRADE_RETCODE_DONE:
+                self.logger.error(f"Order {i+1} failed: {result.retcode}, {result.comment}")
+                continue
+            
+            self.logger.info(f"  Position {i+1}: {lot} lots at {price}, TP: {tp} (Ticket: {result.order})")
+            
+            tickets.append(result.order)
+            
+            # Store position info
+            self.positions[result.order] = {
+                'symbol': symbol,
+                'direction': direction,
+                'entry_price': price,
+                'initial_sl': stop_loss,
+                'initial_tp': tp,
+                'ticket': result.order,
+                'group_id': group_id,
+                'position_number': i + 1,
+                'total_positions': len(lot_sizes)
+            }
+            
+            # Small delay between orders
+            time.sleep(0.5)
+        
+        if len(tickets) == 0:
+            self.logger.error("Failed to open any split positions")
+            return False, None, []
+        
+        # Store group info
+        self.split_position_groups[group_id] = {
+            'symbol': symbol,
+            'direction': direction,
+            'tickets': tickets,
+            'entry_price': entry_price,
+            'initial_sl': stop_loss,
+            'created_at': datetime.now()
+        }
+        
+        self.logger.info(f"Successfully opened {len(tickets)} split positions (Group: {group_id})")
+        return True, group_id, tickets
+    
+    def update_trailing_stop(self, position_ticket, symbol, direction):
+        """
+        Update trailing stop loss for an open position
+        
+        Args:
+            position_ticket (int): Position ticket number
+            symbol (str): Trading symbol
+            direction (int): 1 for buy, -1 for sell
+            
+        Returns:
+            bool: True if updated
+        """
+        # Get current position
+        positions = mt5.positions_get(ticket=position_ticket)
+        if not positions or len(positions) == 0:
+            return False
+        
+        position = positions[0]
+        current_price = mt5.symbol_info_tick(symbol).bid if direction == 1 else mt5.symbol_info_tick(symbol).ask
+        
+        # Get current ATR
+        df = self.get_historical_data(symbol, self.timeframe, 50)
+        if df is None:
+            return False
+        
+        df = self.calculate_indicators(df)
+        current_atr = df.iloc[-1]['atr']
+        
+        entry_price = self.positions[position_ticket]['entry_price']
+        initial_sl = self.positions[position_ticket]['initial_sl']
+        
+        # Check if trailing should be activated
+        profit_in_atr = abs(current_price - entry_price) / current_atr
+        
+        if profit_in_atr < self.trail_activation:
+            return False  # Not enough profit to activate trailing
+        
+        # Calculate new trailing stop
+        if direction == 1:  # Buy position
+            new_sl = current_price - (self.trail_distance * current_atr)
+            if new_sl > position.sl:  # Only move SL up
+                new_sl = round(new_sl, mt5.symbol_info(symbol).digits)
+            else:
+                return False
+        else:  # Sell position
+            new_sl = current_price + (self.trail_distance * current_atr)
+            if new_sl < position.sl:  # Only move SL down
+                new_sl = round(new_sl, mt5.symbol_info(symbol).digits)
+            else:
+                return False
+        
+        # Modify position
+        request = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "position": position_ticket,
+            "sl": new_sl,
+            "tp": position.tp,
+        }
+        
+        result = mt5.order_send(request)
+        
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            self.logger.info(f"Trailing stop updated for {symbol}: New SL = {new_sl}")
+            return True
+        else:
+            self.logger.warning(f"Failed to update trailing stop: {result.comment}")
+            return False
+    
+    def update_group_trailing_stop(self, group_id):
+        """
+        Update trailing stop for all positions in a split position group
+        Updates all positions together to maintain consistency
+        
+        Args:
+            group_id (str): Group ID for split positions
+            
+        Returns:
+            int: Number of positions updated
+        """
+        if group_id not in self.split_position_groups:
+            return 0
+        
+        group = self.split_position_groups[group_id]
+        symbol = group['symbol']
+        direction = group['direction']
+        tickets = group['tickets']
+        
+        # Get current data
+        df = self.get_historical_data(symbol, self.timeframe, 50)
+        if df is None:
+            return 0
+        
+        df = self.calculate_indicators(df)
+        current_atr = df.iloc[-1]['atr']
+        
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            self.logger.error(f"Failed to get tick data for {symbol} in trailing stop check")
+            return 0
+        
+        current_price = tick.bid if direction == 1 else tick.ask
+        entry_price = group['entry_price']
+        
+        # Check if trailing should activate
+        profit_in_atr = abs(current_price - entry_price) / current_atr
+        
+        if profit_in_atr < self.trail_activation:
+            return 0
+        
+        # Calculate new trailing stop (same for all positions in group)
+        if direction == 1:  # Buy
+            new_sl = current_price - (self.trail_distance * current_atr)
+        else:  # Sell
+            new_sl = current_price + (self.trail_distance * current_atr)
+        
+        new_sl = round(new_sl, mt5.symbol_info(symbol).digits)
+        
+        updated_count = 0
+        
+        # Update all positions in the group
+        for ticket in tickets:
+            positions = mt5.positions_get(ticket=ticket)
+            if not positions or len(positions) == 0:
+                continue
+            
+            position = positions[0]
+            
+            # Only move SL in profitable direction
+            should_update = False
+            if direction == 1 and new_sl > position.sl:
+                should_update = True
+            elif direction == -1 and new_sl < position.sl:
+                should_update = True
+            
+            if not should_update:
+                continue
+            
+            request = {
+                "action": mt5.TRADE_ACTION_SLTP,
+                "position": ticket,
+                "sl": new_sl,
+                "tp": position.tp,
+            }
+            
+            result = mt5.order_send(request)
+            
+            if result.retcode == mt5.TRADE_RETCODE_DONE:
+                updated_count += 1
+        
+        if updated_count > 0:
+            self.logger.info(f"Group {group_id}: Updated trailing stop for {updated_count} positions to {new_sl}")
+        
+        return updated_count
+    
+    def manage_positions(self):
+        """Check and manage all open positions with dynamic SL/TP"""
+        positions = mt5.positions_get(magic=self.magic_number)
+        
+        if positions is None or len(positions) == 0:
+            # Clean up tracking dictionaries if no positions
+            self.cleanup_closed_positions()
+            return
+        
+        # Track which groups we've already processed
+        processed_groups = set()
+        
+        # Get list of open ticket numbers
+        open_tickets = {pos.ticket for pos in positions}
+        
+        for position in positions:
+            ticket = position.ticket
+            symbol = position.symbol
+            direction = 1 if position.type == mt5.ORDER_TYPE_BUY else -1
+            
+            try:
+                # Verify position still exists before processing
+                verify_position = mt5.positions_get(ticket=ticket)
+                if not verify_position or len(verify_position) == 0:
+                    self.logger.debug(f"Position {ticket} already closed, skipping update")
+                    continue
+                
+                # Get current data and market condition for dynamic adjustments
+                df = self.get_historical_data(symbol, self.timeframe, 100)
+                if df is not None:
+                    df = self.calculate_indicators(df)
+                    
+                    # Get market condition if adaptive risk is enabled
+                    market_condition = None
+                    if self.use_adaptive_risk and self.adaptive_risk_manager:
+                        market_condition = self.adaptive_risk_manager.analyze_market_condition(df)
+                    
+                    # Dynamic Stop Loss adjustment
+                    if self.config.get('use_dynamic_sl', False):
+                        try:
+                            from src.dynamic_sl_manager import integrate_dynamic_sl
+                            integrate_dynamic_sl(self, position, df, market_condition)
+                        except Exception as e:
+                            self.logger.debug(f"Dynamic SL not available: {str(e)}")
+                    
+                    # Dynamic Take Profit extension
+                    if self.config.get('use_dynamic_tp', False) and position.profit > 0:
+                        try:
+                            from src.dynamic_tp_manager import integrate_dynamic_tp
+                            integrate_dynamic_tp(self, position, df, market_condition)
+                        except Exception as e:
+                            self.logger.debug(f"Dynamic TP not available: {str(e)}")
+                    
+                    # Scalping Mode (M1 only) - Dynamic exits instead of fixed TP
+                    if self.config.get('use_scalping_mode', False) and self.timeframe == mt5.TIMEFRAME_M1:
+                        try:
+                            from scalping_manager import integrate_scalping
+                            # Returns True if position was closed
+                            if integrate_scalping(self, position, df):
+                                continue  # Position closed, skip trailing stop logic
+                        except Exception as e:
+                            self.logger.debug(f"Scalping mode not available: {str(e)}")
+                
+                # Standard trailing stop logic
+                # Check if this is part of a split position group
+                if ticket in self.positions and 'group_id' in self.positions[ticket]:
+                    group_id = self.positions[ticket]['group_id']
+                    
+                    # Update entire group together (only once)
+                    if group_id not in processed_groups:
+                        self.update_group_trailing_stop(group_id)
+                        processed_groups.add(group_id)
+                else:
+                    # Single position, update individually
+                    self.update_trailing_stop(ticket, symbol, direction)
+            except Exception as e:
+                # More informative error message
+                error_msg = str(e)
+                if "not found" in error_msg.lower() or ticket == int(error_msg):
+                    self.logger.debug(f"Position {ticket} closed during update, will clean up")
+                else:
+                    self.logger.warning(f"Error updating position {ticket} ({symbol}): {error_msg}")
+                continue
+        
+        # Clean up closed positions and groups
+        self.cleanup_closed_positions()
+        self.cleanup_closed_groups()
+    
+    def cleanup_closed_groups(self):
+        """Remove groups where all positions are closed"""
+        groups_to_remove = []
+        
+        for group_id, group in self.split_position_groups.items():
+            all_closed = True
+            for ticket in group['tickets']:
+                positions = mt5.positions_get(ticket=ticket)
+                if positions and len(positions) > 0:
+                    all_closed = False
+                    break
+            
+            if all_closed:
+                groups_to_remove.append(group_id)
+        
+        for group_id in groups_to_remove:
+            del self.split_position_groups[group_id]
+            self.logger.info(f"Cleaned up closed group: {group_id}")
+    
+    def cleanup_closed_positions(self):
+        """Remove closed positions from tracking dictionary"""
+        # Get all currently open positions
+        open_positions = mt5.positions_get(magic=self.magic_number)
+        
+        if open_positions is None:
+            open_tickets = set()
+        else:
+            open_tickets = {pos.ticket for pos in open_positions}
+        
+        # Find positions in tracking that are no longer open
+        tickets_to_remove = []
+        for ticket in self.positions.keys():
+            if ticket not in open_tickets:
+                tickets_to_remove.append(ticket)
+        
+        # Remove closed positions from tracking
+        for ticket in tickets_to_remove:
+            del self.positions[ticket]
+            self.logger.debug(f"Cleaned up closed position: {ticket}")
+        
+        if len(tickets_to_remove) > 0:
+            self.logger.info(f"Cleaned up {len(tickets_to_remove)} closed position(s)")
+    
+    def check_daily_loss_limit(self):
+        """
+        Check if daily loss limit has been exceeded
+        
+        Returns:
+            bool: True if can continue trading, False if limit exceeded
+        """
+        from datetime import datetime, timedelta
+        
+        # Get account info
+        account_info = mt5.account_info()
+        if not account_info:
+            return True  # Can't check, allow trading
+        
+        current_equity = account_info.equity
+        
+        # Get today's deals
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        deals = mt5.history_deals_get(today_start, datetime.now())
+        
+        if deals is None or len(deals) == 0:
+            return True  # No deals today, can trade
+        
+        # Calculate today's profit/loss for bot trades only
+        daily_pnl = 0.0
+        for deal in deals:
+            if deal.magic == self.magic_number:
+                daily_pnl += deal.profit
+        
+        # Calculate loss percentage of current equity
+        if daily_pnl < 0:
+            loss_percent = abs(daily_pnl) / current_equity * 100
+            
+            max_loss_percent = self.config.get('max_daily_loss_percent', 5.0)
+            
+            if loss_percent >= max_loss_percent:
+                self.logger.warning(f"Daily loss limit reached: {loss_percent:.2f}% (Max: {max_loss_percent}%)")
+                self.logger.warning(f"Daily P/L: ${daily_pnl:.2f}, Equity: ${current_equity:.2f}")
+                self.logger.warning(f"Trading paused for today. Will resume tomorrow.")
+                return False
+            
+            # Log warning when approaching limit (at 80%)
+            if loss_percent >= max_loss_percent * 0.8:
+                self.logger.warning(f"Approaching daily loss limit: {loss_percent:.2f}% of {max_loss_percent}%")
+                self.logger.warning(f"Daily P/L: ${daily_pnl:.2f}, Remaining: ${(max_loss_percent * current_equity / 100) - abs(daily_pnl):.2f}")
+        
+        return True
+    
+    def run_strategy(self, symbol):
+        """
+        Execute trading strategy for a symbol
+        
+        Args:
+            symbol (str): Trading symbol
+        """
+        self.logger.info("")
+        self.logger.info("╔" + "="*78 + "╗")
+        self.logger.info(f"║ ANALYZING {symbol:^70} ║")
+        self.logger.info("╚" + "="*78 + "╝")
+        
+        # Check daily loss limit before trading
+        if not self.check_daily_loss_limit():
+            self.logger.warning(f"⚠️  Daily loss limit reached - skipping {symbol}")
+            self.logger.info("="*80)
+            return
+        
+        # Check if already have maximum positions for this symbol
+        positions = mt5.positions_get(symbol=symbol, magic=self.magic_number)
+        max_per_symbol = self.config.get('max_trades_per_symbol', 1)
+        
+        if positions and len(positions) >= max_per_symbol:
+            self.logger.info(f"📊 Position Check: Already have {len(positions)} position(s) for {symbol}")
+            self.logger.info(f"   Maximum per symbol: {max_per_symbol} - Skipping new trades")
+            self.logger.info("="*80)
+            return
+        else:
+            self.logger.info(f"📊 Position Check: {len(positions) if positions else 0}/{max_per_symbol} positions for {symbol}")
+        
+        # Get data and calculate indicators
+        self.logger.info(f"📈 Fetching historical data for {symbol} (Timeframe: M{self.timeframe})...")
+        df = self.get_historical_data(symbol, self.timeframe)
+        if df is None:
+            self.logger.error(f"❌ Failed to get data for {symbol}")
+            self.logger.info("="*80)
+            return
+        
+        self.logger.info(f"✅ Retrieved {len(df)} bars of data")
+        self.logger.info(f"📊 Calculating technical indicators...")
+        df = self.calculate_indicators(df)
+        self.logger.info(f"✅ Indicators calculated successfully")
+        self.logger.info("")
+        
+        # Check for entry signal
+        signal = self.check_entry_signal(df)
+        
+        if signal == 0:
+            self.logger.info(f"Completed analysis for {symbol}")
+            self.logger.info("="*80)
+            return  # No signal
+        
+        self.logger.info(f"🎯 {'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
+        self.logger.info("")
+        
+        # === PRICE LEVEL PROTECTION ===
+        can_trade, limit_price, price_reason = self.check_existing_position_prices(symbol, signal)
+        
+        if not can_trade:
+            self.logger.warning(f"❌ TRADE REJECTED by price level protection")
+            self.logger.warning(f"   {price_reason}")
+            self.logger.info("="*80)
+            return
+        else:
+            if limit_price is not None:
+                self.logger.info(f"✅ Price level check passed: {price_reason}")
+        
+        # === VOLUME ANALYSIS ===
+        confidence_adjustment = 0.0
+        if self.use_volume_filter and self.volume_analyzer:
+            self.logger.info("="*80)
+            self.logger.info(f"📊 VOLUME ANALYSIS for {symbol}")
+            self.logger.info("="*80)
+            
+            # Check if trade should be taken based on volume
+            should_trade, volume_confidence = self.volume_analyzer.should_trade(
+                df, 'buy' if signal == 1 else 'sell'
+            )
+            
+            if not should_trade:
+                self.logger.warning(f"❌ TRADE REJECTED by volume filter for {symbol}")
+                self.logger.warning(f"   Volume conditions not favorable for this trade")
+                self.logger.info("="*80)
+                return
+            
+            # Apply confidence boost from volume analysis
+            confidence_adjustment = volume_confidence
+            self.logger.info(f"✅ Volume analysis PASSED")
+            self.logger.info(f"   Confidence boost: {confidence_adjustment:+.2%}")
+            self.logger.info("")
+        
+        # === ADAPTIVE RISK MANAGEMENT ===
+        if self.use_adaptive_risk and self.adaptive_risk_manager:
+            self.logger.info("="*80)
+            self.logger.info(f"🎯 ADAPTIVE RISK MANAGEMENT for {symbol}")
+            self.logger.info("="*80)
+            
+            # Get adaptive parameters
+            adaptive_params = integrate_adaptive_risk(self, symbol, signal, df)
+            
+            if adaptive_params is None:
+                self.logger.info(f"❌ Trade rejected by adaptive risk manager for {symbol}")
+                self.logger.info("="*80)
+                return
+            
+            # Extract adaptive parameters
+            entry_price = adaptive_params['entry_price']
+            stop_loss = adaptive_params['stop_loss']
+            tp_prices = adaptive_params['tp_prices']
+            allocations = adaptive_params['allocations']
+            trailing_params = adaptive_params['trailing_params']
+            risk_multiplier = adaptive_params['risk_multiplier']
+            confidence = adaptive_params['confidence']
+            market_condition = adaptive_params['market_condition']
+            
+            # Apply volume confidence adjustment
+            confidence += confidence_adjustment
+            confidence = min(1.0, max(0.0, confidence))  # Clamp between 0 and 1
+            
+            # Adjust risk multiplier based on updated confidence
+            if confidence >= 0.8:
+                risk_multiplier = min(risk_multiplier * 1.1, self.config.get('max_risk_multiplier', 2.0))
+            elif confidence < 0.5:
+                risk_multiplier = max(risk_multiplier * 0.9, self.config.get('min_risk_multiplier', 0.5))
+            
+            self.logger.info(f"Adaptive Analysis:")
+            self.logger.info(f"  Market Type: {market_condition['market_type']}")
+            self.logger.info(f"  Trend Strength: {market_condition['trend_strength']:.1f}")
+            self.logger.info(f"  Volatility Ratio: {market_condition['volatility_ratio']:.2f}")
+            self.logger.info(f"  Trade Confidence: {confidence:.1%} (Volume boost: {confidence_adjustment:+.1%})")
+            self.logger.info(f"  Risk Multiplier: {risk_multiplier:.2f}x")
+            
+            # Calculate position size with risk adjustment
+            base_lot_size = self.calculate_position_size(symbol, entry_price, stop_loss)
+            total_lot_size = base_lot_size * risk_multiplier
+            
+            # Update trailing parameters dynamically
+            self.trail_activation = trailing_params['activation_atr']
+            self.trail_distance = trailing_params['trail_distance_atr']
+            
+        else:
+            # === STANDARD RISK MANAGEMENT ===
+            self.logger.info(f"Using Standard Risk Management for {symbol}")
+            
+            # Get current price and ATR
+            latest = df.iloc[-1]
+            current_atr = latest['atr']
+            tick = mt5.symbol_info_tick(symbol)
+            if tick is None:
+                self.logger.error(f"Failed to get tick data for {symbol} - cannot place trade")
+                return
+            
+            entry_price = tick.ask if signal == 1 else tick.bid
+            
+            # Calculate SL
+            stop_loss = self.calculate_stop_loss(entry_price, signal, current_atr)
+            
+            # Calculate position size
+            total_lot_size = self.calculate_position_size(symbol, entry_price, stop_loss)
+            
+            # Use configured TP levels
+            tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, signal)
+            allocations = self.partial_close_percent
+        
+        # Round prices
+        digits = mt5.symbol_info(symbol).digits
+        stop_loss = round(stop_loss, digits)
+        
+        self.logger.info(f"Signal for {symbol}: {'BUY' if signal == 1 else 'SELL'}")
+        self.logger.info(f"Entry: {entry_price}, SL: {stop_loss}, Total Lots: {total_lot_size:.2f}")
+        
+        # Decide whether to use split orders
+        if self.use_split_orders:
+            # Round TP prices
+            tp_prices_rounded = [round(tp, digits) for tp in tp_prices]
+            
+            self.logger.info(f"Using split orders strategy:")
+            self.logger.info(f"  Take Profit levels: {tp_prices_rounded}")
+            self.logger.info(f"  Allocations: {allocations}%")
+            
+            # Open split positions
+            success, group_id, tickets = self.open_split_positions(
+                symbol, signal, entry_price, stop_loss, total_lot_size
+            )
+            
+            if success:
+                self.logger.info(f"Split positions opened successfully (Group: {group_id})")
+            else:
+                self.logger.error(f"Failed to open split positions for {symbol}")
+        else:
+            # Use single position with one TP
+            take_profit = self.calculate_take_profit(entry_price, stop_loss, signal)
+            take_profit = round(take_profit, digits)
+            
+            self.logger.info(f"Using single position strategy")
+            self.logger.info(f"  TP: {take_profit}")
+            
+            # Open single position
+            self.open_position(symbol, signal, entry_price, stop_loss, take_profit, total_lot_size)
+    
+    def run(self):
+        """Main bot loop"""
+        if not self.connect():
+            return
+        
+        self.logger.info("Trading bot started")
+        self.logger.info(f"Trading symbols: {self.symbols}")
+        self.logger.info(f"Timeframe: {self.timeframe}")
+        
+        try:
+            while True:
+                # Run strategy for each symbol
+                for symbol in self.symbols:
+                    try:
+                        self.run_strategy(symbol)
+                        # Small delay between symbols to avoid MT5 rate limiting
+                        time.sleep(0.5)  # 500ms delay between symbols
+                    except Exception as e:
+                        self.logger.error(f"Error processing {symbol}: {str(e)}")
+                        self.logger.debug(f"Traceback:", exc_info=True)
+                
+                # Manage existing positions (trailing stops)
+                try:
+                    self.manage_positions()
+                except Exception as e:
+                    self.logger.error(f"Error managing positions: {str(e)}")
+                    self.logger.debug(f"Traceback:", exc_info=True)
+                
+                # Wait before next iteration
+                time.sleep(60)  # Check every minute
+                
+        except KeyboardInterrupt:
+            self.logger.info("Bot stopped by user")
+        finally:
+            self.disconnect()
+
+
+if __name__ == "__main__":
+    # Configuration
+    config = {
+        'symbols': ['XAUUSD', 'XAGUSD'],  # Gold and Silver
+        'timeframe': mt5.TIMEFRAME_H1,  # 1-hour timeframe
+        'magic_number': 234000,  # Unique identifier for bot's trades
+        'lot_size': 0.01,  # Default lot size
+        'risk_percent': 1.0,  # Risk 1% per trade
+        'reward_ratio': 2.0,  # 1:2 risk/reward
+
+        # Moving average parameters
+        'fast_ma_period': 20,
+        'slow_ma_period': 50,
+
+        # RSI parameters (optimized values)
+        'rsi_period': 14,
+        'rsi_overbought': 75,
+        'rsi_oversold': 25,
+        'use_rsi': True,
+
+        # MACD parameters (optimized values)
+        'macd_fast': 12,
+        'macd_slow': 26,
+        'macd_signal': 9,
+        'macd_min_histogram': 0.0005,
+        'use_macd': True,
+
+        # ATR-based stops
+        'atr_period': 14,
+        'atr_multiplier': 2.0,  # SL = Entry ± 2*ATR
+
+        # Trailing parameters
+        'trail_activation': 1.5,  # Activate trailing after 1.5*ATR profit
+        'trail_distance': 1.0,  # Trail at 1*ATR distance
+    }
+    
+    # Create and run bot
+    bot = MT5TradingBot(config)
+    bot.run()

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test - GEM Trading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e293b;
+            color: white;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-primary { background: #10b981; color: white; }
+        .btn-secondary { background: #6366f1; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .result {
+            margin: 10px;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 5px;
+            border-left: 3px solid #10b981;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 GEM Trading Dashboard - Button Test</h1>
+    <p>This page tests if JavaScript buttons are working in your browser.</p>
+    
+    <div>
+        <h2>Basic JavaScript Tests:</h2>
+        <button class="btn btn-primary" onclick="testBasicJS()">Test Basic JavaScript</button>
+        <button class="btn btn-secondary" onclick="testAlert()">Test Alert</button>
+        <button class="btn btn-secondary" onclick="testConsole()">Test Console Log</button>
+        <div id="basic-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div>
+        <h2>Dashboard API Tests:</h2>
+        <button class="btn btn-primary" onclick="testDashboardAPI()">Test Dashboard API</button>
+        <button class="btn btn-secondary" onclick="testMT5API()">Test MT5 API</button>
+        <button class="btn btn-secondary" onclick="testConfigAPI()">Test Config API</button>
+        <div id="api-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div>
+        <h2>Dashboard Access:</h2>
+        <button class="btn btn-danger" onclick="openDashboard()">🚀 Open Full Dashboard</button>
+        <p style="color: #94a3b8; font-size: 14px;">
+            If this button works but dashboard buttons don't, the issue is with the main dashboard JavaScript.
+        </p>
+    </div>
+    
+    <div>
+        <h2>Browser Information:</h2>
+        <div id="browser-info" class="result"></div>
+    </div>
+    
+    <script>
+        // Display browser information
+        document.getElementById('browser-info').innerHTML = `
+            <strong>Browser:</strong> ${navigator.userAgent}<br>
+            <strong>JavaScript Enabled:</strong> ✅ Yes<br>
+            <strong>Local Storage:</strong> ${typeof(Storage) !== "undefined" ? "✅ Available" : "❌ Not Available"}<br>
+            <strong>Fetch API:</strong> ${typeof(fetch) !== "undefined" ? "✅ Available" : "❌ Not Available"}<br>
+            <strong>Current URL:</strong> ${window.location.href}
+        `;
+        
+        function testBasicJS() {
+            const result = document.getElementById('basic-result');
+            result.style.display = 'block';
+            result.innerHTML = '✅ Basic JavaScript is working! Current time: ' + new Date().toLocaleTimeString();
+        }
+        
+        function testAlert() {
+            alert('✅ Alert is working! JavaScript is functional.');
+        }
+        
+        function testConsole() {
+            console.log('✅ Console.log is working!');
+            const result = document.getElementById('basic-result');
+            result.style.display = 'block';
+            result.innerHTML = '✅ Console.log executed! Check browser developer tools (F12) -> Console tab.';
+        }
+        
+        async function testDashboardAPI() {
+            const result = document.getElementById('api-result');
+            result.style.display = 'block';
+            result.innerHTML = '🔄 Testing dashboard API...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/bot/status');
+                const data = await response.json();
+                result.innerHTML = `✅ Dashboard API working!<br>
+                    Status: ${response.status}<br>
+                    Bot Running: ${data.running}<br>
+                    Balance: ${data.balance} ${data.currency}`;
+            } catch (error) {
+                result.innerHTML = `❌ Dashboard API failed: ${error.message}`;
+            }
+        }
+        
+        async function testMT5API() {
+            const result = document.getElementById('api-result');
+            result.style.display = 'block';
+            result.innerHTML = '🔄 Testing MT5 API...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/mt5/test');
+                const data = await response.json();
+                result.innerHTML = `✅ MT5 API working!<br>
+                    Connected: ${data.connected ? '✅ Yes' : '❌ No'}<br>
+                    ${data.connected ? `Account: ${data.account_name} (${data.server})` : `Error: ${data.error}`}`;
+            } catch (error) {
+                result.innerHTML = `❌ MT5 API failed: ${error.message}`;
+            }
+        }
+        
+        async function testConfigAPI() {
+            const result = document.getElementById('api-result');
+            result.style.display = 'block';
+            result.innerHTML = '🔄 Testing Config API...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/config');
+                const data = await response.json();
+                result.innerHTML = `✅ Config API working!<br>
+                    Symbols: ${data.symbols ? data.symbols.join(', ') : 'None'}<br>
+                    Timeframe: ${data.timeframe}<br>
+                    Risk: ${data.risk_percent}%`;
+            } catch (error) {
+                result.innerHTML = `❌ Config API failed: ${error.message}`;
+            }
+        }
+        
+        function openDashboard() {
+            window.open('http://127.0.0.1:5000', '_blank');
+        }
+        
+        // Auto-test basic functionality on load
+        window.addEventListener('load', function() {
+            console.log('🔧 Button test page loaded successfully');
+            testBasicJS();
+        });
+    </script>
+</body>
+</html>

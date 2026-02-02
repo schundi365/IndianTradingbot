@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEM Trading Dashboard - Working Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #60a5fa;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-secondary {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4f46e5;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #334155;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: #60a5fa;
+        }
+        
+        .tab.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.running {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.stopped {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .result {
+            margin: 10px 0;
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
+        
+        .error {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .success {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💎 GEM Trading Dashboard</h1>
+            <p class="subtitle">Minimal Working Version - Testing JavaScript</p>
+        </header>
+        
+        <!-- Status Card -->
+        <div class="card">
+            <h2>Bot Status</h2>
+            <div style="margin-bottom: 15px;">
+                <span>Status: </span>
+                <span id="bot-status">
+                    <span class="status-indicator stopped"></span>
+                    Stopped
+                </span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <span>MT5 Connection: </span>
+                <span id="mt5-connection">
+                    <span class="status-indicator stopped"></span>
+                    Not Connected
+                </span>
+            </div>
+            <div>
+                <button class="btn btn-primary" id="start-btn" onclick="startBot()">Start Bot</button>
+                <button class="btn btn-danger" id="stop-btn" onclick="stopBot()">Stop Bot</button>
+                <button class="btn btn-secondary" onclick="testMT5Connection()">Test MT5</button>
+                <button class="btn btn-secondary" onclick="testJavaScript()">Test JavaScript</button>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('config')">Configuration</div>
+                <div class="tab" onclick="showTab('status')">Status</div>
+                <div class="tab" onclick="showTab('logs')">Logs</div>
+                <div class="tab" onclick="showTab('test')">Test</div>
+            </div>
+            
+            <!-- Configuration Tab -->
+            <div id="config-tab" class="tab-content active">
+                <h2>Configuration</h2>
+                <p>Configuration settings would go here.</p>
+                <button class="btn btn-secondary" onclick="loadConfig()">Load Config</button>
+                <div id="config-result" class="result" style="display: none;"></div>
+            </div>
+            
+            <!-- Status Tab -->
+            <div id="status-tab" class="tab-content">
+                <h2>System Status</h2>
+                <p>System status information would go here.</p>
+                <button class="btn btn-secondary" onclick="checkStatus()">Check Status</button>
+                <div id="status-result" class="result" style="display: none;"></div>
+            </div>
+            
+            <!-- Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <h2>System Logs</h2>
+                <p>System logs would go here.</p>
+                <button class="btn btn-secondary" onclick="loadLogs()">Load Logs</button>
+                <div id="logs-result" class="result" style="display: none;"></div>
+            </div>
+            
+            <!-- Test Tab -->
+            <div id="test-tab" class="tab-content">
+                <h2>JavaScript Test</h2>
+                <p>Test JavaScript functionality:</p>
+                <button class="btn btn-primary" onclick="testBasicJS()">Test Basic JS</button>
+                <button class="btn btn-secondary" onclick="testFetch()">Test Fetch API</button>
+                <button class="btn btn-secondary" onclick="testConsole()">Test Console</button>
+                <div id="test-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🚀 Dashboard JavaScript loaded successfully');
+        
+        // Test basic JavaScript functionality
+        function testJavaScript() {
+            alert('✅ JavaScript is working! Buttons are responsive.');
+            console.log('✅ JavaScript test successful');
+        }
+        
+        function testBasicJS() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.className = 'result success';
+            result.innerHTML = '✅ Basic JavaScript is working! Current time: ' + new Date().toLocaleTimeString();
+            console.log('✅ Basic JavaScript test passed');
+        }
+        
+        function testConsole() {
+            console.log('✅ Console.log is working!');
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.className = 'result success';
+            result.innerHTML = '✅ Console.log executed! Check browser developer tools (F12) -> Console tab.';
+        }
+        
+        async function testFetch() {
+            const result = document.getElementById('test-result');
+            result.style.display = 'block';
+            result.className = 'result';
+            result.innerHTML = '🔄 Testing Fetch API...';
+            
+            try {
+                const response = await fetch('/api/bot/status');
+                const data = await response.json();
+                result.className = 'result success';
+                result.innerHTML = `✅ Fetch API working!<br>
+                    Status: ${response.status}<br>
+                    Bot Running: ${data.running}<br>
+                    Balance: ${data.balance} ${data.currency}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Fetch API failed: ${error.message}`;
+            }
+        }
+        
+        // Tab switching
+        function showTab(tabName) {
+            console.log('Switching to tab:', tabName);
+            
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Show corresponding content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            console.log('✅ Tab switched to:', tabName);
+        }
+        
+        // Bot control functions
+        async function startBot() {
+            console.log('Starting bot...');
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            btn.textContent = 'Starting...';
+            
+            try {
+                const response = await fetch('/api/bot/start', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('✅ Bot started successfully!');
+                    updateBotStatus(true);
+                } else {
+                    alert('❌ Failed to start bot: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error starting bot: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Start Bot';
+            }
+        }
+        
+        async function stopBot() {
+            console.log('Stopping bot...');
+            const btn = document.getElementById('stop-btn');
+            btn.disabled = true;
+            btn.textContent = 'Stopping...';
+            
+            try {
+                const response = await fetch('/api/bot/stop', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('✅ Bot stopped successfully!');
+                    updateBotStatus(false);
+                } else {
+                    alert('❌ Failed to stop bot: ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error stopping bot: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Stop Bot';
+            }
+        }
+        
+        async function testMT5Connection() {
+            console.log('Testing MT5 connection...');
+            
+            try {
+                const response = await fetch('/api/mt5/test');
+                const data = await response.json();
+                
+                if (data.connected) {
+                    alert(`✅ MT5 Connected: ${data.account_name} (${data.server})`);
+                    updateMT5Status(true, data);
+                } else {
+                    alert('❌ MT5 Not Connected: ' + data.error);
+                    updateMT5Status(false);
+                }
+            } catch (error) {
+                alert('❌ Connection test failed: ' + error.message);
+                updateMT5Status(false);
+            }
+        }
+        
+        function updateBotStatus(running) {
+            const statusEl = document.getElementById('bot-status');
+            if (running) {
+                statusEl.innerHTML = '<span class="status-indicator running"></span>Running';
+            } else {
+                statusEl.innerHTML = '<span class="status-indicator stopped"></span>Stopped';
+            }
+        }
+        
+        function updateMT5Status(connected, data = null) {
+            const statusEl = document.getElementById('mt5-connection');
+            if (connected) {
+                statusEl.innerHTML = '<span class="status-indicator running"></span>Connected';
+            } else {
+                statusEl.innerHTML = '<span class="status-indicator stopped"></span>Not Connected';
+            }
+        }
+        
+        async function loadConfig() {
+            const result = document.getElementById('config-result');
+            result.style.display = 'block';
+            result.className = 'result';
+            result.innerHTML = '🔄 Loading configuration...';
+            
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                result.className = 'result success';
+                result.innerHTML = `✅ Configuration loaded!<br>
+                    Symbols: ${data.symbols ? data.symbols.join(', ') : 'None'}<br>
+                    Timeframe: ${data.timeframe}<br>
+                    Risk: ${data.risk_percent}%`;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Failed to load config: ${error.message}`;
+            }
+        }
+        
+        async function checkStatus() {
+            const result = document.getElementById('status-result');
+            result.style.display = 'block';
+            result.className = 'result';
+            result.innerHTML = '🔄 Checking status...';
+            
+            try {
+                const response = await fetch('/api/bot/status');
+                const data = await response.json();
+                result.className = 'result success';
+                result.innerHTML = `✅ Status retrieved!<br>
+                    Bot Running: ${data.running}<br>
+                    Balance: ${data.balance} ${data.currency}<br>
+                    Open Positions: ${data.open_positions}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Failed to check status: ${error.message}`;
+            }
+        }
+        
+        async function loadLogs() {
+            const result = document.getElementById('logs-result');
+            result.style.display = 'block';
+            result.className = 'result';
+            result.innerHTML = '🔄 Loading logs...';
+            
+            try {
+                const response = await fetch('/api/logs?lines=10');
+                const data = await response.json();
+                result.className = 'result success';
+                result.innerHTML = `✅ Logs loaded!<br>
+                    <pre style="white-space: pre-wrap; font-size: 12px; margin-top: 10px;">${data.logs ? data.logs.slice(0, 5).join('') : 'No logs available'}</pre>`;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Failed to load logs: ${error.message}`;
+            }
+        }
+        
+        // Initialize dashboard
+        window.addEventListener('load', function() {
+            console.log('🎯 Dashboard loaded successfully');
+            testBasicJS();
+        });
+        
+        // Test that all functions are defined
+        console.log('📋 Function check:');
+        console.log('showTab:', typeof showTab);
+        console.log('startBot:', typeof startBot);
+        console.log('stopBot:', typeof stopBot);
+        console.log('testMT5Connection:', typeof testMT5Connection);
+        console.log('✅ All functions defined successfully');
+    </script>
+</body>
+</html>

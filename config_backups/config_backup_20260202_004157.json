@@ -1,0 +1,212 @@
+{
+    "symbols": [
+        "XAUUSD",
+        "XAGUSD",
+        "EURUSD",
+        "GBPUSD",
+        "USDJPY",
+        "USDCHF",
+        "AUDUSD",
+        "USDCAD",
+        "NZDUSD",
+        "EURJPY",
+        "GBPJPY",
+        "EURGBP",
+        "EURAUD",
+        "EURCAD",
+        "GBPAUD",
+        "GBPCAD"
+    ],
+    "timeframe": 30,
+    "magic_number": 123456,
+    "lot_size": 0.01,
+    "risk_percent": 1,
+    "reward_ratio": 1.2,
+    "min_trade_confidence": 0.6,
+    "max_daily_loss_percent": 5,
+    "fast_ma_period": 10,
+    "slow_ma_period": 30,
+    "rsi_period": 14,
+    "rsi_overbought": 75,
+    "rsi_oversold": 25,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "macd_min_histogram": 0.0003,
+    "atr_period": 14,
+    "atr_multiplier": 1.5,
+    "adx_min_strength": 20,
+    "use_rsi": true,
+    "use_macd": true,
+    "use_adx": true,
+    "use_trend_filter": false,
+    "trend_ma_period": 50,
+    "enable_trading_hours": true,
+    "trading_start_hour": 0,
+    "trading_end_hour": 23,
+    "avoid_news_trading": false,
+    "news_buffer_minutes": 30,
+    "use_split_orders": true,
+    "num_positions": 3,
+    "tp_level_1": 1,
+    "tp_level_2": 1.2,
+    "tp_level_3": 2,
+    "tp_levels": [
+        1.5,
+        2.5,
+        4.0
+    ],
+    "partial_close_percent": [
+        40,
+        30,
+        30
+    ],
+    "max_lot_per_order": 1,
+    "max_trades_total": 50,
+    "max_trades_per_symbol": 10,
+    "enable_trailing_stop": true,
+    "trail_activation": 1,
+    "trail_distance": 0.8,
+    "use_adaptive_risk": true,
+    "max_risk_multiplier": 2,
+    "min_risk_multiplier": 0.5,
+    "max_drawdown_percent": 15,
+    "max_daily_trades": 100,
+    "use_volume_filter": true,
+    "min_volume_ma": 1.2,
+    "volume_ma_period": 20,
+    "obv_period": 20,
+    "update_interval": 60,
+    "version": "2.1.0",
+    "last_updated": "2026-02-02T00:30:10.608367",
+    "max_daily_loss": 5,
+    "symbol_atr_multipliers": {
+        "ADAUSD": 2.5,
+        "AVAXUSD": 2.0,
+        "BCHUSD": 2.0,
+        "BTCUSD": 1.5,
+        "DOGEUSD": 3.0,
+        "DOTUSD": 2.0,
+        "ETHUSD": 1.5,
+        "LINKUSD": 2.0,
+        "LTCUSD": 2.0,
+        "MATICUSD": 2.5,
+        "SHIBUSD": 3.5,
+        "SOLUSD": 1.8,
+        "UNIUSD": 2.0,
+        "XAGUSD": 3.0,
+        "XLMUSD": 2.5,
+        "XRPUSD": 2.5
+    },
+    "adx_period": 14,
+    "symbol_tp_levels": {
+        "ADAUSD": [
+            1.5,
+            2.5,
+            4.5
+        ],
+        "AVAXUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "BCHUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "BTCUSD": [
+            2.0,
+            3.5,
+            6.0
+        ],
+        "DOGEUSD": [
+            1.5,
+            2.5,
+            4.0
+        ],
+        "DOTUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "ETHUSD": [
+            2.0,
+            3.5,
+            6.0
+        ],
+        "EURUSD": [
+            1.2,
+            2.0,
+            2.5
+        ],
+        "LINKUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "LTCUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "MATICUSD": [
+            1.5,
+            2.5,
+            4.5
+        ],
+        "SHIBUSD": [
+            1.5,
+            2.5,
+            4.0
+        ],
+        "SOLUSD": [
+            2.0,
+            3.5,
+            6.0
+        ],
+        "UNIUSD": [
+            1.8,
+            3.0,
+            5.0
+        ],
+        "XAGUSD": [
+            1.5,
+            2.5,
+            4.0
+        ],
+        "XAUUSD": [
+            1.5,
+            2.0,
+            3.0
+        ],
+        "XLMUSD": [
+            1.5,
+            2.5,
+            4.5
+        ],
+        "XRPUSD": [
+            1.5,
+            2.5,
+            4.5
+        ]
+    },
+    "enable_trailing_tp": true,
+    "trailing_tp_ratio": 0.5,
+    "use_scalping_mode": false,
+    "scalping_profit_target": 0.5,
+    "scalping_max_hold_time": 30,
+    "normal_volume_ma": 1.0,
+    "high_volume_ma": 1.5,
+    "very_high_volume_ma": 2.0,
+    "volume_ma_min_period": 10,
+    "obv_period_short": 10,
+    "obv_period_long": 30,
+    "divergence_lookback": 20,
+    "divergence_threshold": 0.85,
+    "prevent_worse_entries": true,
+    "analysis_bars": 200,
+    "use_dynamic_tp": true,
+    "use_dynamic_sl": true,
+    "logging_level": "debug"
+}

@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 import time
 import logging
 import sys
+import inspect
+import functools
 from pathlib import Path
 
 # Determine base directory (works for both script and executable)
@@ -39,15 +41,50 @@ except ImportError:
     VOLUME_ANALYZER_AVAILABLE = False
     logging.warning("Volume Analyzer not available")
 
-# Setup logging
+# Enhanced Logging System
+class EnhancedFormatter(logging.Formatter):
+    """Enhanced formatter with line numbers and performance timing"""
+    
+    def format(self, record):
+        # Add line number and filename info
+        if hasattr(record, 'pathname') and hasattr(record, 'lineno'):
+            filename = os.path.basename(record.pathname)
+            record.location = f"[{filename}:{record.lineno}]"
+        else:
+            record.location = "[unknown]"
+        
+        # Format with enhanced info
+        formatted = f"{self.formatTime(record)} - {record.levelname} - {record.location} {record.getMessage()}"
+        return formatted
+
+# Setup enhanced logging
+formatter = EnhancedFormatter()
+file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+file_handler.setFormatter(formatter)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE, encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    handlers=[file_handler, console_handler]
 )
+
+# Performance timing decorator
+def performance_timer(func):
+    """Decorator to measure function execution time"""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        try:
+            result = func(*args, **kwargs)
+            execution_time = time.time() - start_time
+            logging.info(f"⏱️ {func.__name__} completed in {execution_time:.3f}s")
+            return result
+        except Exception as e:
+            execution_time = time.time() - start_time
+            logging.error(f"❌ {func.__name__} failed after {execution_time:.3f}s: {e}")
+            raise
+    return wrapper
 
 class MT5TradingBot:
     def __init__(self, config):
@@ -191,6 +228,7 @@ class MT5TradingBot:
             else:
                 return True, lowest_sell_price, f"SELL allowed - above lowest existing SELL at {lowest_sell_price:.5f}"
         
+    @performance_timer
     def connect(self):
         """Connect to MetaTrader5 with build 5549+ compatibility"""
         import os
@@ -262,6 +300,7 @@ class MT5TradingBot:
         mt5.shutdown()
         logging.info("MT5 connection closed")
     
+    @performance_timer
     def get_historical_data(self, symbol, timeframe, bars=200):
         """
         Fetch historical price data from MT5 with improved error handling
@@ -309,6 +348,7 @@ class MT5TradingBot:
         
         return None
     
+    @performance_timer
     def calculate_indicators(self, df):
         """
         Calculate technical indicators (Enhanced with RSI)
@@ -547,70 +587,235 @@ class MT5TradingBot:
         logging.info("="*80)
         logging.info("📊 SIGNAL ANALYSIS - DETAILED CALCULATIONS")
         logging.info("="*80)
+        
+        # 🔧 DETAILED TECHNICAL INDICATOR VALUES
+        logging.info("🔧 DETAILED TECHNICAL INDICATOR VALUES:")
+        logging.info("-" * 60)
+        if 'fast_ma' in df.columns:
+            logging.info(f"   Fast MA ({self.fast_ma_period}): {latest.get('fast_ma', 0):.5f}")
+        if 'slow_ma' in df.columns:
+            logging.info(f"   Slow MA ({self.slow_ma_period}): {latest.get('slow_ma', 0):.5f}")
+        if 'atr' in df.columns:
+            logging.info(f"   ATR ({self.atr_period}): {latest.get('atr', 0.001):.5f}")
+        if 'rsi' in df.columns:
+            logging.info(f"   RSI (14): {latest.get('rsi', 50):.2f}")
+        if 'macd' in df.columns:
+            logging.info(f"   MACD ({self.macd_fast},{self.macd_slow}): {latest.get('macd', 0):.6f}")
+        if 'macd_signal' in df.columns:
+            logging.info(f"   MACD Signal ({self.macd_signal}): {latest.get('macd_signal', 0):.6f}")
+        if 'macd_histogram' in df.columns:
+            logging.info(f"   MACD Histogram: {latest.get('macd_histogram', 0):.6f}")
+        logging.info("-" * 60)
         logging.info(f"Current Price:     {latest['close']:.5f}")
-        logging.info(f"Fast MA ({self.fast_ma_period}):      {latest['fast_ma']:.5f}")
-        logging.info(f"Slow MA ({self.slow_ma_period}):      {latest['slow_ma']:.5f}")
-        logging.info(f"MA Distance:       {abs(latest['fast_ma'] - latest['slow_ma']):.5f} points")
-        logging.info(f"MA Position:       Fast {'ABOVE' if latest['fast_ma'] > latest['slow_ma'] else 'BELOW'} Slow")
-        logging.info(f"Price vs Fast MA:  {latest['close'] - latest['fast_ma']:+.5f} ({'above' if latest['close'] > latest['fast_ma'] else 'below'})")
-        logging.info(f"Price vs Slow MA:  {latest['close'] - latest['slow_ma']:+.5f} ({'above' if latest['close'] > latest['slow_ma'] else 'below'})")
+        logging.info(f"Fast MA ({self.fast_ma_period}):      {latest.get('fast_ma', 0):.5f}")
+        logging.info(f"Slow MA ({self.slow_ma_period}):      {latest.get('slow_ma', 0):.5f}")
+        logging.info(f"MA Distance:       {abs(latest.get('fast_ma', 0) - latest.get('slow_ma', 0)):.5f} points")
+        logging.info(f"MA Position:       Fast {'ABOVE' if latest.get('fast_ma', 0) > latest.get('slow_ma', 0) else 'BELOW'} Slow")
+        logging.info(f"Price vs Fast MA:  {latest['close'] - latest.get('fast_ma', 0):+.5f} ({'above' if latest['close'] > latest.get('fast_ma', 0) else 'below'})")
+        logging.info(f"Price vs Slow MA:  {latest['close'] - latest.get('slow_ma', 0):+.5f} ({'above' if latest['close'] > latest.get('slow_ma', 0) else 'below'})")
         logging.info("-"*80)
         
-        # Check for MA crossover
+        # ENHANCED SIGNAL GENERATION - Multiple Signal Types
         signal = 0
-        logging.info("🔍 CHECKING MA CROSSOVER:")
+        signal_reason = ""
+        
+        # METHOD 1: MA CROSSOVER (Original - High Confidence)
+        logging.info("🔍 METHOD 1: CHECKING MA CROSSOVER:")
         logging.info(f"  Previous: Fast MA={previous['fast_ma']:.5f}, Slow MA={previous['slow_ma']:.5f}")
-        logging.info(f"  Current:  Fast MA={latest['fast_ma']:.5f}, Slow MA={latest['slow_ma']:.5f}")
+        logging.info(f"  Current:  Fast MA={latest.get('fast_ma', 0):.5f}, Slow MA={latest.get('slow_ma', 0):.5f}")
         
         if latest['ma_cross'] == 1:
             logging.info(f"  ✅ BULLISH CROSSOVER DETECTED!")
             logging.info(f"     Fast MA crossed ABOVE Slow MA")
             logging.info(f"     Previous: Fast {previous['fast_ma']:.5f} <= Slow {previous['slow_ma']:.5f}")
-            logging.info(f"     Current:  Fast {latest['fast_ma']:.5f} > Slow {latest['slow_ma']:.5f}")
+            logging.info(f"     Current:  Fast {latest.get('fast_ma', 0):.5f} > Slow {latest.get('slow_ma', 0):.5f}")
             signal = 1
+            signal_reason = "MA Bullish Crossover"
         elif latest['ma_cross'] == -1:
             logging.info(f"  ✅ BEARISH CROSSOVER DETECTED!")
             logging.info(f"     Fast MA crossed BELOW Slow MA")
             logging.info(f"     Previous: Fast {previous['fast_ma']:.5f} >= Slow {previous['slow_ma']:.5f}")
-            logging.info(f"     Current:  Fast {latest['fast_ma']:.5f} < Slow {latest['slow_ma']:.5f}")
+            logging.info(f"     Current:  Fast {latest.get('fast_ma', 0):.5f} < Slow {latest.get('slow_ma', 0):.5f}")
             signal = -1
+            signal_reason = "MA Bearish Crossover"
         else:
             logging.info(f"  ❌ No crossover detected")
             logging.info(f"     MA Cross value: {latest['ma_cross']}")
         
-        # Additional confirmation: price above/below both MAs
+        # METHOD 2: TREND CONFIRMATION (Original - High Confidence)
         if signal == 0:
             logging.info("-"*80)
-            logging.info("🔍 CHECKING TREND CONFIRMATION:")
+            logging.info("🔍 METHOD 2: CHECKING TREND CONFIRMATION:")
             logging.info(f"  Current MA Trend:  {latest['ma_trend']} (1=bullish, -1=bearish)")
             logging.info(f"  Previous MA Trend: {previous['ma_trend']}")
-            logging.info(f"  Price > Fast MA:   {latest['close'] > latest['fast_ma']}")
-            logging.info(f"  Price > Slow MA:   {latest['close'] > latest['slow_ma']}")
-            logging.info(f"  Price < Fast MA:   {latest['close'] < latest['fast_ma']}")
-            logging.info(f"  Price < Slow MA:   {latest['close'] < latest['slow_ma']}")
+            logging.info(f"  Price > Fast MA:   {latest['close'] > latest.get('fast_ma', 0)}")
+            logging.info(f"  Price > Slow MA:   {latest['close'] > latest.get('slow_ma', 0)}")
+            logging.info(f"  Price < Fast MA:   {latest['close'] < latest.get('fast_ma', 0)}")
+            logging.info(f"  Price < Slow MA:   {latest['close'] < latest.get('slow_ma', 0)}")
             
-            if (latest['close'] > latest['fast_ma'] and 
-                latest['close'] > latest['slow_ma'] and 
+            if (latest['close'] > latest.get('fast_ma', 0) and 
+                latest['close'] > latest.get('slow_ma', 0) and 
                 latest['ma_trend'] == 1 and previous['ma_trend'] == -1):
                 logging.info(f"  ✅ BULLISH TREND CONFIRMATION!")
                 logging.info(f"     Price above both MAs AND trend changed to bullish")
                 signal = 1
-            elif (latest['close'] < latest['fast_ma'] and 
-                  latest['close'] < latest['slow_ma'] and 
+                signal_reason = "Bullish Trend Confirmation"
+            elif (latest['close'] < latest.get('fast_ma', 0) and 
+                  latest['close'] < latest.get('slow_ma', 0) and 
                   latest['ma_trend'] == -1 and previous['ma_trend'] == 1):
                 logging.info(f"  ✅ BEARISH TREND CONFIRMATION!")
                 logging.info(f"     Price below both MAs AND trend changed to bearish")
                 signal = -1
+                signal_reason = "Bearish Trend Confirmation"
             else:
                 logging.info(f"  ❌ No trend confirmation")
                 logging.info(f"     Conditions not met for trend-based signal")
         
+        # METHOD 3: MOMENTUM SIGNALS (New - Medium Confidence)
+        if signal == 0:
+            logging.info("-"*80)
+            logging.info("🔍 METHOD 3: CHECKING MOMENTUM SIGNALS:")
+            
+            # Check if we have RSI and MACD data for momentum analysis
+            if not pd.isna(latest.get('rsi', 50)) and not pd.isna(latest.get('macd_histogram', 0)):
+                rsi = latest.get('rsi', 50)
+                macd_hist = latest.get('macd_histogram', 0)
+                macd_hist_prev = previous['macd_histogram'] if not pd.isna(previous['macd_histogram']) else 0
+                
+                logging.info(f"  RSI: {rsi:.2f}")
+                logging.info(f"  MACD Histogram: {macd_hist:.6f}")
+                logging.info(f"  MACD Hist Previous: {macd_hist_prev:.6f}")
+                
+                # BULLISH MOMENTUM: RSI oversold recovery + MACD turning positive
+                if (rsi > 30 and rsi < 60 and  # RSI recovering from oversold
+                    macd_hist > 0 and macd_hist > macd_hist_prev and  # MACD histogram improving
+                    latest['close'] > latest.get('fast_ma', 0) and  # Price above fast MA
+                    latest.get('fast_ma', 0) > latest.get('slow_ma', 0)):  # Bullish MA alignment
+                    
+                    logging.info(f"  ✅ BULLISH MOMENTUM SIGNAL!")
+                    logging.info(f"     RSI {rsi:.2f} recovering from oversold")
+                    logging.info(f"     MACD histogram improving: {macd_hist:.6f} > {macd_hist_prev:.6f}")
+                    logging.info(f"     Price above fast MA in bullish trend")
+                    signal = 1
+                    signal_reason = "Bullish Momentum Recovery"
+                
+                # BEARISH MOMENTUM: RSI overbought decline + MACD turning negative
+                elif (rsi < 70 and rsi > 40 and  # RSI declining from overbought
+                      macd_hist < 0 and macd_hist < macd_hist_prev and  # MACD histogram declining
+                      latest['close'] < latest.get('fast_ma', 0) and  # Price below fast MA
+                      latest.get('fast_ma', 0) < latest.get('slow_ma', 0)):  # Bearish MA alignment
+                    
+                    logging.info(f"  ✅ BEARISH MOMENTUM SIGNAL!")
+                    logging.info(f"     RSI {rsi:.2f} declining from overbought")
+                    logging.info(f"     MACD histogram declining: {macd_hist:.6f} < {macd_hist_prev:.6f}")
+                    logging.info(f"     Price below fast MA in bearish trend")
+                    signal = -1
+                    signal_reason = "Bearish Momentum Decline"
+                else:
+                    logging.info(f"  ❌ No momentum signal")
+                    logging.info(f"     Momentum conditions not aligned")
+            else:
+                logging.info(f"  ⚠️  Insufficient data for momentum analysis")
+        
+        # METHOD 4: PULLBACK SIGNALS (New - Medium Confidence)
+        if signal == 0:
+            logging.info("-"*80)
+            logging.info("🔍 METHOD 4: CHECKING PULLBACK SIGNALS:")
+            
+            # Calculate price distance from MAs
+            fast_ma_distance = (latest['close'] - latest.get('fast_ma', 0)) / latest.get('fast_ma', 0) * 100
+            slow_ma_distance = (latest['close'] - latest.get('slow_ma', 0)) / latest.get('slow_ma', 0) * 100
+            
+            logging.info(f"  Price distance from Fast MA: {fast_ma_distance:+.3f}%")
+            logging.info(f"  Price distance from Slow MA: {slow_ma_distance:+.3f}%")
+            
+            # BULLISH PULLBACK: Price near fast MA in uptrend
+            if (latest.get('fast_ma', 0) > latest.get('slow_ma', 0) and  # Uptrend
+                abs(fast_ma_distance) < 0.1 and  # Price very close to fast MA
+                fast_ma_distance > -0.05 and  # Price not too far below
+                slow_ma_distance > 0.05):  # Price still above slow MA
+                
+                logging.info(f"  ✅ BULLISH PULLBACK SIGNAL!")
+                logging.info(f"     Price pulled back to fast MA in uptrend")
+                logging.info(f"     Good entry point for trend continuation")
+                signal = 1
+                signal_reason = "Bullish Pullback to MA"
+            
+            # BEARISH PULLBACK: Price near fast MA in downtrend
+            elif (latest.get('fast_ma', 0) < latest.get('slow_ma', 0) and  # Downtrend
+                  abs(fast_ma_distance) < 0.1 and  # Price very close to fast MA
+                  fast_ma_distance < 0.05 and  # Price not too far above
+                  slow_ma_distance < -0.05):  # Price still below slow MA
+                
+                logging.info(f"  ✅ BEARISH PULLBACK SIGNAL!")
+                logging.info(f"     Price pulled back to fast MA in downtrend")
+                logging.info(f"     Good entry point for trend continuation")
+                signal = -1
+                signal_reason = "Bearish Pullback to MA"
+            else:
+                logging.info(f"  ❌ No pullback signal")
+                logging.info(f"     Pullback conditions not met")
+        
+        # METHOD 5: BREAKOUT SIGNALS (New - High Confidence)
+        if signal == 0 and len(df) >= 20:
+            logging.info("-"*80)
+            logging.info("🔍 METHOD 5: CHECKING BREAKOUT SIGNALS:")
+            
+            # Calculate recent high/low (last 10 bars)
+            recent_bars = df.tail(10)
+            recent_high = recent_bars['high'].max()
+            recent_low = recent_bars['low'].min()
+            current_price = latest['close']
+            
+            logging.info(f"  Recent High (10 bars): {recent_high:.5f}")
+            logging.info(f"  Recent Low (10 bars):  {recent_low:.5f}")
+            logging.info(f"  Current Price:         {current_price:.5f}")
+            
+            # BULLISH BREAKOUT: Price breaks above recent high
+            if (current_price > recent_high and
+                latest.get('fast_ma', 0) > latest.get('slow_ma', 0) and  # Bullish MA alignment
+                current_price > latest.get('fast_ma', 0)):  # Price above fast MA
+                
+                breakout_strength = (current_price - recent_high) / recent_high * 100
+                logging.info(f"  ✅ BULLISH BREAKOUT SIGNAL!")
+                logging.info(f"     Price broke above recent high")
+                logging.info(f"     Breakout strength: {breakout_strength:+.3f}%")
+                signal = 1
+                signal_reason = "Bullish Breakout"
+            
+            # BEARISH BREAKOUT: Price breaks below recent low
+            elif (current_price < recent_low and
+                  latest.get('fast_ma', 0) < latest.get('slow_ma', 0) and  # Bearish MA alignment
+                  current_price < latest.get('fast_ma', 0)):  # Price below fast MA
+                
+                breakout_strength = (recent_low - current_price) / recent_low * 100
+                logging.info(f"  ✅ BEARISH BREAKOUT SIGNAL!")
+                logging.info(f"     Price broke below recent low")
+                logging.info(f"     Breakout strength: {breakout_strength:+.3f}%")
+                signal = -1
+                signal_reason = "Bearish Breakout"
+            else:
+                logging.info(f"  ❌ No breakout signal")
+                logging.info(f"     No significant breakout detected")
+        
+        # Final check - if still no signal
         if signal == 0:
             logging.info("-"*80)
             logging.info("❌ NO SIGNAL GENERATED")
-            logging.info("   Waiting for MA crossover or trend confirmation...")
+            logging.info("   Checked 5 signal methods:")
+            logging.info("   1. MA Crossover - No crossover")
+            logging.info("   2. Trend Confirmation - No trend change")
+            logging.info("   3. Momentum Signals - No momentum alignment")
+            logging.info("   4. Pullback Signals - No pullback opportunity")
+            logging.info("   5. Breakout Signals - No breakout detected")
+            logging.info("   Market conditions not favorable for entry")
             logging.info("="*80)
             return 0
+        
+        # Log the successful signal
+        logging.info("-"*80)
+        logging.info(f"✅ SIGNAL GENERATED: {signal_reason}")
+        logging.info("="*80)
         
         # Log signal detected
         signal_type = "BUY" if signal == 1 else "SELL"
@@ -620,8 +825,8 @@ class MT5TradingBot:
         
         # Apply RSI filter (most popular enhancement)
         logging.info("🔍 RSI FILTER CHECK:")
-        if not pd.isna(latest['rsi']):
-            rsi = latest['rsi']
+        if not pd.isna(latest.get('rsi', 50)):
+            rsi = latest.get('rsi', 50)
             rsi_overbought = self.config.get('rsi_overbought', 70)
             rsi_oversold = self.config.get('rsi_oversold', 30)
             
@@ -679,10 +884,10 @@ class MT5TradingBot:
         # Apply MACD confirmation (second most popular) - ENHANCED WITH THRESHOLD
         logging.info("-"*80)
         logging.info("🔍 MACD FILTER CHECK:")
-        if not pd.isna(latest['macd_histogram']):
-            histogram = latest['macd_histogram']
-            macd = latest['macd']
-            macd_signal = latest['macd_signal']
+        if not pd.isna(latest.get('macd_histogram', 0)):
+            histogram = latest.get('macd_histogram', 0)
+            macd = latest.get('macd', 0)
+            macd_signal = latest.get('macd_signal', 0)
             
             # Enhanced MACD with meaningful threshold
             MACD_THRESHOLD = self.config.get('macd_min_histogram', 0.0005)
@@ -758,10 +963,23 @@ class MT5TradingBot:
                 dx = 100 * np.abs(df['plus_di'] - df['minus_di']) / (df['plus_di'] + df['minus_di'])
                 df['adx'] = dx.rolling(window=adx_period).mean()
             
-            if not pd.isna(latest['adx']):
-                adx = latest['adx']
-                plus_di = latest.get('plus_di', 0)
-                minus_di = latest.get('minus_di', 0)
+            try:
+                try:
+
+                    if 'adx' in df.columns:
+            try:
+                if hasattr(latest, 'index') and 'adx' in getattr(latest, 'index', []) and not pd.isna(latest.get('adx', 0)):
+                    adx = latest.get('adx', 0)
+
+                except (KeyError, AttributeError, IndexError):
+
+                    adx = 0
+                else:
+                    adx = 0
+            except (KeyError, AttributeError):
+                adx = 0
+                plus_di = latest.get('plus_di', 0) if 'plus_di' in df.columns else 0 if 'plus_di' in df.columns else 0
+                minus_di = latest.get('minus_di', 0) if 'minus_di' in df.columns else 0 if 'minus_di' in df.columns else 0
                 
                 ADX_THRESHOLD = self.config.get('adx_min_strength', 25)
                 
@@ -1452,6 +1670,19 @@ class MT5TradingBot:
             logging.info(f"📊 VOLUME ANALYSIS for {symbol}")
             logging.info("="*80)
             
+            # Enhanced volume breakdown logging
+            current_volume = df.iloc[-1]['tick_volume'] if 'tick_volume' in df.columns else 0
+            avg_volume = df['tick_volume'].rolling(20).mean().iloc[-1] if 'tick_volume' in df.columns else 0
+            volume_ratio = current_volume / avg_volume if avg_volume > 0 else 0
+            
+            logging.info(f"📊 DETAILED VOLUME BREAKDOWN:")
+            logging.info(f"   Current Volume: {current_volume:,.0f}")
+            logging.info(f"   Average Volume (20): {avg_volume:,.0f}")
+            logging.info(f"   Volume Ratio: {volume_ratio:.2f}")
+            logging.info(f"   Volume Threshold: {self.volume_analyzer.min_volume_ma}")
+            logging.info(f"   Volume Classification: {'HIGH' if volume_ratio > 1.5 else 'NORMAL' if volume_ratio > 0.7 else 'LOW'}")
+            logging.info(f"   Volume Filter Status: {'PASS' if volume_ratio >= self.volume_analyzer.min_volume_ma else 'FAIL'}")
+            
             # Check if trade should be taken based on volume
             should_trade, volume_confidence = self.volume_analyzer.should_trade(
                 df, 'buy' if signal == 1 else 'sell'
@@ -1524,7 +1755,7 @@ class MT5TradingBot:
             
             # Get current price and ATR
             latest = df.iloc[-1]
-            current_atr = latest['atr']
+            current_atr = latest.get('atr', 0.001)
             tick = mt5.symbol_info_tick(symbol)
             if tick is None:
                 logging.error(f"Failed to get tick data for {symbol} - cannot place trade")

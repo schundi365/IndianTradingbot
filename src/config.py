@@ -137,8 +137,8 @@ ADX_RANGING = 15                # Avoid ranging markets
 TREND_CONSISTENCY_HIGH = 70     # High consistency required
 VOLATILITY_HIGH = 1.5
 
-# HIGH confidence threshold
-MIN_TRADE_CONFIDENCE = 0.5
+# Balanced confidence threshold (optimized)
+MIN_TRADE_CONFIDENCE = 0.60     # 60% minimum (balanced quality vs quantity)
 
 MAX_RISK_MULTIPLIER = 2
 MIN_RISK_MULTIPLIER = 0.5
@@ -169,7 +169,7 @@ MACD_FAST = 12
 MACD_SLOW = 26
 MACD_SIGNAL = 9
 
-MACD_MIN_HISTOGRAM = 0.3
+MACD_MIN_HISTOGRAM = 0.0005
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
@@ -231,7 +231,7 @@ TREND_MA_PERIOD = 50
 # ADDITIONAL FILTERS
 # ==============================================================================
 USE_VOLUME_FILTER = True
-MIN_VOLUME_MA = 1.2             # Require above-average volume
+MIN_VOLUME_MA = 0.7             # Require above-average volume (optimized: 0.7 = 70%)
 VOLUME_MA_PERIOD = 20           # Period for volume moving average
 OBV_PERIOD = 14                 # Period for On-Balance Volume indicator
 

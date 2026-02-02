@@ -580,7 +580,7 @@
                                 <li>High confidence threshold (bot is selective)</li>
                             </ul>
                             <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 13px;">
-                                <strong>Tip:</strong> Lower "Min Trade Confidence" to 40% in Configuration to see trades faster, or wait for the bot to find high-quality setups.
+                                <strong>Tip:</strong> The bot is now optimized with 50% confidence for better signal generation. Lower values may increase trades but reduce quality.
                             </p>
                         </div>
                     </div>
@@ -737,9 +737,9 @@
                                 <select id="timeframe">
                                     <option value="1">M1 (1 minute) - Not Recommended</option>
                                     <option value="5">M5 (5 minutes)</option>
-                                    <option value="15">M15 (15 minutes)</option>
+                                    <option value="15" selected>M15 (15 minutes) - Recommended</option>
                                     <option value="30">M30 (30 minutes)</option>
-                                    <option value="16385" selected>H1 (1 hour) - Recommended</option>
+                                    <option value="16385">H1 (1 hour)</option>
                                     <option value="16388">H4 (4 hours)</option>
                                     <option value="16408">D1 (Daily)</option>
                                 </select>
@@ -761,7 +761,7 @@
                             
                             <div class="form-group">
                                 <label>Min Trade Confidence (%)</label>
-                                <input type="number" id="min-confidence" value="70" step="5" min="20" max="90" onchange="validateConfidence()">
+                                <input type="number" id="min-confidence" value="50" step="5" min="20" max="90" onchange="validateConfidence()">
                                 <div class="validation-warning" id="confidence-warning">⚠️ Confidence below 50% may result in poor trades</div>
                                 <small style="color: #94a3b8;">Higher = fewer but better trades</small>
                             </div>
@@ -873,8 +873,8 @@
                                 </div>
                                 <div class="form-group">
                                     <label>MACD Min Histogram</label>
-                                    <input type="number" id="macd-min-histogram" value="0.5" step="0.1" min="0" max="2">
-                                    <small style="color: #94a3b8;">Minimum momentum strength</small>
+                                    <input type="number" id="macd-min-histogram" value="0.0005" step="0.0001" min="0" max="2">
+                                    <small style="color: #94a3b8;">Minimum momentum strength (Valid range: 0.0001 to 0.01)</small>
                                 </div>
                                 
                                 <!-- ATR -->
@@ -944,8 +944,8 @@
                                 <div class="form-group">
                                     <label>Enable Trading Hours</label>
                                     <select id="enable-trading-hours">
-                                        <option value="true" selected>Yes (Recommended)</option>
-                                        <option value="false">No (24/7)</option>
+                                        <option value="false" selected>No (24/7) - Recommended</option>
+                                        <option value="true">Yes (Restricted Hours)</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -1077,7 +1077,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Max Daily Trades</label>
-                                    <input type="number" id="max-daily-trades" value="20" min="5" max="100">
+                                    <input type="number" id="max-daily-trades" value="999" min="5" max="999">
                                     <small style="color: #94a3b8;">Limit trades per day</small>
                                 </div>
                             </div>
@@ -1102,7 +1102,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Min Volume Multiplier</label>
-                                    <input type="number" id="min-volume-ma" value="1.2" step="0.1" min="1.0" max="2.0">
+                                    <input type="number" id="min-volume-ma" value="0.7" step="0.1" min="1.0" max="2.0">
                                     <small style="color: #94a3b8;">Volume must be X times average (1.2 = 120%)</small>
                                 </div>
                                 <div class="form-group">
@@ -1354,6 +1354,43 @@
             <div id="logs-tab" class="tab-content">
                 <h2>System Logs & Diagnostics</h2>
                 
+                <!-- Logging Level Controls -->
+                <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); border-radius: 8px;">
+                    <label style="color: white; font-weight: 600; margin-bottom: 10px; display: block;">⚙️ Logging Level Controls</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px; display: block;">Current Logging Level</label>
+                            <select id="logging_level" style="width: 100%; padding: 8px; border-radius: 5px; border: none;">
+                                <option value="minimal">Minimal (Errors only)</option>
+                                <option value="standard" selected>Standard (Basic info)</option>
+                                <option value="detailed">Detailed (Full analysis)</option>
+                                <option value="debug">Debug (Everything)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px; display: block;">Performance Impact</label>
+                            <div style="background: rgba(255,255,255,0.1); padding: 8px; border-radius: 5px; font-size: 12px;">
+                                <strong>Minimal:</strong> Fastest<br>
+                                <strong>Standard:</strong> Balanced<br>
+                                <strong>Detailed:</strong> Full indicators<br>
+                                <strong>Debug:</strong> Maximum detail
+                            </div>
+                        </div>
+                        <div>
+                            <label style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 5px; display: block;">Actions</label>
+                            <button type="button" class="btn btn-primary" onclick="updateLoggingLevel()" style="width: 100%; padding: 8px 16px; font-size: 14px; margin-bottom: 5px;">
+                                Apply Logging Level
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="refreshLogs()" style="width: 100%; padding: 6px 12px; font-size: 12px;">
+                                🔄 Refresh Logs
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 12px; color: rgba(255,255,255,0.8);">
+                        <strong>💡 Tip:</strong> Change logging level to see more or less detail in the logs below. Higher levels show more information but may impact performance.
+                    </div>
+                </div>
+                
                 <!-- MT5 Connection Status -->
                 <div class="card" style="margin-bottom: 20px;">
                     <h3 style="color: #60a5fa; margin-bottom: 15px;">🔌 MT5 Connection Status</h3>
@@ -1508,6 +1545,42 @@
                 toast.style.animation = 'slideIn 0.3s ease-out reverse';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        }
+        
+        // Logging Level Control
+        function updateLoggingLevel() {
+            const level = document.getElementById('logging_level').value;
+            
+            fetch('/api/logging/level', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({level: level})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('✅ Logging level updated to: ' + level.toUpperCase(), 'success');
+                } else {
+                    showToast('❌ Failed to update logging level: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showToast('❌ Error updating logging level: ' + error, 'error');
+            });
+        }
+        
+        // Refresh Logs Function
+        function refreshLogs() {
+            // Refresh the logs display
+            if (typeof loadLogs === 'function') {
+                loadLogs();
+                showToast('🔄 Logs refreshed', 'info');
+            } else {
+                // Fallback: reload the logs section
+                location.reload();
+            }
         }
         
         // Disclaimer Modal
@@ -1809,10 +1882,10 @@
         // Auto-calculate recommended values based on timeframe
         const autoCalculateValues = {
             '1': { risk: 0.3, atr: 0.8, confidence: 40, scalp: 20 },
-            '5': { risk: 0.3, atr: 1.0, confidence: 45, scalp: 30 },
+            '5': { risk: 0.3, atr: 1.0, confidence:45, scalp: 30 },
             '15': { risk: 0.4, atr: 1.2, confidence: 50, scalp: 45 },
-            '30': { risk: 0.5, atr: 1.5, confidence: 55, scalp: 60 },
-            '60': { risk: 0.5, atr: 1.8, confidence: 60, scalp: 90 }
+            '30': { risk: 0.5, atr: 1.5, confidence: 50, scalp: 60 },
+            '60': { risk: 0.5, atr: 1.8, confidence: 55, scalp: 90 }
         };
         
         // Get currency symbol
@@ -1911,7 +1984,25 @@
                 startPositionsAutoRefresh();
             }
             if (tabName === 'analysis') loadRecommendations();
-            if (tabName === 'logs') loadLogs();
+            if (tabName === 'logs') {
+                loadLogs();
+                loadCurrentLoggingLevel();
+            }
+        }
+        
+        // Load Current Logging Level
+        function loadCurrentLoggingLevel() {
+            // Try to get current logging level from bot configuration
+            fetch('/api/config')
+                .then(response => response.json())
+                .then(config => {
+                    if (config.logging_level) {
+                        document.getElementById('logging_level').value = config.logging_level;
+                    }
+                })
+                .catch(error => {
+                    console.log('Could not load current logging level:', error);
+                });
         }
         
         // Load logs
@@ -3245,10 +3336,10 @@
         // Configuration presets
         const configPresets = {
             profitable: {
-                timeframe: '16385', // H1
+                timeframe: '15', // M15 - Optimized
                 risk_percent: 0.5,
                 reward_ratio: 2.0,
-                min_confidence: 70,
+                min_confidence: 50,
                 max_daily_loss: 3,
                 analysis_bars: 200,
                 fast_ma: 20,
@@ -3259,7 +3350,7 @@
                 macd_fast: 12,
                 macd_slow: 26,
                 macd_signal: 9,
-                macd_min_histogram: 0.5,
+                macd_min_histogram: 0.0005,
                 atr_period: 14,
                 atr_multiplier: 2.0,
                 adx_min: 25,
@@ -3268,9 +3359,9 @@
                 use_adx: 'true',
                 use_trend_filter: 'true',
                 trend_ma_period: 100,
-                enable_trading_hours: 'true',
-                trading_start_hour: 8,
-                trading_end_hour: 16,
+                enable_trading_hours: 'false',
+                trading_start_hour: 0,
+                trading_end_hour: 23,
                 avoid_news: 'true',
                 news_buffer: 60,
                 use_split_orders: 'true',
@@ -3288,13 +3379,13 @@
                 max_risk_multiplier: 1.5,
                 min_risk_multiplier: 0.5,
                 max_drawdown: 10,
-                max_daily_trades: 20
+                max_daily_trades: 999
             },
             conservative: {
                 timeframe: '16388', // H4
                 risk_percent: 0.3,
                 reward_ratio: 2.5,
-                min_confidence: 75,
+                min_confidence: 50,
                 max_daily_loss: 2,
                 analysis_bars: 300,
                 fast_ma: 20,
@@ -3305,7 +3396,7 @@
                 macd_fast: 12,
                 macd_slow: 26,
                 macd_signal: 9,
-                macd_min_histogram: 0.8,
+                macd_min_histogram: 0.0005,
                 atr_period: 14,
                 atr_multiplier: 2.5,
                 adx_min: 30,
@@ -3314,9 +3405,9 @@
                 use_adx: 'true',
                 use_trend_filter: 'true',
                 trend_ma_period: 100,
-                enable_trading_hours: 'true',
-                trading_start_hour: 8,
-                trading_end_hour: 16,
+                enable_trading_hours: 'false',
+                trading_start_hour: 0,
+                trading_end_hour: 23,
                 avoid_news: 'true',
                 news_buffer: 90,
                 use_split_orders: 'true',
@@ -3334,13 +3425,13 @@
                 max_risk_multiplier: 1.2,
                 min_risk_multiplier: 0.3,
                 max_drawdown: 8,
-                max_daily_trades: 10
+                max_daily_trades: 999
             },
             aggressive: {
                 timeframe: '30', // M30
                 risk_percent: 1.0,
                 reward_ratio: 1.5,
-                min_confidence: 60,
+                min_confidence: 50,
                 max_daily_loss: 5,
                 analysis_bars: 150,
                 fast_ma: 10,
@@ -3351,7 +3442,7 @@
                 macd_fast: 12,
                 macd_slow: 26,
                 macd_signal: 9,
-                macd_min_histogram: 0.3,
+                macd_min_histogram: 0.0005,
                 atr_period: 14,
                 atr_multiplier: 1.5,
                 adx_min: 20,
@@ -3380,24 +3471,24 @@
                 max_risk_multiplier: 2.0,
                 min_risk_multiplier: 0.5,
                 max_drawdown: 15,
-                max_daily_trades: 50
+                max_daily_trades: 999
             },
             crypto: {
                 timeframe: '16385', // H1
                 risk_percent: 0.3,
                 reward_ratio: 2.5,
-                min_confidence: 65,
+                min_confidence: 50,
                 max_daily_loss: 4,
                 analysis_bars: 250,
                 fast_ma: 15,
                 slow_ma: 35,
                 rsi_period: 14,
-                rsi_overbought: 70,
-                rsi_oversold: 30,
+                rsi_overbought: 75,
+                rsi_oversold: 25,
                 macd_fast: 12,
                 macd_slow: 26,
                 macd_signal: 9,
-                macd_min_histogram: 0.0008,
+                macd_min_histogram: 0.0005,
                 atr_period: 14,
                 atr_multiplier: 1.8,
                 adx_min: 25,
@@ -3426,7 +3517,7 @@
                 max_risk_multiplier: 1.8,
                 min_risk_multiplier: 0.4,
                 max_drawdown: 12,
-                max_daily_trades: 15
+                max_daily_trades: 999
             }
         };
         
@@ -3540,8 +3631,8 @@
                 timeframe: parseInt(document.getElementById('timeframe').value),
                 risk_percent: parseFloat(document.getElementById('risk-percent').value),
                 reward_ratio: parseFloat(document.getElementById('reward-ratio').value),
-                min_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
-                max_daily_loss: parseFloat(document.getElementById('max-daily-loss').value),
+                min_trade_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
+                max_daily_loss_percent: parseFloat(document.getElementById('max-daily-loss').value),
                 analysis_bars: parseInt(document.getElementById('analysis-bars').value),
                 
                 // Indicators
@@ -3617,6 +3708,56 @@
                 btn.disabled = false;
                 btn.innerHTML = '💾 Save Configuration';
             });
+        });
+        
+        // Load configuration from API and update form fields
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                console.log('Loading configuration:', config);
+                
+                // Update form fields with API values
+                if (config.symbols) {
+                    const symbolSelect = document.getElementById('symbols');
+                    Array.from(symbolSelect.options).forEach(option => {
+                        option.selected = config.symbols.includes(option.value);
+                    });
+                }
+                
+                if (config.timeframe) document.getElementById('timeframe').value = config.timeframe;
+                if (config.risk_percent) document.getElementById('risk-percent').value = config.risk_percent;
+                if (config.min_trade_confidence) document.getElementById('min-confidence').value = config.min_trade_confidence * 100;
+                if (config.max_daily_loss_percent) document.getElementById('max-daily-loss').value = config.max_daily_loss_percent;
+                
+                // RSI Configuration
+                if (config.rsi_overbought) document.getElementById('rsi-overbought').value = config.rsi_overbought;
+                if (config.rsi_oversold) document.getElementById('rsi-oversold').value = config.rsi_oversold;
+                if (config.rsi_period) document.getElementById('rsi-period').value = config.rsi_period;
+                
+                // MACD Configuration
+                if (config.macd_fast) document.getElementById('macd-fast').value = config.macd_fast;
+                if (config.macd_slow) document.getElementById('macd-slow').value = config.macd_slow;
+                if (config.macd_signal) document.getElementById('macd-signal').value = config.macd_signal;
+                if (config.macd_min_histogram) document.getElementById('macd-min-histogram').value = config.macd_min_histogram;
+                
+                // Volume Filter
+                if (config.use_volume_filter !== undefined) document.getElementById('use-volume-filter').value = config.use_volume_filter.toString();
+                if (config.min_volume_ma) document.getElementById('min-volume-ma').value = config.min_volume_ma;
+                
+                console.log('✅ Configuration loaded successfully');
+                console.log('RSI Overbought loaded as:', config.rsi_overbought);
+                
+            } catch (error) {
+                console.error('❌ Failed to load configuration:', error);
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Dashboard initializing...');
+            loadConfig();
         });
     </script>
 </body>

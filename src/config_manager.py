@@ -49,17 +49,17 @@ class ConfigManager:
             'lot_size': 0.01,
             'risk_percent': 0.5,
             'reward_ratio': 2,
-            'min_confidence': 0.25,
-            'max_daily_loss': 10,
+            'min_trade_confidence': 0.60,
+            'max_daily_loss_percent': 5,
             'fast_ma_period': 10,
             'slow_ma_period': 20,
             'rsi_period': 14,
-            'rsi_overbought': 90,
-            'rsi_oversold': 10,
+            'rsi_overbought': 75,
+            'rsi_oversold': 25,
             'macd_fast': 12,
             'macd_slow': 26,
             'macd_signal': 9,
-            'macd_min_histogram': 0.5,
+            'macd_min_histogram': 0.0005,
             'atr_period': 14,
             'atr_multiplier': 2,
             'adx_min_strength': 25,
@@ -92,7 +92,7 @@ class ConfigManager:
             'max_drawdown_percent': 10,
             'max_daily_trades': 999,
             'use_volume_filter': False,
-            'min_volume_ma': 1.2,
+            'min_volume_ma': 0.7,
             'volume_ma_period': 20,
             'obv_period': 20,
             'update_interval': 60,
@@ -243,8 +243,8 @@ class ConfigManager:
                     return False
             
             # Validate confidence
-            if 'min_confidence' in config:
-                confidence = config['min_confidence']
+            if 'min_trade_confidence' in config:
+                confidence = config['min_trade_confidence']
                 if confidence < 0.2 or confidence > 0.9:
                     logger.error(f"Invalid confidence: {confidence}")
                     return False
@@ -262,6 +262,13 @@ class ConfigManager:
                 valid_timeframes = [1, 5, 15, 30, 16385, 16388, 16408]
                 if timeframe not in valid_timeframes:
                     logger.error(f"Invalid timeframe: {timeframe}")
+                    return False
+            
+            # Validate max daily loss percentage
+            if 'max_daily_loss_percent' in config:
+                max_loss_percent = config['max_daily_loss_percent']
+                if max_loss_percent < 1 or max_loss_percent > 20:
+                    logger.error(f"Invalid max daily loss percentage: {max_loss_percent}")
                     return False
             
             return True

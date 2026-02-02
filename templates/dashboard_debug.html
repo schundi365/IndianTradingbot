@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEM Trading Dashboard - Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #10b981;
+            color: white;
+        }
+        .btn:hover {
+            background: #059669;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #334155;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .tab.active {
+            background: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>GEM Trading Dashboard - Debug Version</h1>
+    
+    <div>
+        <h2>Bot Controls</h2>
+        <button class="btn" onclick="startBot()">Start Bot</button>
+        <button class="btn" onclick="stopBot()">Stop Bot</button>
+        <button class="btn" onclick="testMT5Connection()">Test MT5</button>
+    </div>
+    
+    <div>
+        <h2>Tabs</h2>
+        <div class="tab active" onclick="showTab('config')">Configuration</div>
+        <div class="tab" onclick="showTab('trades')">Trades</div>
+        <div class="tab" onclick="showTab('logs')">Logs</div>
+    </div>
+    
+    <div id="status">Status: Loading...</div>
+    
+    <script>
+        console.log('🚀 Debug Dashboard loaded');
+        
+        // Test if basic JavaScript works
+        function startBot() {
+            console.log('startBot called');
+            alert('✅ startBot function is working!');
+        }
+        
+        function stopBot() {
+            console.log('stopBot called');
+            alert('✅ stopBot function is working!');
+        }
+        
+        function testMT5Connection() {
+            console.log('testMT5Connection called');
+            alert('✅ testMT5Connection function is working!');
+        }
+        
+        function showTab(tabName) {
+            console.log('showTab called with:', tabName);
+            alert('✅ showTab function is working! Tab: ' + tabName);
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Test async function
+        async function testAsync() {
+            try {
+                const response = await fetch('/api/bot/status');
+                const data = await response.json();
+                document.getElementById('status').textContent = 'Status: ' + JSON.stringify(data);
+            } catch (error) {
+                document.getElementById('status').textContent = 'Status: Error - ' + error.message;
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('load', function() {
+            console.log('✅ Debug dashboard initialized');
+            testAsync();
+        });
+        
+        console.log('✅ All debug functions loaded');
+    </script>
+</body>
+</html>

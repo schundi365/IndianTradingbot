@@ -87,8 +87,8 @@ MIN_MA_SEPARATION = 0.0005      # Require clear separation
 # ==============================================================================
 USE_RSI = True
 RSI_PERIOD = 14
-RSI_OVERBOUGHT = 70             # Don't buy above 70
-RSI_OVERSOLD = 30               # Don't sell below 30
+RSI_OVERBOUGHT = 75             # Don't buy above 75
+RSI_OVERSOLD = 25               # Don't sell below 25
 
 # ==============================================================================
 # MACD - MOMENTUM CONFIRMATION
@@ -98,7 +98,7 @@ MACD_FAST = 12                  # Standard settings
 MACD_SLOW = 26
 MACD_SIGNAL = 9
 
-MACD_MIN_HISTOGRAM = 0.5        # Require strong momentum
+MACD_MIN_HISTOGRAM = 0.0005        # Require strong momentum (optimized)
 REQUIRE_MACD_CONFIRMATION = True
 
 # ==============================================================================
@@ -160,7 +160,7 @@ TREND_MA_PERIOD = 100               # 100 EMA for trend direction
 # ADDITIONAL FILTERS
 # ==============================================================================
 USE_VOLUME_FILTER = True
-MIN_VOLUME_MA = 1.2             # Require above-average volume
+MIN_VOLUME_MA = 0.7             # Require above-average volume (optimized)
 
 AVOID_NEWS_TRADING = True
 NEWS_BUFFER_MINUTES = 60        # Avoid 1 hour before/after news

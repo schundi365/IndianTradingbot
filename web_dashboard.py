@@ -51,6 +51,18 @@ def index():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
+@app.route('/debug')
+def debug():
+    """Debug dashboard page"""
+    return render_template('dashboard_debug.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon to prevent 404 errors"""
+    from flask import Response
+    # Simple response to prevent 404 errors
+    return Response(status=204)  # No Content
+
 
 @app.route('/api/config', methods=['GET', 'POST'])
 def config_api():
@@ -72,9 +84,12 @@ def config_api():
                 return jsonify({'status': 'error', 'message': 'Risk must be between 0.1% and 5%'})
             
             # Validate confidence
-            confidence = new_config.get('min_confidence', 0)
-            if confidence < 0.2 or confidence > 0.9:
-                return jsonify({'status': 'error', 'message': 'Confidence must be between 20% and 90%'})
+            try:
+                confidence = float(new_config.get('min_trade_confidence', 0))
+                if confidence < 0.2 or confidence > 0.9:
+                    return jsonify({'status': 'error', 'message': 'Confidence must be between 20% and 90%'})
+            except (ValueError, TypeError):
+                return jsonify({'status': 'error', 'message': 'Confidence must be a valid number between 20% and 90%'})
             
             # Validate symbols
             symbols = new_config.get('symbols', [])
@@ -92,10 +107,13 @@ def config_api():
             if reward_ratio < 1.0 or reward_ratio > 5.0:
                 return jsonify({'status': 'error', 'message': 'Reward ratio must be between 1.0 and 5.0'})
             
-            # Validate max daily loss
-            max_daily_loss = new_config.get('max_daily_loss', 0)
-            if max_daily_loss < 1 or max_daily_loss > 20:
-                return jsonify({'status': 'error', 'message': 'Max daily loss must be between 1% and 20%'})
+            # Validate max daily loss percentage
+            try:
+                max_daily_loss_percent = float(new_config.get('max_daily_loss_percent', 0))
+                if max_daily_loss_percent < 1 or max_daily_loss_percent > 20:
+                    return jsonify({'status': 'error', 'message': 'Max daily loss must be between 1% and 20% of equity'})
+            except (ValueError, TypeError):
+                return jsonify({'status': 'error', 'message': 'Max daily loss must be a valid number between 1% and 20%'})
             
             # Validate indicator periods
             fast_ma = new_config.get('fast_ma_period', 20)
@@ -104,8 +122,8 @@ def config_api():
                 return jsonify({'status': 'error', 'message': 'Fast MA must be less than Slow MA'})
             
             # Validate RSI
-            rsi_overbought = new_config.get('rsi_overbought', 70)
-            rsi_oversold = new_config.get('rsi_oversold', 30)
+            rsi_overbought = new_config.get('rsi_overbought', 75)
+            rsi_oversold = new_config.get('rsi_oversold', 25)
             if rsi_oversold >= rsi_overbought:
                 return jsonify({'status': 'error', 'message': 'RSI oversold must be less than overbought'})
             
@@ -152,9 +170,9 @@ def config_api():
             
             # Validate volume filter settings
             if 'min_volume_ma' in new_config:
-                min_vol_ma = new_config.get('min_volume_ma', 1.2)
-                if min_vol_ma < 1.0 or min_vol_ma > 2.0:
-                    return jsonify({'status': 'error', 'message': 'Min volume multiplier must be between 1.0 and 2.0'})
+                min_vol_ma = new_config.get('min_volume_ma', 0.7)
+                if min_vol_ma < 0.5 or min_vol_ma > 2.0:
+                    return jsonify({'status': 'error', 'message': 'Min volume multiplier must be between 0.5 and 2.0'})
             
             if 'volume_ma_period' in new_config:
                 vol_ma_period = new_config.get('volume_ma_period', 20)
@@ -166,6 +184,28 @@ def config_api():
                 if obv_period < 10 or obv_period > 50:
                     return jsonify({'status': 'error', 'message': 'OBV period must be between 10 and 50'})
             
+            # Validate MACD histogram threshold
+            if 'macd_min_histogram' in new_config:
+                try:
+                    macd_threshold = float(new_config.get('macd_min_histogram', 0.0005))
+                    if macd_threshold < 0.0001 or macd_threshold > 0.01:
+                        return jsonify({'status': 'error', 'message': 'MACD min histogram must be between 0.0001 and 0.01'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'MACD min histogram must be a valid number between 0.0001 and 0.01'})
+            
+            # Validate logging level
+            if 'logging_level' in new_config:
+                logging_level = new_config.get('logging_level', 'standard')
+                valid_levels = ['minimal', 'standard', 'detailed', 'debug']
+                if logging_level not in valid_levels:
+                    return jsonify({'status': 'error', 'message': 'Invalid logging level'})
+            
+            # Validate update interval
+            if 'update_interval' in new_config:
+                update_interval = new_config.get('update_interval', 60)
+                if update_interval < 30 or update_interval > 300:
+                    return jsonify({'status': 'error', 'message': 'Update interval must be between 30 and 300 seconds'})
+            
             # Update configuration using config manager
             if config_manager.update_config(new_config):
                 # Reload current_config from config manager
@@ -173,6 +213,10 @@ def config_api():
                 
                 logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
                 logger.info(f"Configuration saved to: {config_manager.config_file}")
+                
+                # Apply logging level change immediately if bot is running
+                if 'logging_level' in new_config and bot_running:
+                    apply_logging_level(new_config['logging_level'])
                 
                 # If bot is running, it needs to be restarted to apply new config
                 restart_needed = bot_running
@@ -191,6 +235,53 @@ def config_api():
             return jsonify({'status': 'error', 'message': f'Failed to update: {str(e)}'})
 
 
+def apply_logging_level(level):
+    """Apply logging level change to the running bot"""
+    try:
+        if level == 'minimal':
+            logging.getLogger().setLevel(logging.WARNING)
+            logger.info("🔧 Logging level changed to MINIMAL (warnings and errors only)")
+        elif level == 'standard':
+            logging.getLogger().setLevel(logging.INFO)
+            logger.info("🔧 Logging level changed to STANDARD (normal operation)")
+        elif level == 'detailed':
+            logging.getLogger().setLevel(logging.INFO)
+            logger.info("🔧 Logging level changed to DETAILED (full indicator calculations)")
+        elif level == 'debug':
+            logging.getLogger().setLevel(logging.DEBUG)
+            logger.info("🔧 Logging level changed to DEBUG (everything)")
+        
+        # Store the level for the bot to use
+        current_config['logging_level'] = level
+        
+    except Exception as e:
+        logger.error(f"Failed to apply logging level: {e}")
+
+
+@app.route('/api/logging/level', methods=['POST'])
+def set_logging_level():
+    """Change logging level without restarting bot"""
+    try:
+        data = request.json
+        level = data.get('level', 'standard')
+        
+        valid_levels = ['minimal', 'standard', 'detailed', 'debug']
+        if level not in valid_levels:
+            return jsonify({'status': 'error', 'message': 'Invalid logging level'})
+        
+        apply_logging_level(level)
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Logging level changed to {level.upper()}',
+            'level': level
+        })
+        
+    except Exception as e:
+        logger.error(f"Failed to change logging level: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/api/bot/start', methods=['POST'])
 def start_bot():
     """Start the trading bot"""
@@ -207,7 +298,7 @@ def start_bot():
     logger.info(f"Symbols: {current_config.get('symbols')}")
     logger.info(f"Timeframe: {current_config.get('timeframe')}")
     logger.info(f"Risk: {current_config.get('risk_percent')}%")
-    logger.info(f"Min Confidence: {current_config.get('min_confidence', 0.6)*100}%")
+    logger.info(f"Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
     logger.info(f"Use Volume Filter: {current_config.get('use_volume_filter', True)}")
     logger.info("=" * 80)
     
@@ -1017,7 +1108,7 @@ def update_config_file(new_config):
         'timeframe': 'TIMEFRAME',
         'risk_percent': 'RISK_PERCENT',
         'reward_ratio': 'REWARD_RATIO',
-        'min_confidence': 'MIN_TRADE_CONFIDENCE',
+        'min_trade_confidence': 'MIN_TRADE_CONFIDENCE',
         'max_daily_loss': 'MAX_DAILY_LOSS',
         'analysis_bars': 'ANALYSIS_BARS',
         'fast_ma_period': 'FAST_MA_PERIOD',
@@ -1128,6 +1219,12 @@ def run_bot_background():
             logger.info(f"Added to sys.path: {src_path}")
     
     try:
+        # Force reload of the module to pick up changes
+        import importlib
+        import sys
+        if 'src.mt5_trading_bot' in sys.modules:
+            importlib.reload(sys.modules['src.mt5_trading_bot'])
+        
         from src.mt5_trading_bot import MT5TradingBot
     except ImportError as e:
         logger.error(f"Failed to import MT5TradingBot: {e}")
@@ -1144,7 +1241,7 @@ def run_bot_background():
     logger.info(f"  Timeframe: {current_config.get('timeframe')}")
     logger.info(f"  Risk: {current_config.get('risk_percent')}%")
     logger.info(f"  Reward Ratio: {current_config.get('reward_ratio')}:1")
-    logger.info(f"  Min Confidence: {current_config.get('min_confidence', 0.6)*100}%")
+    logger.info(f"  Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
     
     try:
         bot = MT5TradingBot(current_config)
