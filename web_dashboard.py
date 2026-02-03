@@ -211,8 +211,8 @@ def config_api():
                 # Reload current_config from config manager
                 current_config = config_manager.get_config()
                 
-                self.logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
-                self.logger.info(f"Configuration saved to: {config_manager.config_file}")
+                logger.info(f"Configuration updated: Risk={risk}%, Confidence={confidence*100}%, Timeframe={timeframe}")
+                logger.info(f"Configuration saved to: {config_manager.config_file}")
                 
                 # Apply logging level change immediately if bot is running
                 if 'logging_level' in new_config and bot_running:
@@ -231,7 +231,7 @@ def config_api():
                 return jsonify({'status': 'error', 'message': 'Failed to save configuration'})
         
         except Exception as e:
-            self.logger.error(f"Failed to update configuration: {str(e)}")
+            logger.error(f"Failed to update configuration: {str(e)}")
             return jsonify({'status': 'error', 'message': f'Failed to update: {str(e)}'})
 
 
@@ -240,22 +240,22 @@ def apply_logging_level(level):
     try:
         if level == 'minimal':
             logging.getLogger().setLevel(logging.WARNING)
-            self.logger.info("🔧 Logging level changed to MINIMAL (warnings and errors only)")
+            logger.info("🔧 Logging level changed to MINIMAL (warnings and errors only)")
         elif level == 'standard':
             logging.getLogger().setLevel(logging.INFO)
-            self.logger.info("🔧 Logging level changed to STANDARD (normal operation)")
+            logger.info("🔧 Logging level changed to STANDARD (normal operation)")
         elif level == 'detailed':
             logging.getLogger().setLevel(logging.INFO)
-            self.logger.info("🔧 Logging level changed to DETAILED (full indicator calculations)")
+            logger.info("🔧 Logging level changed to DETAILED (full indicator calculations)")
         elif level == 'debug':
             logging.getLogger().setLevel(logging.DEBUG)
-            self.logger.info("🔧 Logging level changed to DEBUG (everything)")
+            logger.info("🔧 Logging level changed to DEBUG (everything)")
         
         # Store the level for the bot to use
         current_config['logging_level'] = level
         
     except Exception as e:
-        self.logger.error(f"Failed to apply logging level: {e}")
+        logger.error(f"Failed to apply logging level: {e}")
 
 
 @app.route('/api/logging/level', methods=['POST'])
@@ -278,7 +278,7 @@ def set_logging_level():
         })
         
     except Exception as e:
-        self.logger.error(f"Failed to change logging level: {e}")
+        logger.error(f"Failed to change logging level: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -292,25 +292,25 @@ def start_bot():
     
     # CRITICAL: Reload configuration from config manager before starting
     current_config = config_manager.get_config()
-    self.logger.info("=" * 80)
-    self.logger.info("STARTING BOT WITH CONFIGURATION:")
-    self.logger.info(f"Config file: {config_manager.config_file}")
-    self.logger.info(f"Symbols: {current_config.get('symbols')}")
-    self.logger.info(f"Timeframe: {current_config.get('timeframe')}")
-    self.logger.info(f"Risk: {current_config.get('risk_percent')}%")
-    self.logger.info(f"Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
-    self.logger.info(f"Use Volume Filter: {current_config.get('use_volume_filter', True)}")
-    self.logger.info("=" * 80)
+    logger.info("=" * 80)
+    logger.info("STARTING BOT WITH CONFIGURATION:")
+    logger.info(f"Config file: {config_manager.config_file}")
+    logger.info(f"Symbols: {current_config.get('symbols')}")
+    logger.info(f"Timeframe: {current_config.get('timeframe')}")
+    logger.info(f"Risk: {current_config.get('risk_percent')}%")
+    logger.info(f"Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
+    logger.info(f"Use Volume Filter: {current_config.get('use_volume_filter', True)}")
+    logger.info("=" * 80)
     
     # Test MT5 connection first
     if not mt5.initialize():
-        self.logger.error("Failed to start bot: MT5 not connected")
+        logger.error("Failed to start bot: MT5 not connected")
         return jsonify({'status': 'error', 'message': 'MT5 not connected. Please check MT5 is running.'})
     
     account_info = mt5.account_info()
     if account_info is None:
         mt5.shutdown()
-        self.logger.error("Failed to start bot: No account info")
+        logger.error("Failed to start bot: No account info")
         return jsonify({'status': 'error', 'message': 'Cannot access MT5 account. Check login.'})
     
     mt5.shutdown()
@@ -319,7 +319,7 @@ def start_bot():
     bot_thread = threading.Thread(target=run_bot_background, daemon=True)  # Make daemon thread
     bot_thread.start()
     
-    self.logger.info("Trading bot started successfully")
+    logger.info("Trading bot started successfully")
     return jsonify({'status': 'success', 'message': 'Bot started successfully'})
 
 
@@ -331,31 +331,31 @@ def stop_bot():
     if not bot_running:
         return jsonify({'status': 'warning', 'message': 'Bot is not running'})
     
-    self.logger.info("=" * 80)
-    self.logger.info("STOPPING TRADING BOT...")
-    self.logger.info("=" * 80)
+    logger.info("=" * 80)
+    logger.info("STOPPING TRADING BOT...")
+    logger.info("=" * 80)
     
     bot_running = False
     
     # Wait for thread to finish (max 10 seconds)
     if bot_thread and bot_thread.is_alive():
-        self.logger.info("Waiting for bot thread to stop...")
+        logger.info("Waiting for bot thread to stop...")
         bot_thread.join(timeout=10)
         if bot_thread.is_alive():
-            self.logger.warning("Bot thread did not stop gracefully within 10 seconds")
+            logger.warning("Bot thread did not stop gracefully within 10 seconds")
         else:
-            self.logger.info("Bot thread stopped successfully")
+            logger.info("Bot thread stopped successfully")
     
     # Force MT5 shutdown to ensure clean state
     try:
         mt5.shutdown()
-        self.logger.info("MT5 connection closed")
+        logger.info("MT5 connection closed")
     except Exception as e:
-        self.logger.warning(f"Error closing MT5: {e}")
+        logger.warning(f"Error closing MT5: {e}")
     
-    self.logger.info("=" * 80)
-    self.logger.info("TRADING BOT STOPPED")
-    self.logger.info("=" * 80)
+    logger.info("=" * 80)
+    logger.info("TRADING BOT STOPPED")
+    logger.info("=" * 80)
     
     return jsonify({'status': 'success', 'message': 'Bot stopped successfully'})
 
@@ -371,7 +371,7 @@ def bot_status():
         # Only trust the bot_running flag set by start/stop buttons
         
         if not mt5.initialize():
-            self.logger.warning("MT5 not connected for status check")
+            logger.warning("MT5 not connected for status check")
             return jsonify({
                 'running': bot_running,
                 'balance': 0,
@@ -425,7 +425,7 @@ def bot_status():
         return jsonify(status)
     
     except Exception as e:
-        self.logger.error(f"Error getting bot status: {str(e)}")
+        logger.error(f"Error getting bot status: {str(e)}")
         mt5.shutdown()
         return jsonify({
             'running': bot_running,
@@ -637,11 +637,11 @@ def close_position(ticket):
         
         if result.retcode != mt5.TRADE_RETCODE_DONE:
             error_msg = f'Close order failed: {result.retcode} - {result.comment}'
-            self.logger.error(error_msg)
+            logger.error(error_msg)
             mt5.shutdown()
             return jsonify({'status': 'error', 'message': error_msg})
         
-        self.logger.info(f"Position {ticket} closed successfully from dashboard. Profit: {position.profit}")
+        logger.info(f"Position {ticket} closed successfully from dashboard. Profit: {position.profit}")
         mt5.shutdown()
         
         return jsonify({
@@ -652,7 +652,7 @@ def close_position(ticket):
         })
     
     except Exception as e:
-        self.logger.error(f"Error closing position {ticket}: {str(e)}")
+        logger.error(f"Error closing position {ticket}: {str(e)}")
         mt5.shutdown()
         return jsonify({'status': 'error', 'message': str(e)})
 
@@ -663,7 +663,7 @@ def analysis_performance():
     days = int(request.args.get('days', 7))
     
     if not mt5.initialize():
-        self.logger.error("MT5 not connected for performance analysis")
+        logger.error("MT5 not connected for performance analysis")
         # Return default values instead of error
         return jsonify({
             'total_trades': 0,
@@ -683,7 +683,7 @@ def analysis_performance():
         deals = mt5.history_deals_get(from_date, datetime.now())
         
         if deals is None or len(deals) == 0:
-            self.logger.info("No trades found for performance analysis")
+            logger.info("No trades found for performance analysis")
             mt5.shutdown()
             # Return zeros instead of error
             return jsonify({
@@ -726,7 +726,7 @@ def analysis_performance():
         return jsonify(analysis)
     
     except Exception as e:
-        self.logger.error(f"Error in performance analysis: {str(e)}")
+        logger.error(f"Error in performance analysis: {str(e)}")
         mt5.shutdown()
         # Return zeros on error
         return jsonify({
@@ -981,7 +981,7 @@ def check_symbol_data_availability():
                 })
                 
             except Exception as e:
-                self.logger.error(f"Error checking data for {symbol}: {str(e)}")
+                logger.error(f"Error checking data for {symbol}: {str(e)}")
                 results.append({
                     'symbol': symbol,
                     'available': False,
@@ -995,7 +995,7 @@ def check_symbol_data_availability():
         total_symbols = len(results)
         available_symbols = len([r for r in results if r['available']])
         
-        self.logger.info(f"Data availability check completed: {available_symbols}/{total_symbols} symbols have sufficient data")
+        logger.info(f"Data availability check completed: {available_symbols}/{total_symbols} symbols have sufficient data")
         
         return jsonify({
             'status': 'success',
@@ -1009,7 +1009,7 @@ def check_symbol_data_availability():
         })
         
     except Exception as e:
-        self.logger.error(f"Error in data availability check: {str(e)}")
+        logger.error(f"Error in data availability check: {str(e)}")
         mt5.shutdown()
         return jsonify({'status': 'error', 'message': f'Failed to check data availability: {str(e)}'})
 
@@ -1021,11 +1021,11 @@ def get_logs():
         lines = int(request.args.get('lines', 50))
         
         # Log the file path for debugging
-        self.logger.info(f"Reading logs from: {LOG_FILE}")
-        self.logger.info(f"Log file exists: {LOG_FILE.exists()}")
+        logger.info(f"Reading logs from: {LOG_FILE}")
+        logger.info(f"Log file exists: {LOG_FILE.exists()}")
         
         if not LOG_FILE.exists():
-            self.logger.warning(f"Log file not found at: {LOG_FILE}")
+            logger.warning(f"Log file not found at: {LOG_FILE}")
             return jsonify({'logs': [
                 f'Log file not found at: {LOG_FILE}',
                 'This may be normal on first start.',
@@ -1045,15 +1045,15 @@ def get_logs():
             return jsonify({'logs': ['Log file is empty. Start the bot to generate logs.']})
         
         recent_lines = all_lines[-lines:]
-        self.logger.info(f"Returning {len(recent_lines)} log lines")
+        logger.info(f"Returning {len(recent_lines)} log lines")
         return jsonify({'logs': recent_lines})
     
     except PermissionError:
-        self.logger.error("Permission denied reading log file")
+        logger.error("Permission denied reading log file")
         return jsonify({'logs': [f'Error: Permission denied reading {LOG_FILE}']})
     
     except Exception as e:
-        self.logger.error(f"Failed to read logs: {str(e)}")
+        logger.error(f"Failed to read logs: {str(e)}")
         return jsonify({'logs': [f'Error loading logs: {str(e)}', f'Log file path: {LOG_FILE}']})
 
 @app.route('/api/logs/download', methods=['GET'])
@@ -1066,7 +1066,7 @@ def download_logs():
         return send_file(LOG_FILE, as_attachment=True, download_name='gem_trading_logs.txt')
     
     except Exception as e:
-        self.logger.error(f"Failed to download logs: {str(e)}")
+        logger.error(f"Failed to download logs: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -1216,7 +1216,7 @@ def run_bot_background():
         src_path = Path(sys.executable).parent / 'src'
         if src_path.exists() and str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
-            self.logger.info(f"Added to sys.path: {src_path}")
+            logger.info(f"Added to sys.path: {src_path}")
     
     try:
         # Force reload of the module to pick up changes
@@ -1227,94 +1227,94 @@ def run_bot_background():
         
         from src.mt5_trading_bot import MT5TradingBot
     except ImportError as e:
-        self.logger.error(f"Failed to import MT5TradingBot: {e}")
-        self.logger.error(f"sys.path: {sys.path}")
+        logger.error(f"Failed to import MT5TradingBot: {e}")
+        logger.error(f"sys.path: {sys.path}")
         bot_running = False
         return
     
     # Get latest configuration from config manager
     current_config = config_manager.get_config()
     
-    self.logger.info("Initializing trading bot...")
-    self.logger.info(f"Configuration loaded:")
-    self.logger.info(f"  Symbols: {current_config.get('symbols')}")
-    self.logger.info(f"  Timeframe: {current_config.get('timeframe')}")
-    self.logger.info(f"  Risk: {current_config.get('risk_percent')}%")
-    self.logger.info(f"  Reward Ratio: {current_config.get('reward_ratio')}:1")
-    self.logger.info(f"  Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
+    logger.info("Initializing trading bot...")
+    logger.info(f"Configuration loaded:")
+    logger.info(f"  Symbols: {current_config.get('symbols')}")
+    logger.info(f"  Timeframe: {current_config.get('timeframe')}")
+    logger.info(f"  Risk: {current_config.get('risk_percent')}%")
+    logger.info(f"  Reward Ratio: {current_config.get('reward_ratio')}:1")
+    logger.info(f"  Min Confidence: {current_config.get('min_trade_confidence', 0.6)*100}%")
     
     try:
         bot = MT5TradingBot(current_config)
     except Exception as e:
-        self.logger.error(f"Failed to create MT5TradingBot instance: {e}")
-        self.logger.error(f"Traceback:", exc_info=True)
+        logger.error(f"Failed to create MT5TradingBot instance: {e}")
+        logger.error(f"Traceback:", exc_info=True)
         bot_running = False
         return
     
     if not bot.connect():
-        self.logger.error("Failed to connect to MT5")
+        logger.error("Failed to connect to MT5")
         bot_running = False
         return
     
-    self.logger.info("Bot connected successfully, starting trading loop...")
+    logger.info("Bot connected successfully, starting trading loop...")
     
     try:
         while bot_running:
             try:
                 # Check if bot should still be running
                 if not bot_running:
-                    self.logger.info("Bot stop signal received, exiting loop")
+                    logger.info("Bot stop signal received, exiting loop")
                     break
                 
-                self.logger.info(f"Starting analysis cycle for {len(bot.symbols)} symbols...")
+                logger.info(f"Starting analysis cycle for {len(bot.symbols)} symbols...")
                 
                 # Run strategy for each symbol
                 for symbol in bot.symbols:
                     if not bot_running:  # Check again before each symbol
                         break
                     try:
-                        self.logger.info(f"Analyzing {symbol}...")
+                        logger.info(f"Analyzing {symbol}...")
                         bot.run_strategy(symbol)
-                        self.logger.info(f"Completed analysis for {symbol}")
+                        logger.info(f"Completed analysis for {symbol}")
                         # Small delay between symbols to avoid MT5 rate limiting
                         time.sleep(0.5)  # 500ms delay between symbols
                     except Exception as e:
-                        self.logger.error(f"Error processing {symbol}: {str(e)}")
-                        self.logger.error(f"Traceback:", exc_info=True)
+                        logger.error(f"Error processing {symbol}: {str(e)}")
+                        logger.error(f"Traceback:", exc_info=True)
                 
                 # Manage existing positions (trailing stops)
                 if bot_running:
                     try:
                         bot.manage_positions()
                     except Exception as e:
-                        self.logger.error(f"Error managing positions: {str(e)}")
-                        self.logger.error(f"Traceback:", exc_info=True)
+                        logger.error(f"Error managing positions: {str(e)}")
+                        logger.error(f"Traceback:", exc_info=True)
                 
                 # Sleep with frequent checks for stop signal
                 update_interval = current_config.get('update_interval', 60)
                 for _ in range(update_interval):
                     if not bot_running:
-                        self.logger.info("Bot stop signal received during sleep")
+                        logger.info("Bot stop signal received during sleep")
                         break
                     time.sleep(1)  # Check every second
                 
             except Exception as e:
-                self.logger.error(f"Error in bot loop: {str(e)}")
-                self.logger.error(f"Traceback:", exc_info=True)
+                logger.error(f"Error in bot loop: {str(e)}")
+                logger.error(f"Traceback:", exc_info=True)
                 if not bot_running:
                     break
                 time.sleep(5)  # Wait before retrying
     except Exception as e:
-        self.logger.error(f"Critical bot error: {str(e)}")
-        self.logger.error(f"Traceback:", exc_info=True)
+        logger.error(f"Critical bot error: {str(e)}")
+        logger.error(f"Traceback:", exc_info=True)
     finally:
-        self.logger.info("Shutting down bot...")
+        logger.info("Shutting down bot...")
         try:
             bot.disconnect()
         except Exception as e:
-            self.logger.error(f"Error disconnecting bot: {e}")
+            logger.error(f"Error disconnecting bot: {e}")
         bot_running = False
-        self.logger.info("Bot shutdown complete")
+        logger.info("Bot shutdown complete")
 
 
 if __name__ == '__main__':

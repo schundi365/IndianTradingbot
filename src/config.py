@@ -293,6 +293,43 @@ EMAIL_ADDRESS = ''
 EMAIL_PASSWORD = ''
 
 # ==============================================================================
+# ADVANCED TREND DETECTION SYSTEM
+# ==============================================================================
+USE_TREND_DETECTION = True
+TREND_DETECTION_SENSITIVITY = 5         # 1-10 scale (5 = balanced)
+MIN_TREND_CONFIDENCE = 0.6              # Minimum confidence for trend signals
+ENABLE_EARLY_SIGNALS = True             # Enable early warning signals
+
+# EMA Momentum Analysis
+EMA_FAST_PERIOD = 20                    # Fast EMA period
+EMA_SLOW_PERIOD = 50                    # Slow EMA period
+
+# Aroon Indicator
+AROON_PERIOD = 25                       # Aroon calculation period
+AROON_THRESHOLD = 70                    # Threshold for strong trend signals
+
+# Market Structure Analysis
+MIN_SWING_STRENGTH = 3                  # Minimum bars for swing point
+STRUCTURE_BREAK_THRESHOLD = 0.001       # 0.1% threshold for structure breaks
+
+# Divergence Detection
+DIVERGENCE_LOOKBACK = 50                # Bars to look back for divergences
+MIN_DIVERGENCE_STRENGTH = 0.3           # Minimum divergence strength
+
+# Trendline Analysis
+MAX_TRENDLINES = 5                      # Maximum active trendlines
+MIN_TRENDLINE_TOUCHES = 2               # Minimum touches for valid trendline
+TRENDLINE_ANGLE_MIN = 10                # Minimum trendline angle (degrees)
+TRENDLINE_ANGLE_MAX = 80                # Maximum trendline angle (degrees)
+
+# Multi-Timeframe Confirmation
+ENABLE_MTF_CONFIRMATION = True          # Enable multi-timeframe confirmation
+MTF_WEIGHT = 0.3                        # Weight for MTF confirmation in signals
+
+# Volume Pattern Analysis
+VOLUME_SPIKE_THRESHOLD = 1.5            # Volume spike threshold (1.5x average)
+
+# ==============================================================================
 # SAFETY LIMITS
 # ==============================================================================
 MAX_DAILY_LOSS = 5
@@ -414,6 +451,27 @@ def get_config():
         'dynamic_tp_check_interval': DYNAMIC_TP_CHECK_INTERVAL,
         'max_tp_extensions': MAX_TP_EXTENSIONS,
         'use_scalping_mode': USE_SCALPING_MODE,
+        
+        # Advanced Trend Detection
+        'use_trend_detection': USE_TREND_DETECTION,
+        'trend_detection_sensitivity': TREND_DETECTION_SENSITIVITY,
+        'min_trend_confidence': MIN_TREND_CONFIDENCE,
+        'enable_early_signals': ENABLE_EARLY_SIGNALS,
+        'ema_fast_period': EMA_FAST_PERIOD,
+        'ema_slow_period': EMA_SLOW_PERIOD,
+        'aroon_period': AROON_PERIOD,
+        'aroon_threshold': AROON_THRESHOLD,
+        'min_swing_strength': MIN_SWING_STRENGTH,
+        'structure_break_threshold': STRUCTURE_BREAK_THRESHOLD,
+        'divergence_lookback': DIVERGENCE_LOOKBACK,
+        'min_divergence_strength': MIN_DIVERGENCE_STRENGTH,
+        'max_trendlines': MAX_TRENDLINES,
+        'min_trendline_touches': MIN_TRENDLINE_TOUCHES,
+        'trendline_angle_min': TRENDLINE_ANGLE_MIN,
+        'trendline_angle_max': TRENDLINE_ANGLE_MAX,
+        'enable_mtf_confirmation': ENABLE_MTF_CONFIRMATION,
+        'mtf_weight': MTF_WEIGHT,
+        'volume_spike_threshold': VOLUME_SPIKE_THRESHOLD,
     }
 
 

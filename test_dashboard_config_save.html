@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Configuration Save</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Configuration Save Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Load Configuration</h3>
+        <button onclick="testLoadConfig()">Load Config</button>
+        <div id="load-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Save Configuration</h3>
+        <button onclick="testSaveConfig()">Save Config</button>
+        <div id="save-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Performance API</h3>
+        <button onclick="testPerformance()">Test Performance</button>
+        <div id="performance-result"></div>
+    </div>
+
+    <script>
+        async function testLoadConfig() {
+            const resultDiv = document.getElementById('load-result');
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Config loaded successfully! Got ${Object.keys(data).length} config items</span>`;
+                    window.testConfig = data; // Store for save test
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Failed to load config: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testSaveConfig() {
+            const resultDiv = document.getElementById('save-result');
+            
+            if (!window.testConfig) {
+                resultDiv.innerHTML = `<span class="error">❌ Please load config first</span>`;
+                return;
+            }
+            
+            try {
+                // Make a small test change
+                const testConfig = {...window.testConfig};
+                testConfig.risk_percent = 1.5;
+                
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(testConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    resultDiv.innerHTML = `<span class="success">✅ Config saved successfully! ${data.message}</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Failed to save: ${data.message || 'Unknown error'}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testPerformance() {
+            const resultDiv = document.getElementById('performance-result');
+            try {
+                const response = await fetch('/api/analysis/performance');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Performance API working! Total trades: ${data.total_trades}, Win rate: ${data.win_rate}%</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Performance API failed: ${response.status}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

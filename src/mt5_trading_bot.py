@@ -39,6 +39,14 @@ except ImportError:
     VOLUME_ANALYZER_AVAILABLE = False
     logging.warning("Volume Analyzer not available")
 
+# Import trend detection engine
+try:
+    from src.trend_detection_engine import TrendDetectionEngine
+    TREND_DETECTION_AVAILABLE = True
+except ImportError:
+    TREND_DETECTION_AVAILABLE = False
+    logging.warning("Trend Detection Engine not available")
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -110,6 +118,16 @@ class MT5TradingBot:
             self.volume_analyzer = None
             if self.use_volume_filter and not VOLUME_ANALYZER_AVAILABLE:
                 logging.warning("Volume filter requested but module not available")
+        
+        # Trend detection engine
+        self.use_trend_detection = config.get('use_trend_detection', True)
+        if self.use_trend_detection and TREND_DETECTION_AVAILABLE:
+            self.trend_detection_engine = TrendDetectionEngine(config)
+            logging.info("Advanced Trend Detection enabled")
+        else:
+            self.trend_detection_engine = None
+            if self.use_trend_detection and not TREND_DETECTION_AVAILABLE:
+                logging.warning("Trend detection requested but module not available")
         
         self.positions = {}
         self.split_position_groups = {}  # Track groups of split positions
@@ -960,6 +978,44 @@ class MT5TradingBot:
         
         # All filters passed
         logging.info("-"*80)
+        
+        # ADVANCED TREND DETECTION FILTER
+        if self.trend_detection_engine and signal != 0:
+            logging.info("🔍 ADVANCED TREND DETECTION FILTER:")
+            signal_type_str = "buy" if signal == 1 else "sell"
+            
+            try:
+                should_trade, trend_confidence = self.trend_detection_engine.should_trade_trend(df, signal_type_str)
+                
+                if should_trade:
+                    logging.info(f"  ✅ TREND DETECTION CONFIRMED!")
+                    logging.info(f"     Trend analysis supports {signal_type_str.upper()} signal")
+                    logging.info(f"     Trend confidence: {trend_confidence:.2f}")
+                    
+                    # Get detailed trend signals for logging
+                    trend_signals = self.trend_detection_engine.get_trend_signals(df, signal_type_str)
+                    if trend_signals:
+                        logging.info(f"     Supporting trend factors:")
+                        for ts in trend_signals:
+                            logging.info(f"       - {ts.source}: {ts.confidence:.2f} confidence")
+                            for factor in ts.supporting_factors:
+                                logging.info(f"         * {factor}")
+                else:
+                    logging.info(f"  ❌ TREND DETECTION REJECTED!")
+                    logging.info(f"     Trend analysis does not support {signal_type_str.upper()} signal")
+                    logging.info(f"     Trend confidence: {trend_confidence:.2f} (min required: {self.trend_detection_engine.min_confidence:.2f})")
+                    logging.info("="*80)
+                    return 0
+                    
+            except Exception as e:
+                logging.error(f"  ⚠️  Trend detection error: {e}")
+                logging.info(f"     Proceeding without trend detection filter")
+        else:
+            if not self.trend_detection_engine:
+                logging.info("  ⚠️  Advanced trend detection disabled")
+            else:
+                logging.info("  ⚠️  No signal to analyze with trend detection")
+        
         logging.info(f"✅ ALL FILTERS PASSED - {signal_type} SIGNAL CONFIRMED!")
         logging.info(f"   Signal will proceed to risk management and position opening")
         logging.info("="*80)
