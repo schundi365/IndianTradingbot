@@ -491,9 +491,360 @@ class VolumeAnalyzer:
             'price_range': (price_min, price_max)
         }
     
+    def detect_exhaustion_volume(self, df, key_level: float = None, lookback: int = 20) -> dict:
+        """
+        Detect exhaustion volume patterns at key price levels
+        
+        Exhaustion occurs when:
+        - High volume at resistance/support levels
+        - Volume spikes without price follow-through
+        - Decreasing volume on continued price movement
+        
+        Args:
+            df: DataFrame with price and volume data
+            key_level: Optional key price level to check
+            lookback: Number of periods to analyze
+            
+        Returns:
+            dict: Exhaustion analysis results
+        """
+        if len(df) < lookback:
+            return {
+                'detected': False,
+                'type': 'none',
+                'strength': 0.0,
+                'description': 'Insufficient data for exhaustion analysis'
+            }
+        
+        recent_df = df.iloc[-lookback:]
+        current_price = df['close'].iloc[-1]
+        current_volume = df['tick_volume'].iloc[-1]
+        
+        # Calculate volume statistics with more reasonable thresholds
+        avg_volume = recent_df['tick_volume'].mean()
+        volume_std = recent_df['tick_volume'].std()
+        
+        # Use a more reasonable threshold - 1.5x average (simpler approach)
+        high_volume_threshold = avg_volume * 1.5
+        
+        self.logger.debug(f"Exhaustion analysis: avg_volume={avg_volume:.0f}, threshold={high_volume_threshold:.0f}")
+        
+        # Check for volume spikes
+        volume_spikes = recent_df[recent_df['tick_volume'] > high_volume_threshold]
+        
+        if len(volume_spikes) == 0:
+            return {
+                'detected': False,
+                'type': 'none',
+                'strength': 0.0,
+                'description': f'No volume spikes above {high_volume_threshold:.0f} threshold detected'
+            }
+        
+        self.logger.debug(f"Found {len(volume_spikes)} volume spikes")
+        
+        # Analyze price action after volume spikes
+        exhaustion_signals = []
+        
+        for idx, spike_row in volume_spikes.iterrows():
+            spike_price = spike_row['close']
+            spike_volume = spike_row['tick_volume']
+            
+            # Find position of spike in recent_df
+            try:
+                spike_position = recent_df.index.get_loc(idx)
+            except KeyError:
+                continue
+            
+            # Need at least 2 bars after spike to analyze follow-through
+            if spike_position < len(recent_df) - 2:
+                
+                subsequent_bars = recent_df.iloc[spike_position+1:min(spike_position+4, len(recent_df))]
+                
+                if len(subsequent_bars) > 0:
+                    # Check for exhaustion patterns
+                    price_follow_through = abs(subsequent_bars['close'].iloc[-1] - spike_price) / spike_price
+                    volume_decline = (subsequent_bars['tick_volume'].mean() / spike_volume) if spike_volume > 0 else 1.0
+                    
+                    self.logger.debug(f"Spike at {spike_price:.5f}: follow_through={price_follow_through:.4f}, volume_decline={volume_decline:.3f}")
+                    
+                    # Exhaustion criteria - low price follow-through AND volume decline
+                    if price_follow_through < 0.005 and volume_decline < 0.8:  # Relaxed criteria
+                        exhaustion_type = 'bearish_exhaustion' if spike_price >= current_price else 'bullish_exhaustion'
+                        
+                        # Calculate strength based on volume spike magnitude and lack of follow-through
+                        volume_strength = min(2.0, spike_volume / avg_volume) / 2.0  # Normalize to 0-1
+                        follow_through_penalty = price_follow_through / 0.005  # Penalty for follow-through
+                        volume_decline_bonus = (1.0 - volume_decline)  # Bonus for volume decline
+                        
+                        strength = volume_strength * (1.0 - follow_through_penalty) * (1.0 + volume_decline_bonus)
+                        strength = max(0.0, min(1.0, strength))
+                        
+                        exhaustion_signals.append({
+                            'type': exhaustion_type,
+                            'strength': strength,
+                            'spike_price': spike_price,
+                            'spike_volume': spike_volume,
+                            'follow_through': price_follow_through,
+                            'volume_decline': volume_decline
+                        })
+                        
+                        self.logger.debug(f"Exhaustion signal: {exhaustion_type}, strength={strength:.3f}")
+        
+        if exhaustion_signals:
+            # Return strongest exhaustion signal
+            strongest = max(exhaustion_signals, key=lambda x: x['strength'])
+            return {
+                'detected': True,
+                'type': strongest['type'],
+                'strength': strongest['strength'],
+                'description': f"Volume exhaustion at {strongest['spike_price']:.5f} with {strongest['strength']:.2f} strength"
+            }
+        
+        return {
+            'detected': False,
+            'type': 'none',
+            'strength': 0.0,
+            'description': f'Volume spikes detected but no exhaustion pattern confirmed (need low follow-through + volume decline)'
+        }
+    
+    def confirm_breakout_volume(self, df, breakout_price: float, breakout_direction: str, lookback: int = 10) -> dict:
+        """
+        Confirm breakout with volume analysis
+        
+        Valid breakouts should have:
+        - Above average volume on breakout
+        - Sustained volume on continuation
+        - Volume expansion compared to consolidation period
+        
+        Args:
+            df: DataFrame with price and volume data
+            breakout_price: Price level of the breakout
+            breakout_direction: 'up' or 'down'
+            lookback: Periods to analyze before breakout
+            
+        Returns:
+            dict: Breakout volume confirmation results
+        """
+        if len(df) < lookback + 5:
+            return {
+                'confirmed': False,
+                'strength': 0.0,
+                'volume_ratio': 1.0,
+                'description': 'Insufficient data for breakout confirmation'
+            }
+        
+        # Get pre-breakout consolidation period
+        consolidation_df = df.iloc[-(lookback + 5):-5]
+        breakout_df = df.iloc[-5:]  # Last 5 bars for breakout analysis
+        
+        # Calculate volume statistics
+        consolidation_avg_volume = consolidation_df['tick_volume'].mean()
+        breakout_avg_volume = breakout_df['tick_volume'].mean()
+        current_volume = df['tick_volume'].iloc[-1]
+        
+        # Volume expansion ratio
+        volume_expansion = breakout_avg_volume / consolidation_avg_volume if consolidation_avg_volume > 0 else 1.0
+        current_volume_ratio = current_volume / consolidation_avg_volume if consolidation_avg_volume > 0 else 1.0
+        
+        # Price movement confirmation
+        price_movement = abs(df['close'].iloc[-1] - breakout_price) / breakout_price
+        
+        # Breakout confirmation criteria
+        volume_confirmed = volume_expansion >= 1.3  # 30% volume increase
+        price_confirmed = price_movement >= 0.001   # Minimum price movement
+        sustained_volume = current_volume_ratio >= 1.2  # Current volume still elevated
+        
+        # Calculate confirmation strength
+        strength = 0.0
+        if volume_confirmed:
+            strength += 0.4
+        if price_confirmed:
+            strength += 0.3
+        if sustained_volume:
+            strength += 0.3
+        
+        # Bonus for exceptional volume
+        if volume_expansion >= 2.0:
+            strength += 0.2
+        
+        strength = min(1.0, strength)
+        
+        confirmed = volume_confirmed and price_confirmed
+        
+        return {
+            'confirmed': confirmed,
+            'strength': strength,
+            'volume_ratio': volume_expansion,
+            'current_volume_ratio': current_volume_ratio,
+            'price_movement': price_movement,
+            'description': f"Breakout {'confirmed' if confirmed else 'not confirmed'} with {volume_expansion:.1f}x volume expansion"
+        }
+    
+    def detect_volume_price_divergence(self, df, trend_direction: str, lookback: int = 20) -> dict:
+        """
+        Detect volume-price divergence patterns for trend analysis
+        
+        Divergence types:
+        - Bullish: Price makes lower lows but volume decreases (selling exhaustion)
+        - Bearish: Price makes higher highs but volume decreases (buying exhaustion)
+        
+        Args:
+            df: DataFrame with price and volume data
+            trend_direction: 'up', 'down', or 'auto' to detect automatically
+            lookback: Number of periods to analyze
+            
+        Returns:
+            dict: Divergence analysis results
+        """
+        if len(df) < lookback:
+            return {
+                'detected': False,
+                'type': 'none',
+                'strength': 0.0,
+                'price_points': [],
+                'volume_points': [],
+                'description': 'Insufficient data for divergence analysis'
+            }
+        
+        recent_df = df.iloc[-lookback:].copy()
+        
+        # Calculate volume moving average for comparison
+        recent_df['volume_ma'] = recent_df['tick_volume'].rolling(window=5).mean()
+        
+        # Find swing points for price and volume
+        price_highs = []
+        price_lows = []
+        volume_highs = []
+        volume_lows = []
+        
+        # Simple swing point detection (can be enhanced)
+        for i in range(2, len(recent_df) - 2):
+            current_high = recent_df['high'].iloc[i]
+            current_low = recent_df['low'].iloc[i]
+            current_volume = recent_df['volume_ma'].iloc[i]
+            
+            # Price swing highs
+            if (current_high > recent_df['high'].iloc[i-2:i].max() and 
+                current_high > recent_df['high'].iloc[i+1:i+3].max()):
+                price_highs.append((recent_df.index[i], current_high))
+            
+            # Price swing lows
+            if (current_low < recent_df['low'].iloc[i-2:i].min() and 
+                current_low < recent_df['low'].iloc[i+1:i+3].min()):
+                price_lows.append((recent_df.index[i], current_low))
+            
+            # Volume swing points
+            if (current_volume > recent_df['volume_ma'].iloc[i-2:i].max() and 
+                current_volume > recent_df['volume_ma'].iloc[i+1:i+3].max()):
+                volume_highs.append((recent_df.index[i], current_volume))
+            
+            if (current_volume < recent_df['volume_ma'].iloc[i-2:i].min() and 
+                current_volume < recent_df['volume_ma'].iloc[i+1:i+3].min()):
+                volume_lows.append((recent_df.index[i], current_volume))
+        
+        # Analyze divergence patterns
+        divergences = []
+        
+        # Bearish divergence: Higher price highs with lower volume highs
+        if len(price_highs) >= 2 and len(volume_highs) >= 2:
+            recent_price_highs = sorted(price_highs, key=lambda x: x[0])[-2:]
+            recent_volume_highs = sorted(volume_highs, key=lambda x: x[0])[-2:]
+            
+            if (recent_price_highs[1][1] > recent_price_highs[0][1] and  # Higher price high
+                recent_volume_highs[1][1] < recent_volume_highs[0][1]):   # Lower volume high
+                
+                price_change = (recent_price_highs[1][1] - recent_price_highs[0][1]) / recent_price_highs[0][1]
+                volume_change = (recent_volume_highs[0][1] - recent_volume_highs[1][1]) / recent_volume_highs[0][1]
+                strength = min(1.0, (price_change + volume_change) * 2)
+                
+                divergences.append({
+                    'type': 'bearish_divergence',
+                    'strength': strength,
+                    'price_points': recent_price_highs,
+                    'volume_points': recent_volume_highs
+                })
+        
+        # Bullish divergence: Lower price lows with higher volume lows (less selling pressure)
+        if len(price_lows) >= 2 and len(volume_lows) >= 2:
+            recent_price_lows = sorted(price_lows, key=lambda x: x[0])[-2:]
+            recent_volume_lows = sorted(volume_lows, key=lambda x: x[0])[-2:]
+            
+            if (recent_price_lows[1][1] < recent_price_lows[0][1] and    # Lower price low
+                recent_volume_lows[1][1] > recent_volume_lows[0][1]):    # Higher volume low (less selling)
+                
+                price_change = (recent_price_lows[0][1] - recent_price_lows[1][1]) / recent_price_lows[0][1]
+                volume_change = (recent_volume_lows[1][1] - recent_volume_lows[0][1]) / recent_volume_lows[0][1]
+                strength = min(1.0, (price_change + volume_change) * 2)
+                
+                divergences.append({
+                    'type': 'bullish_divergence',
+                    'strength': strength,
+                    'price_points': recent_price_lows,
+                    'volume_points': recent_volume_lows
+                })
+        
+        if divergences:
+            # Return strongest divergence
+            strongest = max(divergences, key=lambda x: x['strength'])
+            return {
+                'detected': True,
+                'type': strongest['type'],
+                'strength': strongest['strength'],
+                'price_points': strongest['price_points'],
+                'volume_points': strongest['volume_points'],
+                'description': f"{strongest['type'].replace('_', ' ').title()} detected with {strongest['strength']:.2f} strength"
+            }
+        
+        return {
+            'detected': False,
+            'type': 'none',
+            'strength': 0.0,
+            'price_points': [],
+            'volume_points': [],
+            'description': 'No significant volume-price divergence detected'
+        }
+    
+    def filter_signals_by_volume(self, signals: list, df: pd.DataFrame, min_volume_score: float = 0.6) -> list:
+        """
+        Filter trading signals based on volume analysis
+        
+        Args:
+            signals: List of trading signals to filter
+            df: DataFrame with price and volume data
+            min_volume_score: Minimum volume score required (0.0 to 1.0)
+            
+        Returns:
+            list: Filtered signals that meet volume criteria
+        """
+        if not self.use_volume_filter:
+            return signals
+        
+        filtered_signals = []
+        
+        for signal in signals:
+            signal_type = 'buy' if 'buy' in str(signal).lower() or 'bullish' in str(signal).lower() else 'sell'
+            
+            # Get volume confirmation
+            volume_confirmation = self.get_volume_confirmation(df, signal_type)
+            
+            # Check if signal meets volume criteria
+            if volume_confirmation['score'] >= min_volume_score:
+                # Add volume information to signal if possible
+                if hasattr(signal, 'supporting_factors'):
+                    signal.supporting_factors.append(f"volume_score_{volume_confirmation['score']:.2f}")
+                
+                filtered_signals.append(signal)
+                self.logger.info(f"✅ Signal passed volume filter: {signal_type} (score: {volume_confirmation['score']:.2f})")
+            else:
+                self.logger.info(f"❌ Signal rejected by volume filter: {signal_type} (score: {volume_confirmation['score']:.2f} < {min_volume_score:.2f})")
+        
+        self.logger.info(f"Volume filtering: {len(filtered_signals)}/{len(signals)} signals passed")
+        return filtered_signals
+
     def get_volume_confirmation(self, df, signal_type):
         """
         Get comprehensive volume confirmation with weighted scoring system
+        Enhanced with trend-specific volume patterns
         
         Args:
             df: DataFrame with price and volume data
@@ -508,6 +859,8 @@ class VolumeAnalyzer:
             'obv_signal': 'neutral',
             'divergence': 'none',
             'candle_pressure': {},
+            'exhaustion_volume': {},
+            'volume_price_divergence': {},
             'confirmed': False,
             'confidence_boost': 0.0,
             'score': 0.5,  # Start neutral
@@ -518,7 +871,7 @@ class VolumeAnalyzer:
         self.logger.info(f"🔍 ENHANCED VOLUME CONFIRMATION ANALYSIS FOR {signal_type.upper()}")
         self.logger.info("-"*80)
         
-        # IMPROVEMENT #3: Weighted Scoring System
+        # IMPROVEMENT #3: Weighted Scoring System with Trend-Specific Patterns
         score = 0.5  # Start neutral
         reasons = []
         
@@ -568,7 +921,7 @@ class VolumeAnalyzer:
         else:
             reasons.append("Divergence: None (0.00)")
         
-        # 5. IMPROVEMENT #6: Candle pressure analysis (±0.10)
+        # 5. Candle pressure analysis (±0.10)
         confirmation['candle_pressure'] = self.get_candle_pressure(df)
         pressure = confirmation['candle_pressure']
         
@@ -584,11 +937,49 @@ class VolumeAnalyzer:
         else:
             reasons.append("Candle: Neutral pressure (0.00)")
         
+        # 6. NEW: Exhaustion volume analysis (±0.12)
+        confirmation['exhaustion_volume'] = self.detect_exhaustion_volume(df)
+        exhaustion = confirmation['exhaustion_volume']
+        
+        if exhaustion['detected']:
+            if signal_type == 'buy' and exhaustion['type'] == 'bearish_exhaustion':
+                exhaustion_boost = exhaustion['strength'] * 0.12
+                score += exhaustion_boost
+                reasons.append(f"Exhaustion: Bearish exhaustion detected (+{exhaustion_boost:.2f})")
+            elif signal_type == 'sell' and exhaustion['type'] == 'bullish_exhaustion':
+                exhaustion_boost = exhaustion['strength'] * 0.12
+                score += exhaustion_boost
+                reasons.append(f"Exhaustion: Bullish exhaustion detected (+{exhaustion_boost:.2f})")
+            else:
+                score -= 0.06  # Wrong type of exhaustion
+                reasons.append("Exhaustion: Wrong type (-0.06)")
+        else:
+            reasons.append("Exhaustion: None detected (0.00)")
+        
+        # 7. NEW: Volume-price divergence analysis (±0.15)
+        trend_direction = 'up' if signal_type == 'buy' else 'down'
+        confirmation['volume_price_divergence'] = self.detect_volume_price_divergence(df, trend_direction)
+        vp_divergence = confirmation['volume_price_divergence']
+        
+        if vp_divergence['detected']:
+            if signal_type == 'buy' and vp_divergence['type'] == 'bullish_divergence':
+                divergence_boost = vp_divergence['strength'] * 0.15
+                score += divergence_boost
+                reasons.append(f"VP Divergence: Bullish pattern (+{divergence_boost:.2f})")
+            elif signal_type == 'sell' and vp_divergence['type'] == 'bearish_divergence':
+                divergence_boost = vp_divergence['strength'] * 0.15
+                score += divergence_boost
+                reasons.append(f"VP Divergence: Bearish pattern (+{divergence_boost:.2f})")
+            else:
+                score -= 0.08  # Contradictory divergence
+                reasons.append("VP Divergence: Contradictory (-0.08)")
+        else:
+            reasons.append("VP Divergence: None detected (0.00)")
+        
         # Clamp score between 0.0 and 1.0
         final_score = max(0.0, min(1.0, score))
         
-        # IMPROVEMENT #3: Relaxed Confirmation Logic
-        # Decision based on volume level (not requiring all factors)
+        # Decision based on volume level and trend-specific patterns
         confirmation['confirmed'] = vol_class['passes']  # Based on volume level
         confidence_boost = (final_score - 0.5) * 0.2  # Convert to ±0.10 boost
         
@@ -597,10 +988,17 @@ class VolumeAnalyzer:
         confirmation['confidence_boost'] = confidence_boost
         confirmation['reasons'] = reasons
         
-        # Detailed logging
+        # Enhanced detailed logging
         self.logger.info(f"📊 WEIGHTED SCORING BREAKDOWN:")
         for reason in reasons:
             self.logger.info(f"   • {reason}")
+        
+        # Log trend-specific patterns
+        if exhaustion['detected']:
+            self.logger.info(f"🔥 EXHAUSTION PATTERN: {exhaustion['description']}")
+        
+        if vp_divergence['detected']:
+            self.logger.info(f"📈 VOLUME-PRICE DIVERGENCE: {vp_divergence['description']}")
         
         self.logger.info("-"*80)
         self.logger.info(f"📈 FINAL VOLUME ANALYSIS RESULTS:")

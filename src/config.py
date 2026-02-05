@@ -326,6 +326,18 @@ TRENDLINE_ANGLE_MAX = 80                # Maximum trendline angle (degrees)
 ENABLE_MTF_CONFIRMATION = True          # Enable multi-timeframe confirmation
 MTF_WEIGHT = 0.3                        # Weight for MTF confirmation in signals
 
+# Multi-Timeframe Relationships
+MTF_PRIMARY_TO_HIGHER = {               # Primary timeframe to higher timeframe mapping
+    mt5.TIMEFRAME_M15: mt5.TIMEFRAME_H4,  # 15-minute requires 4-hour confirmation
+    mt5.TIMEFRAME_M30: mt5.TIMEFRAME_H4,  # 30-minute requires 4-hour confirmation
+    mt5.TIMEFRAME_H1: mt5.TIMEFRAME_D1,   # 1-hour requires daily confirmation
+    mt5.TIMEFRAME_H4: mt5.TIMEFRAME_D1,   # 4-hour requires daily confirmation
+}
+
+MTF_CONFIRMATION_BARS = 100             # Bars to fetch from higher timeframe
+MTF_ALIGNMENT_THRESHOLD = 0.6           # Minimum alignment score for confirmation
+MTF_CONTRADICTION_PENALTY = 0.4         # Penalty for contradictory signals
+
 # Volume Pattern Analysis
 VOLUME_SPIKE_THRESHOLD = 1.5            # Volume spike threshold (1.5x average)
 
@@ -471,6 +483,10 @@ def get_config():
         'trendline_angle_max': TRENDLINE_ANGLE_MAX,
         'enable_mtf_confirmation': ENABLE_MTF_CONFIRMATION,
         'mtf_weight': MTF_WEIGHT,
+        'mtf_primary_to_higher': MTF_PRIMARY_TO_HIGHER,
+        'mtf_confirmation_bars': MTF_CONFIRMATION_BARS,
+        'mtf_alignment_threshold': MTF_ALIGNMENT_THRESHOLD,
+        'mtf_contradiction_penalty': MTF_CONTRADICTION_PENALTY,
         'volume_spike_threshold': VOLUME_SPIKE_THRESHOLD,
     }
 

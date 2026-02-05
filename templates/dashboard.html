@@ -617,6 +617,7 @@
         <div class="card">
             <div class="tabs">
                 <div class="tab active" onclick="showTab('config')">Configuration</div>
+                <div class="tab" onclick="showTab('trend-detection')">Trend Detection</div>
                 <div class="tab" onclick="showTab('charts')">Charts & Analytics</div>
                 <div class="tab" onclick="showTab('trades')">Trade History</div>
                 <div class="tab" onclick="showTab('positions')">Open Positions</div>
@@ -1041,6 +1042,55 @@
                                     <small style="color: #94a3b8;">Trail X*ATR behind price</small>
                                 </div>
                             </div>
+                            
+                            <!-- Pip-Based TP/SL Section -->
+                            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px;">
+                                <h4 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>📏</span>
+                                    <span>Pip-Based TP/SL (Alternative to ATR)</span>
+                                </h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; color: white; font-size: 13px;">
+                                    <strong>💡 What is this?</strong><br>
+                                    Instead of using ATR (dynamic), you can set fixed pip values for Stop Loss and Take Profit.<br>
+                                    <strong>Benefits:</strong> Consistent risk, easier backtesting, predictable targets<br>
+                                    <strong>Example:</strong> 50 pip SL + 100 pip TP = 1:2 Risk:Reward on all symbols
+                                </div>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label style="color: white;">Enable Pip-Based Stop Loss</label>
+                                        <select id="use-pip-based-sl" onchange="togglePipBasedControls()">
+                                            <option value="false" selected>No (Use ATR)</option>
+                                            <option value="true">Yes (Use Fixed Pips)</option>
+                                        </select>
+                                        <small style="color: rgba(255,255,255,0.8);">Override ATR-based SL calculation</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="color: white;">Stop Loss (Pips)</label>
+                                        <input type="number" id="sl-pips" value="50" min="10" max="500" step="5" disabled>
+                                        <small style="color: rgba(255,255,255,0.8);">Fixed pip distance for stop loss</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="color: white;">Enable Pip-Based Take Profit</label>
+                                        <select id="use-pip-based-tp" onchange="togglePipBasedControls()">
+                                            <option value="false" selected>No (Use R:R Ratio)</option>
+                                            <option value="true">Yes (Use Fixed Pips)</option>
+                                        </select>
+                                        <small style="color: rgba(255,255,255,0.8);">Override ratio-based TP calculation</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="color: white;">Take Profit (Pips)</label>
+                                        <input type="number" id="tp-pips" value="100" min="10" max="1000" step="5" disabled>
+                                        <small style="color: rgba(255,255,255,0.8);">Fixed pip distance for take profit</small>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 6px; color: white; font-size: 12px;">
+                                    <strong>📊 Recommended Pip Values by Symbol Type:</strong><br>
+                                    • <strong>Forex Majors (EURUSD, GBPUSD):</strong> SL: 30-50 pips, TP: 60-100 pips<br>
+                                    • <strong>Forex Crosses (EURJPY, GBPJPY):</strong> SL: 50-80 pips, TP: 100-160 pips<br>
+                                    • <strong>Gold (XAUUSD):</strong> SL: 200-400 pips, TP: 400-800 pips<br>
+                                    • <strong>Crypto (BTCUSD):</strong> SL: 300-500 pips, TP: 600-1000 pips
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -1127,13 +1177,576 @@
                         </div>
                     </div>
                     
+                    <!-- Advanced Trend Detection -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('trend-detection')">
+                            <span>🔍 Advanced Trend Detection</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="trend-detection-content" class="accordion-content">
+                            <!-- Main Controls -->
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label>Enable Trend Detection</label>
+                                    <select id="use-trend-detection">
+                                        <option value="true" selected>Yes (Advanced Analysis)</option>
+                                        <option value="false">No (Basic Indicators Only)</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Advanced market structure and divergence analysis</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Detection Sensitivity (1-10)</label>
+                                    <input type="number" id="trend-detection-sensitivity" value="5" min="1" max="10">
+                                    <small style="color: #94a3b8;">Higher = more sensitive to trend changes</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Min Trend Confidence (%)</label>
+                                    <input type="number" id="min-trend-confidence" value="60" min="20" max="90" step="5">
+                                    <small style="color: #94a3b8;">Minimum confidence for trend signals</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enable Early Warning Signals</label>
+                                    <select id="enable-early-signals">
+                                        <option value="true" selected>Yes (Recommended)</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                    <small style="color: #94a3b8;">Get signals before full trend confirmation</small>
+                                </div>
+                            </div>
+                            
+                            <!-- EMA Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📈 EMA Momentum Analysis</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Fast EMA Period</label>
+                                        <input type="number" id="ema-fast-period" value="20" min="5" max="50">
+                                        <small style="color: #94a3b8;">Standard: 20</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Slow EMA Period</label>
+                                        <input type="number" id="ema-slow-period" value="50" min="20" max="100">
+                                        <small style="color: #94a3b8;">Standard: 50</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Aroon Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📊 Aroon Indicator</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Aroon Period</label>
+                                        <input type="number" id="aroon-period" value="25" min="14" max="50">
+                                        <small style="color: #94a3b8;">Standard: 25</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Aroon Threshold</label>
+                                        <input type="number" id="aroon-threshold" value="70" min="50" max="90">
+                                        <small style="color: #94a3b8;">Minimum for strong trend signals</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Market Structure Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">🏗️ Market Structure Analysis</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Min Swing Strength</label>
+                                        <input type="number" id="min-swing-strength" value="3" min="2" max="10">
+                                        <small style="color: #94a3b8;">Minimum bars for swing point detection</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Structure Break Threshold (%)</label>
+                                        <input type="number" id="structure-break-threshold" value="0.1" min="0.05" max="0.5" step="0.05">
+                                        <small style="color: #94a3b8;">Minimum % move for structure break</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Divergence Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📉 Divergence Detection</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Divergence Lookback</label>
+                                        <input type="number" id="divergence-lookback" value="50" min="20" max="100">
+                                        <small style="color: #94a3b8;">Bars to analyze for divergences</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Min Divergence Strength</label>
+                                        <input type="number" id="min-divergence-strength" value="0.3" min="0.1" max="0.8" step="0.1">
+                                        <small style="color: #94a3b8;">Minimum strength to validate divergence</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Trendline Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📐 Trendline Analysis</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Max Active Trendlines</label>
+                                        <input type="number" id="max-trendlines" value="5" min="2" max="10">
+                                        <small style="color: #94a3b8;">Maximum trendlines to track</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Min Trendline Touches</label>
+                                        <input type="number" id="min-trendline-touches" value="2" min="2" max="5">
+                                        <small style="color: #94a3b8;">Minimum touches for valid trendline</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Min Trendline Angle (°)</label>
+                                        <input type="number" id="trendline-angle-min" value="10" min="5" max="30">
+                                        <small style="color: #94a3b8;">Minimum angle to avoid flat lines</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Max Trendline Angle (°)</label>
+                                        <input type="number" id="trendline-angle-max" value="80" min="60" max="85">
+                                        <small style="color: #94a3b8;">Maximum angle to avoid steep lines</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Multi-Timeframe Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">⏰ Multi-Timeframe Confirmation</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Enable MTF Confirmation</label>
+                                        <select id="enable-mtf-confirmation">
+                                            <option value="true" selected>Yes (Recommended)</option>
+                                            <option value="false">No</option>
+                                        </select>
+                                        <small style="color: #94a3b8;">Confirm signals with higher timeframes</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>MTF Weight</label>
+                                        <input type="number" id="mtf-weight" value="0.3" min="0.1" max="0.5" step="0.1">
+                                        <small style="color: #94a3b8;">Weight of MTF confirmation in signals</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>MTF Alignment Threshold</label>
+                                        <input type="number" id="mtf-alignment-threshold" value="0.6" min="0.3" max="0.9" step="0.1">
+                                        <small style="color: #94a3b8;">Minimum alignment score for confirmation</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>MTF Contradiction Penalty</label>
+                                        <input type="number" id="mtf-contradiction-penalty" value="0.4" min="0.1" max="0.8" step="0.1">
+                                        <small style="color: #94a3b8;">Penalty for contradictory signals</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Volume Pattern Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📊 Volume Pattern Analysis</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Volume Spike Threshold</label>
+                                        <input type="number" id="volume-spike-threshold" value="1.5" min="1.2" max="3.0" step="0.1">
+                                        <small style="color: #94a3b8;">Volume spike threshold (X times average)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Performance Settings -->
+                            <div style="margin-top: 15px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 10px;">⚡ Performance Settings</h4>
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>Analysis Timeout (ms)</label>
+                                        <select id="max-analysis-time-ms">
+                                            <option value="100">100ms (Fast - May Skip Analysis)</option>
+                                            <option value="150">150ms (Balanced)</option>
+                                            <option value="200">200ms (Recommended)</option>
+                                            <option value="250" selected>250ms (Complete Analysis)</option>
+                                            <option value="300">300ms (Comprehensive)</option>
+                                            <option value="500">500ms (Maximum Detail)</option>
+                                        </select>
+                                        <small style="color: #94a3b8;">
+                                            ⚠️ If seeing "skipping divergence" warnings, increase this value
+                                        </small>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; padding: 10px; background: #1e293b; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                                    <small style="color: #fbbf24; display: block; margin-bottom: 5px;"><strong>⚡ Performance Guide:</strong></small>
+                                    <small style="color: #94a3b8; display: block; line-height: 1.5;">
+                                        • <strong>100-150ms:</strong> Fast but may skip divergence detection<br>
+                                        • <strong>200-250ms:</strong> Balanced - recommended for most users<br>
+                                        • <strong>300-500ms:</strong> Complete analysis, best for fewer symbols
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 6px; color: white;">
+                                <strong style="display: block; margin-bottom: 8px;">🔍 Advanced Trend Detection Features:</strong>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                                    <li>Market structure break detection (higher highs/lower lows)</li>
+                                    <li>RSI and MACD divergence analysis with multi-swing validation</li>
+                                    <li>Automatic trendline identification and break detection</li>
+                                    <li>EMA momentum analysis with slope confirmation</li>
+                                    <li>Multi-timeframe signal confirmation</li>
+                                    <li>Volume pattern analysis and exhaustion detection</li>
+                                    <li>Early warning signals for trend weakness</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #667eea;">
                         <strong style="color: #667eea;">💡 Tip:</strong> 
                         <span style="color: #64748b;">Start with the "Profitable Balanced" preset and adjust gradually. Test changes on demo account first!</span>
                     </div>
                     
+                    <!-- ML Features Section -->
+                    <div class="config-section" style="margin-top: 10px;">
+                        <div class="accordion-header" onclick="toggleAccordion('ml-features')">
+                            <span>🤖 ML & AI Features</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div id="ml-features-content" class="accordion-content">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="color: white; margin: 0; font-size: 0.95em;">
+                                    <strong>🚀 Advanced ML Features:</strong> Pattern recognition, sentiment analysis, and machine learning predictions to enhance trading signals.
+                                </p>
+                            </div>
+                            
+                            <!-- Enable/Disable ML Features -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">🎯 Feature Toggles</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="pattern_enabled" name="pattern_enabled">
+                                            📊 Pattern Recognition
+                                        </label>
+                                        <small style="color: #64748b; display: block; margin-top: 5px;">
+                                            Detects chart patterns (double tops, triangles, etc.)
+                                        </small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="sentiment_enabled" name="sentiment_enabled">
+                                            📰 Sentiment Analysis
+                                        </label>
+                                        <small style="color: #64748b; display: block; margin-top: 5px;">
+                                            Analyzes market sentiment from news
+                                        </small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="ml_enabled" name="ml_enabled">
+                                            🧠 ML Predictions
+                                        </label>
+                                        <small style="color: #64748b; display: block; margin-top: 5px;">
+                                            XGBoost model predictions (requires training)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Signal Weights -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">⚖️ Signal Weights</h4>
+                                <p style="color: #94a3b8; font-size: 0.9em; margin-bottom: 10px;">
+                                    Adjust how much each signal type influences trading decisions (weights are auto-normalized)
+                                </p>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                    <div class="form-group">
+                                        <label for="technical_weight">Technical Analysis</label>
+                                        <input type="number" id="technical_weight" name="technical_weight" 
+                                               min="0" max="1" step="0.05" value="0.4">
+                                        <small style="color: #64748b;">Default: 0.4 (40%)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ml_weight">ML Predictions</label>
+                                        <input type="number" id="ml_weight" name="ml_weight" 
+                                               min="0" max="1" step="0.05" value="0.3">
+                                        <small style="color: #64748b;">Default: 0.3 (30%)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sentiment_weight">Sentiment</label>
+                                        <input type="number" id="sentiment_weight" name="sentiment_weight" 
+                                               min="0" max="1" step="0.05" value="0.15">
+                                        <small style="color: #64748b;">Default: 0.15 (15%)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pattern_weight">Patterns</label>
+                                        <input type="number" id="pattern_weight" name="pattern_weight" 
+                                               min="0" max="1" step="0.05" value="0.15">
+                                        <small style="color: #64748b;">Default: 0.15 (15%)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ML Configuration -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">🔧 ML Configuration</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                                    <div class="form-group">
+                                        <label for="ml_min_confidence">Minimum Confidence</label>
+                                        <input type="number" id="ml_min_confidence" name="ml_min_confidence" 
+                                               min="0" max="1" step="0.05" value="0.6">
+                                        <small style="color: #64748b;">Minimum confidence to trade (0.6 = 60%)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ml_require_agreement">Require Agreement</label>
+                                        <select id="ml_require_agreement" name="ml_require_agreement">
+                                            <option value="2">2+ components must agree</option>
+                                            <option value="3">3+ components must agree</option>
+                                            <option value="all">All components must agree</option>
+                                        </select>
+                                        <small style="color: #64748b;">Signal agreement requirement</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Data Paths -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">📁 Data Paths</h4>
+                                <div class="grid" style="grid-template-columns: 1fr;">
+                                    <div class="form-group">
+                                        <label for="ml_model_path">ML Model Path</label>
+                                        <input type="text" id="ml_model_path" name="ml_model_path" 
+                                               value="models/ml_signal_model.pkl" placeholder="models/ml_signal_model.pkl">
+                                        <small style="color: #64748b;">Path to trained ML model file</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ml_training_data_path">Training Data Path</label>
+                                        <input type="text" id="ml_training_data_path" name="ml_training_data_path" 
+                                               value="data/training_data.csv" placeholder="data/training_data.csv">
+                                        <small style="color: #64748b;">Path to historical training data</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="news_data_path">News Data Path (Optional)</label>
+                                        <input type="text" id="news_data_path" name="news_data_path" 
+                                               value="" placeholder="data/news_headlines.json">
+                                        <small style="color: #64748b;">Path to news data for sentiment analysis</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ML Training Options -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">🎓 Training Options</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="ml_auto_retrain" name="ml_auto_retrain">
+                                            🔄 Auto-Retrain Model
+                                        </label>
+                                        <small style="color: #64748b; display: block; margin-top: 5px;">
+                                            Automatically retrain model with new data
+                                        </small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ml_retrain_frequency">Retrain Frequency</label>
+                                        <select id="ml_retrain_frequency" name="ml_retrain_frequency">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly" selected>Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                        <small style="color: #64748b;">How often to retrain</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ml_min_training_samples">Min Training Samples</label>
+                                        <input type="number" id="ml_min_training_samples" name="ml_min_training_samples" 
+                                               min="50" max="1000" step="10" value="100">
+                                        <small style="color: #64748b;">Minimum samples needed to train</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pattern Recognition Settings -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">📊 Pattern Recognition Settings</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                    <div class="form-group">
+                                        <label for="pattern_min_confidence">Pattern Min Confidence</label>
+                                        <input type="number" id="pattern_min_confidence" name="pattern_min_confidence" 
+                                               min="0" max="1" step="0.05" value="0.6">
+                                        <small style="color: #64748b;">Minimum pattern confidence</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pattern_lookback">Pattern Lookback</label>
+                                        <input type="number" id="pattern_lookback" name="pattern_lookback" 
+                                               min="10" max="100" step="5" value="30">
+                                        <small style="color: #64748b;">Bars to analyze for patterns</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sentiment Analysis Settings -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">📰 Sentiment Analysis Settings</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                                    <div class="form-group">
+                                        <label for="sentiment_cache_duration">Cache Duration (hours)</label>
+                                        <input type="number" id="sentiment_cache_duration" name="sentiment_cache_duration" 
+                                               min="0.5" max="24" step="0.5" value="1">
+                                        <small style="color: #64748b;">How long to cache sentiment data</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sentiment_min_confidence">Min Confidence</label>
+                                        <input type="number" id="sentiment_min_confidence" name="sentiment_min_confidence" 
+                                               min="0" max="1" step="0.05" value="0.5">
+                                        <small style="color: #64748b;">Minimum sentiment confidence</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ML Status & Actions -->
+                            <div style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155;">
+                                <h4 style="color: #60a5fa; margin-bottom: 15px;">📊 ML Status & Actions</h4>
+                                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    <button type="button" class="btn btn-primary" onclick="trainMLModel()" style="width: 100%;">
+                                        🎓 Train ML Model
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="testMLFeatures()" style="width: 100%;">
+                                        🧪 Test ML Features
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="viewMLStats()" style="width: 100%;">
+                                        📈 View ML Statistics
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="exportMLData()" style="width: 100%;">
+                                        💾 Export Training Data
+                                    </button>
+                                </div>
+                                <div id="ml-status-display" style="margin-top: 15px; padding: 10px; background: #1e293b; border-radius: 5px; display: none;">
+                                    <p style="margin: 0; color: #94a3b8;" id="ml-status-text"></p>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Start Guide -->
+                            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <h4 style="color: white; margin-bottom: 10px;">🚀 Quick Start Guide</h4>
+                                <ol style="color: white; margin: 0; padding-left: 20px; font-size: 0.9em;">
+                                    <li style="margin-bottom: 5px;"><strong>Start with Pattern Recognition:</strong> Enable it first, set weight to 0.2-0.3</li>
+                                    <li style="margin-bottom: 5px;"><strong>Add Sentiment (Optional):</strong> If you have news data, enable sentiment analysis</li>
+                                    <li style="margin-bottom: 5px;"><strong>Collect Data:</strong> Run bot for 1-2 weeks to collect training data</li>
+                                    <li style="margin-bottom: 5px;"><strong>Train ML Model:</strong> Click "Train ML Model" after collecting 100+ trades</li>
+                                    <li style="margin-bottom: 5px;"><strong>Enable ML:</strong> Once trained, enable ML predictions</li>
+                                    <li><strong>Monitor & Adjust:</strong> Track performance and adjust weights accordingly</li>
+                                </ol>
+                            </div>
+                            
+                            <!-- Warning -->
+                            <div style="background: #7c2d12; padding: 12px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #ef4444;">
+                                <p style="color: #fecaca; margin: 0; font-size: 0.9em;">
+                                    <strong>⚠️ Important:</strong> ML features require installation of additional dependencies. 
+                                    Run <code style="background: #1e293b; padding: 2px 6px; border-radius: 3px;">python install_ml_features.py</code> first.
+                                    Test on demo account before using on live trading!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="btn btn-secondary" id="save-config-btn" style="margin-top: 20px;">💾 Save Configuration</button>
                 </form>
+            </div>
+            
+            <!-- Trend Detection Tab -->
+            <div id="trend-detection-tab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">🔍 Advanced Trend Detection</h2>
+                    <button class="btn btn-secondary" onclick="refreshTrendDetection(event)" title="Refresh Trend Analysis">🔄</button>
+                </div>
+                
+                <!-- Status Overview -->
+                <div class="grid" style="margin-bottom: 30px;">
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">System Status</h3>
+                        <div class="stat">
+                            <span class="stat-label">Trend Detection</span>
+                            <span class="stat-value" id="trend-detection-enabled">
+                                <span class="status-indicator stopped"></span>
+                                Loading...
+                            </span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Sensitivity Level</span>
+                            <span class="stat-value" id="trend-sensitivity-level">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Min Confidence</span>
+                            <span class="stat-value" id="trend-min-confidence">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Early Signals</span>
+                            <span class="stat-value" id="trend-early-signals">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">MTF Confirmation</span>
+                            <span class="stat-value" id="trend-mtf-confirmation">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3 style="color: #60a5fa; margin-bottom: 15px;">Signal Summary</h3>
+                        <div class="stat">
+                            <span class="stat-label">Active Signals</span>
+                            <span class="stat-value" id="active-signals-count">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Bullish Signals</span>
+                            <span class="stat-value positive" id="bullish-signals-count">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Bearish Signals</span>
+                            <span class="stat-value negative" id="bearish-signals-count">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Early Warnings</span>
+                            <span class="stat-value" id="early-warnings-count">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Last Update</span>
+                            <span class="stat-value" id="trend-last-update">Never</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Symbol Analysis -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Symbol Analysis</h3>
+                    <div id="symbol-analysis-container">
+                        <div class="loading">Loading trend analysis...</div>
+                    </div>
+                </div>
+                
+                <!-- Market Structure Analysis -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Market Structure Analysis</h3>
+                    <div id="market-structure-container">
+                        <div class="loading">Loading market structure analysis...</div>
+                    </div>
+                </div>
+                
+                <!-- Multi-Timeframe Alignment -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Multi-Timeframe Alignment</h3>
+                    <div id="mtf-alignment-container">
+                        <div class="loading">Loading multi-timeframe analysis...</div>
+                    </div>
+                </div>
+                
+                <!-- Volume Analysis -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Volume Analysis</h3>
+                    <div id="volume-analysis-container">
+                        <div class="loading">Loading volume analysis...</div>
+                    </div>
+                </div>
+                
+                <!-- Divergence Detection -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3 style="color: #60a5fa; margin-bottom: 15px;">Divergence Detection</h3>
+                    <div id="divergence-analysis-container">
+                        <div class="loading">Loading divergence analysis...</div>
+                    </div>
+                </div>
             </div>
             
             <!-- Charts & Analytics Tab -->
@@ -1545,6 +2158,42 @@
                 toast.style.animation = 'slideIn 0.3s ease-out reverse';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        }
+        
+        // Toggle pip-based TP/SL controls (must be defined early)
+        function togglePipBasedControls() {
+            const usePipSL = document.getElementById('use-pip-based-sl');
+            const usePipTP = document.getElementById('use-pip-based-tp');
+            const slPips = document.getElementById('sl-pips');
+            const tpPips = document.getElementById('tp-pips');
+            
+            // Check if elements exist (they might not be loaded yet)
+            if (!usePipSL || !usePipTP || !slPips || !tpPips) {
+                return;
+            }
+            
+            const slEnabled = usePipSL.value === 'true';
+            const tpEnabled = usePipTP.value === 'true';
+            
+            slPips.disabled = !slEnabled;
+            tpPips.disabled = !tpEnabled;
+            
+            // Update visual feedback
+            if (slEnabled) {
+                slPips.style.background = '#1e293b';
+                slPips.style.color = '#e2e8f0';
+            } else {
+                slPips.style.background = '#334155';
+                slPips.style.color = '#64748b';
+            }
+            
+            if (tpEnabled) {
+                tpPips.style.background = '#1e293b';
+                tpPips.style.color = '#e2e8f0';
+            } else {
+                tpPips.style.background = '#334155';
+                tpPips.style.color = '#64748b';
+            }
         }
         
         // Logging Level Control
@@ -1988,6 +2637,9 @@
                 loadLogs();
                 loadCurrentLoggingLevel();
             }
+            if (tabName === 'trend-detection') {
+                loadTrendDetectionData();
+            }
         }
         
         // Load Current Logging Level
@@ -2293,6 +2945,486 @@
                     btn.disabled = false;
                     btn.innerHTML = '🔄 Reload Configuration';
                 });
+        }
+        
+        // Trend Detection Functions
+        function refreshTrendDetection(e) {
+            const btn = e.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Refreshing...';
+            
+            loadTrendDetectionData()
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄';
+                });
+        }
+        
+        async function loadTrendDetectionData() {
+            try {
+                const response = await fetch('/api/trend-detection/status');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    updateTrendDetectionDisplay(data);
+                    showToast('✅ Trend detection data refreshed', 'success');
+                } else {
+                    showTrendDetectionError(data.message || 'Failed to load trend detection data');
+                }
+            } catch (error) {
+                console.error('Error loading trend detection data:', error);
+                showTrendDetectionError('Network error: ' + error.message);
+            }
+        }
+        
+        function updateTrendDetectionDisplay(data) {
+            // Update system status
+            const enabledEl = document.getElementById('trend-detection-enabled');
+            if (data.enabled) {
+                enabledEl.innerHTML = '<span class="status-indicator running"></span>Enabled';
+                
+                // Update configuration display
+                document.getElementById('trend-sensitivity-level').textContent = data.config.sensitivity + '/10';
+                document.getElementById('trend-min-confidence').textContent = Math.round(data.config.min_confidence * 100) + '%';
+                document.getElementById('trend-early-signals').textContent = data.config.early_signals ? 'Enabled' : 'Disabled';
+                document.getElementById('trend-mtf-confirmation').textContent = data.config.mtf_confirmation ? 'Enabled' : 'Disabled';
+                
+                // Count signals
+                let totalSignals = 0;
+                let bullishSignals = 0;
+                let bearishSignals = 0;
+                let totalWarnings = 0;
+                
+                Object.values(data.symbols).forEach(symbolData => {
+                    if (symbolData.status === 'success') {
+                        totalSignals += symbolData.signals_count || 0;
+                        
+                        symbolData.signals.forEach(signal => {
+                            if (signal.type.includes('bullish')) {
+                                bullishSignals++;
+                            } else if (signal.type.includes('bearish')) {
+                                bearishSignals++;
+                            }
+                        });
+                        
+                        totalWarnings += symbolData.early_warnings.length || 0;
+                    }
+                });
+                
+                // Update signal counts
+                document.getElementById('active-signals-count').textContent = totalSignals;
+                document.getElementById('bullish-signals-count').textContent = bullishSignals;
+                document.getElementById('bearish-signals-count').textContent = bearishSignals;
+                document.getElementById('early-warnings-count').textContent = totalWarnings;
+                document.getElementById('trend-last-update').textContent = new Date(data.timestamp).toLocaleTimeString();
+                
+                // Update symbol analysis
+                updateSymbolAnalysisDisplay(data.symbols);
+                
+                // Update market structure display
+                updateMarketStructureDisplay(data.symbols);
+                
+                // Update MTF alignment display
+                updateMTFAlignmentDisplay(data.symbols);
+                
+                // Update volume analysis display
+                updateVolumeAnalysisDisplay(data.symbols);
+                
+                // Update divergence analysis display
+                updateDivergenceAnalysisDisplay(data.symbols);
+                
+            } else {
+                enabledEl.innerHTML = '<span class="status-indicator stopped"></span>Disabled';
+                document.getElementById('trend-sensitivity-level').textContent = 'N/A';
+                document.getElementById('trend-min-confidence').textContent = 'N/A';
+                document.getElementById('trend-early-signals').textContent = 'N/A';
+                document.getElementById('trend-mtf-confirmation').textContent = 'N/A';
+                
+                // Show disabled message
+                document.getElementById('symbol-analysis-container').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #94a3b8;">' +
+                    '<p>Trend detection is disabled in configuration.</p>' +
+                    '<p>Enable it in the Configuration tab to see analysis.</p>' +
+                    '</div>';
+                
+                document.getElementById('market-structure-container').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #94a3b8;">Trend detection disabled</div>';
+                
+                document.getElementById('mtf-alignment-container').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #94a3b8;">Trend detection disabled</div>';
+                
+                document.getElementById('volume-analysis-container').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #94a3b8;">Trend detection disabled</div>';
+                
+                document.getElementById('divergence-analysis-container').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #94a3b8;">Trend detection disabled</div>';
+            }
+        }
+        
+        function updateSymbolAnalysisDisplay(symbols) {
+            const container = document.getElementById('symbol-analysis-container');
+            
+            if (Object.keys(symbols).length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No symbols configured for analysis</div>';
+                return;
+            }
+            
+            let html = '<div class="grid">';
+            
+            Object.entries(symbols).forEach(([symbol, data]) => {
+                if (data.status === 'error') {
+                    html += `
+                        <div class="card" style="border-left: 3px solid #ef4444;">
+                            <h4 style="color: #ef4444; margin-bottom: 10px;">${symbol}</h4>
+                            <p style="color: #94a3b8;">Error: ${data.message}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const confidenceColor = data.overall_confidence > 0.7 ? '#10b981' : 
+                                       data.overall_confidence > 0.4 ? '#f59e0b' : '#ef4444';
+                
+                html += `
+                    <div class="card" style="border-left: 3px solid ${confidenceColor};">
+                        <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                        <div class="stat">
+                            <span class="stat-label">Current Price</span>
+                            <span class="stat-value">${data.current_price}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Overall Confidence</span>
+                            <span class="stat-value" style="color: ${confidenceColor};">${Math.round(data.overall_confidence * 100)}%</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Active Signals</span>
+                            <span class="stat-value">${data.signals_count}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Early Warnings</span>
+                            <span class="stat-value">${data.early_warnings.length}</span>
+                        </div>
+                `;
+                
+                // Show signals
+                if (data.signals.length > 0) {
+                    html += '<div style="margin-top: 15px;"><strong style="color: #60a5fa;">Signals:</strong><ul style="margin: 5px 0 0 20px; font-size: 13px;">';
+                    data.signals.forEach(signal => {
+                        const signalColor = signal.type.includes('bullish') ? '#10b981' : '#ef4444';
+                        const signalIcon = signal.type.includes('bullish') ? '📈' : '📉';
+                        html += `<li style="color: ${signalColor}; margin-bottom: 3px;">${signalIcon} ${signal.source.toUpperCase()}: ${Math.round(signal.confidence * 100)}% confidence</li>`;
+                    });
+                    html += '</ul></div>';
+                }
+                
+                // Show early warnings
+                if (data.early_warnings.length > 0) {
+                    html += '<div style="margin-top: 10px;"><strong style="color: #f59e0b;">Warnings:</strong><ul style="margin: 5px 0 0 20px; font-size: 13px;">';
+                    data.early_warnings.slice(0, 2).forEach(warning => {
+                        html += `<li style="color: #f59e0b; margin-bottom: 3px;">⚠️ ${warning.description}</li>`;
+                    });
+                    html += '</ul></div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function updateMarketStructureDisplay(symbols) {
+            const container = document.getElementById('market-structure-container');
+            
+            let html = '<div class="grid">';
+            let hasStructureData = false;
+            
+            Object.entries(symbols).forEach(([symbol, data]) => {
+                if (data.status === 'success' && data.market_structure) {
+                    hasStructureData = true;
+                    const structure = data.market_structure;
+                    const statusColor = structure.confirmed ? '#10b981' : '#f59e0b';
+                    
+                    html += `
+                        <div class="card" style="border-left: 3px solid ${statusColor};">
+                            <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                            <div class="stat">
+                                <span class="stat-label">Break Type</span>
+                                <span class="stat-value">${structure.break_type.replace(/_/g, ' ').toUpperCase()}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Break Level</span>
+                                <span class="stat-value">${structure.break_level}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Volume Confirmed</span>
+                                <span class="stat-value" style="color: ${structure.volume_confirmed ? '#10b981' : '#ef4444'};">
+                                    ${structure.volume_confirmed ? 'Yes' : 'No'}
+                                </span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Strength</span>
+                                <span class="stat-value">${Math.round(structure.strength * 100)}%</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Status</span>
+                                <span class="stat-value" style="color: ${statusColor};">
+                                    ${structure.confirmed ? 'Confirmed' : 'Pending'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (!hasStructureData) {
+                html = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No market structure breaks detected</div>';
+            } else {
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function updateMTFAlignmentDisplay(symbols) {
+            const container = document.getElementById('mtf-alignment-container');
+            
+            let html = '<div class="grid">';
+            let hasMTFData = false;
+            
+            Object.entries(symbols).forEach(([symbol, data]) => {
+                if (data.status === 'success' && data.mtf_alignment) {
+                    hasMTFData = true;
+                    const mtf = data.mtf_alignment;
+                    
+                    let alignmentColor = '#ef4444'; // Default red
+                    if (mtf.confirmation_level === 'strong') alignmentColor = '#10b981';
+                    else if (mtf.confirmation_level === 'moderate') alignmentColor = '#f59e0b';
+                    
+                    html += `
+                        <div class="card" style="border-left: 3px solid ${alignmentColor};">
+                            <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                            <div class="stat">
+                                <span class="stat-label">Primary TF</span>
+                                <span class="stat-value">${mtf.primary_timeframe}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Higher TF</span>
+                                <span class="stat-value">${mtf.higher_timeframe}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Alignment Score</span>
+                                <span class="stat-value">${Math.round(mtf.alignment_score * 100)}%</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Confirmation</span>
+                                <span class="stat-value" style="color: ${alignmentColor};">
+                                    ${mtf.confirmation_level.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (!hasMTFData) {
+                html = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No multi-timeframe data available</div>';
+            } else {
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function updateVolumeAnalysisDisplay(symbols) {
+            const container = document.getElementById('volume-analysis-container');
+            
+            let html = '<div class="grid">';
+            let hasVolumeData = false;
+            
+            Object.entries(symbols).forEach(([symbol, data]) => {
+                if (data.status === 'success') {
+                    hasVolumeData = true;
+                    
+                    // Get volume confirmation data
+                    const volumeConfirmation = data.volume_confirmation;
+                    const hasVolumeConfirmation = volumeConfirmation && volumeConfirmation.strength !== undefined;
+                    
+                    // Determine volume status color
+                    let volumeColor = '#94a3b8'; // Default gray
+                    let volumeStatus = 'No Data';
+                    
+                    if (hasVolumeConfirmation) {
+                        if (volumeConfirmation.strength > 0.7) {
+                            volumeColor = '#10b981'; // Green for strong
+                            volumeStatus = 'Strong';
+                        } else if (volumeConfirmation.strength > 0.4) {
+                            volumeColor = '#f59e0b'; // Yellow for moderate
+                            volumeStatus = 'Moderate';
+                        } else {
+                            volumeColor = '#ef4444'; // Red for weak
+                            volumeStatus = 'Weak';
+                        }
+                    }
+                    
+                    html += `
+                        <div class="card" style="border-left: 3px solid ${volumeColor};">
+                            <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                    `;
+                    
+                    if (hasVolumeConfirmation) {
+                        html += `
+                            <div class="stat">
+                                <span class="stat-label">Volume Status</span>
+                                <span class="stat-value" style="color: ${volumeColor};">${volumeStatus}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Volume Spike</span>
+                                <span class="stat-value" style="color: ${volumeConfirmation.volume_spike ? '#10b981' : '#ef4444'};">
+                                    ${volumeConfirmation.volume_spike ? 'Detected' : 'None'}
+                                </span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Volume Ratio</span>
+                                <span class="stat-value">${volumeConfirmation.volume_ratio}x</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Strength Score</span>
+                                <span class="stat-value">${Math.round(volumeConfirmation.strength * 100)}%</span>
+                            </div>
+                        `;
+                        
+                        // Add volume interpretation
+                        let interpretation = '';
+                        if (volumeConfirmation.volume_spike && volumeConfirmation.strength > 0.6) {
+                            interpretation = '📈 Strong volume support for price movement';
+                        } else if (volumeConfirmation.volume_ratio > 1.5) {
+                            interpretation = '📊 Above average volume activity';
+                        } else if (volumeConfirmation.strength < 0.3) {
+                            interpretation = '⚠️ Weak volume - signals may be unreliable';
+                        } else {
+                            interpretation = '📊 Normal volume activity';
+                        }
+                        
+                        html += `
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(96, 165, 250, 0.1); border-radius: 6px;">
+                                <small style="color: #60a5fa; font-weight: 600;">Analysis:</small><br>
+                                <small style="color: #94a3b8;">${interpretation}</small>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                                <p>Volume analysis not available</p>
+                                <small>Requires active trend signals</small>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+            });
+            
+            if (!hasVolumeData) {
+                html = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No volume analysis data available</div>';
+            } else {
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function updateDivergenceAnalysisDisplay(symbols) {
+            const container = document.getElementById('divergence-analysis-container');
+            
+            let html = '<div class="grid">';
+            let hasDivergenceData = false;
+            
+            Object.entries(symbols).forEach(([symbol, data]) => {
+                if (data.status === 'success' && data.divergences && data.divergences.length > 0) {
+                    hasDivergenceData = true;
+                    
+                    html += `
+                        <div class="card" style="border-left: 3px solid #f59e0b;">
+                            <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                            <div class="stat">
+                                <span class="stat-label">Divergences Found</span>
+                                <span class="stat-value">${data.divergences.length}</span>
+                            </div>
+                    `;
+                    
+                    // Show each divergence
+                    data.divergences.forEach((divergence, index) => {
+                        const divColor = divergence.type.includes('bullish') ? '#10b981' : '#ef4444';
+                        const divIcon = divergence.type.includes('bullish') ? '📈' : '📉';
+                        const divType = divergence.type.replace(/_/g, ' ').toUpperCase();
+                        
+                        html += `
+                            <div style="margin-top: 15px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border-left: 3px solid ${divColor};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: ${divColor};">${divIcon} ${divType}</strong>
+                                    <span style="color: ${divergence.validated ? '#10b981' : '#f59e0b'}; font-size: 12px;">
+                                        ${divergence.validated ? '✅ Validated' : '⏳ Pending'}
+                                    </span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                                    <div>
+                                        <span style="color: #94a3b8;">Indicator:</span><br>
+                                        <span style="color: #e2e8f0;">${divergence.indicator}</span>
+                                    </div>
+                                    <div>
+                                        <span style="color: #94a3b8;">Strength:</span><br>
+                                        <span style="color: #e2e8f0;">${Math.round(divergence.strength * 100)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    
+                } else if (data.status === 'success') {
+                    // No divergences found
+                    html += `
+                        <div class="card" style="border-left: 3px solid #94a3b8;">
+                            <h4 style="color: #60a5fa; margin-bottom: 15px;">${symbol}</h4>
+                            <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                                <p>✅ No divergences detected</p>
+                                <small>Price and momentum indicators are aligned</small>
+                            </div>
+                        </div>
+                    `;
+                    hasDivergenceData = true;
+                }
+            });
+            
+            if (!hasDivergenceData) {
+                html = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No divergence analysis data available</div>';
+            } else {
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function showTrendDetectionError(message) {
+            const containers = [
+                'symbol-analysis-container',
+                'market-structure-container', 
+                'mtf-alignment-container',
+                'volume-analysis-container',
+                'divergence-analysis-container'
+            ];
+            
+            containers.forEach(containerId => {
+                document.getElementById(containerId).innerHTML = 
+                    `<div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <p>❌ Error loading data</p>
+                        <p style="font-size: 14px; color: #94a3b8;">${message}</p>
+                    </div>`;
+            });
+            
+            showToast('❌ Failed to load trend detection data: ' + message, 'error');
         }
         
         // Check MT5 connection on page load
@@ -3355,6 +4487,12 @@
                 atr_multiplier: 2.0,
                 adx_min: 25,
                 use_rsi: 'true',
+                
+                // Pip-Based TP/SL (disabled by default)
+                use_pip_based_sl: 'false',
+                sl_pips: 50,
+                use_pip_based_tp: 'false',
+                tp_pips: 100,
                 use_macd: 'true',
                 use_adx: 'true',
                 use_trend_filter: 'true',
@@ -3555,6 +4693,13 @@
             document.getElementById('atr-multiplier').value = config.atr_multiplier;
             document.getElementById('adx-min').value = config.adx_min;
             
+            // Pip-Based TP/SL
+            if (config.use_pip_based_sl !== undefined) document.getElementById('use-pip-based-sl').value = config.use_pip_based_sl;
+            if (config.sl_pips !== undefined) document.getElementById('sl-pips').value = config.sl_pips;
+            if (config.use_pip_based_tp !== undefined) document.getElementById('use-pip-based-tp').value = config.use_pip_based_tp;
+            if (config.tp_pips !== undefined) document.getElementById('tp-pips').value = config.tp_pips;
+            togglePipBasedControls();
+            
             // Filters
             document.getElementById('use-rsi').value = config.use_rsi;
             document.getElementById('use-macd').value = config.use_macd;
@@ -3649,6 +4794,12 @@
                 atr_multiplier: parseFloat(document.getElementById('atr-multiplier').value),
                 adx_min_strength: parseInt(document.getElementById('adx-min').value),
                 
+                // Pip-Based TP/SL
+                use_pip_based_sl: document.getElementById('use-pip-based-sl').value === 'true',
+                sl_pips: parseFloat(document.getElementById('sl-pips').value),
+                use_pip_based_tp: document.getElementById('use-pip-based-tp').value === 'true',
+                tp_pips: parseFloat(document.getElementById('tp-pips').value),
+                
                 // Filters
                 use_rsi: document.getElementById('use-rsi').value === 'true',
                 use_macd: document.getElementById('use-macd').value === 'true',
@@ -3685,7 +4836,72 @@
                 use_volume_filter: document.getElementById('use-volume-filter').value === 'true',
                 min_volume_ma: parseFloat(document.getElementById('min-volume-ma').value),
                 volume_ma_period: parseInt(document.getElementById('volume-ma-period').value),
-                obv_period: parseInt(document.getElementById('obv-period').value)
+                obv_period: parseInt(document.getElementById('obv-period').value),
+                
+                // Advanced Trend Detection
+                use_trend_detection: document.getElementById('use-trend-detection').value === 'true',
+                trend_detection_sensitivity: parseInt(document.getElementById('trend-detection-sensitivity').value),
+                min_trend_confidence: parseFloat(document.getElementById('min-trend-confidence').value) / 100,
+                enable_early_signals: document.getElementById('enable-early-signals').value === 'true',
+                max_analysis_time_ms: parseInt(document.getElementById('max-analysis-time-ms').value),
+                
+                // EMA Settings
+                ema_fast_period: parseInt(document.getElementById('ema-fast-period').value),
+                ema_slow_period: parseInt(document.getElementById('ema-slow-period').value),
+                
+                // Aroon Settings
+                aroon_period: parseInt(document.getElementById('aroon-period').value),
+                aroon_threshold: parseInt(document.getElementById('aroon-threshold').value),
+                
+                // Market Structure Settings
+                min_swing_strength: parseInt(document.getElementById('min-swing-strength').value),
+                structure_break_threshold: parseFloat(document.getElementById('structure-break-threshold').value) / 100,
+                
+                // Divergence Settings
+                divergence_lookback: parseInt(document.getElementById('divergence-lookback').value),
+                min_divergence_strength: parseFloat(document.getElementById('min-divergence-strength').value),
+                
+                // Trendline Settings
+                max_trendlines: parseInt(document.getElementById('max-trendlines').value),
+                min_trendline_touches: parseInt(document.getElementById('min-trendline-touches').value),
+                trendline_angle_min: parseInt(document.getElementById('trendline-angle-min').value),
+                trendline_angle_max: parseInt(document.getElementById('trendline-angle-max').value),
+                
+                // Multi-Timeframe Settings
+                enable_mtf_confirmation: document.getElementById('enable-mtf-confirmation').value === 'true',
+                mtf_weight: parseFloat(document.getElementById('mtf-weight').value),
+                mtf_alignment_threshold: parseFloat(document.getElementById('mtf-alignment-threshold').value),
+                mtf_contradiction_penalty: parseFloat(document.getElementById('mtf-contradiction-penalty').value),
+                
+                // Volume Pattern Settings
+                volume_spike_threshold: parseFloat(document.getElementById('volume-spike-threshold').value),
+                
+                // ML Features
+                pattern_enabled: document.getElementById('pattern_enabled').checked,
+                sentiment_enabled: document.getElementById('sentiment_enabled').checked,
+                ml_enabled: document.getElementById('ml_enabled').checked,
+                
+                technical_weight: parseFloat(document.getElementById('technical_weight').value),
+                ml_weight: parseFloat(document.getElementById('ml_weight').value),
+                sentiment_weight: parseFloat(document.getElementById('sentiment_weight').value),
+                pattern_weight: parseFloat(document.getElementById('pattern_weight').value),
+                
+                ml_min_confidence: parseFloat(document.getElementById('ml_min_confidence').value),
+                ml_require_agreement: document.getElementById('ml_require_agreement').value,
+                
+                ml_model_path: document.getElementById('ml_model_path').value,
+                ml_training_data_path: document.getElementById('ml_training_data_path').value,
+                news_data_path: document.getElementById('news_data_path').value,
+                
+                ml_auto_retrain: document.getElementById('ml_auto_retrain').checked,
+                ml_retrain_frequency: document.getElementById('ml_retrain_frequency').value,
+                ml_min_training_samples: parseInt(document.getElementById('ml_min_training_samples').value),
+                
+                pattern_min_confidence: parseFloat(document.getElementById('pattern_min_confidence').value),
+                pattern_lookback: parseInt(document.getElementById('pattern_lookback').value),
+                
+                sentiment_cache_duration: parseFloat(document.getElementById('sentiment_cache_duration').value),
+                sentiment_min_confidence: parseFloat(document.getElementById('sentiment_min_confidence').value)
             };
             
             fetch('/api/config', {
@@ -3745,12 +4961,253 @@
                 // Volume Filter
                 if (config.use_volume_filter !== undefined) document.getElementById('use-volume-filter').value = config.use_volume_filter.toString();
                 if (config.min_volume_ma) document.getElementById('min-volume-ma').value = config.min_volume_ma;
+                if (config.volume_ma_period) document.getElementById('volume-ma-period').value = config.volume_ma_period;
+                if (config.obv_period) document.getElementById('obv-period').value = config.obv_period;
+                
+                // Advanced Trend Detection
+                if (config.use_trend_detection !== undefined) document.getElementById('use-trend-detection').value = config.use_trend_detection.toString();
+                if (config.trend_detection_sensitivity) document.getElementById('trend-detection-sensitivity').value = config.trend_detection_sensitivity;
+                if (config.min_trend_confidence) document.getElementById('min-trend-confidence').value = config.min_trend_confidence * 100;
+                if (config.enable_early_signals !== undefined) document.getElementById('enable-early-signals').value = config.enable_early_signals.toString();
+                if (config.max_analysis_time_ms) document.getElementById('max-analysis-time-ms').value = config.max_analysis_time_ms;
+                
+                // EMA Settings
+                if (config.ema_fast_period) document.getElementById('ema-fast-period').value = config.ema_fast_period;
+                if (config.ema_slow_period) document.getElementById('ema-slow-period').value = config.ema_slow_period;
+                
+                // Aroon Settings
+                if (config.aroon_period) document.getElementById('aroon-period').value = config.aroon_period;
+                if (config.aroon_threshold) document.getElementById('aroon-threshold').value = config.aroon_threshold;
+                
+                // Market Structure Settings
+                if (config.min_swing_strength) document.getElementById('min-swing-strength').value = config.min_swing_strength;
+                if (config.structure_break_threshold) document.getElementById('structure-break-threshold').value = config.structure_break_threshold * 100;
+                
+                // Divergence Settings
+                if (config.divergence_lookback) document.getElementById('divergence-lookback').value = config.divergence_lookback;
+                if (config.min_divergence_strength) document.getElementById('min-divergence-strength').value = config.min_divergence_strength;
+                
+                // Trendline Settings
+                if (config.max_trendlines) document.getElementById('max-trendlines').value = config.max_trendlines;
+                if (config.min_trendline_touches) document.getElementById('min-trendline-touches').value = config.min_trendline_touches;
+                if (config.trendline_angle_min) document.getElementById('trendline-angle-min').value = config.trendline_angle_min;
+                if (config.trendline_angle_max) document.getElementById('trendline-angle-max').value = config.trendline_angle_max;
+                
+                // Multi-Timeframe Settings
+                if (config.enable_mtf_confirmation !== undefined) document.getElementById('enable-mtf-confirmation').value = config.enable_mtf_confirmation.toString();
+                if (config.mtf_weight) document.getElementById('mtf-weight').value = config.mtf_weight;
+                if (config.mtf_alignment_threshold) document.getElementById('mtf-alignment-threshold').value = config.mtf_alignment_threshold;
+                if (config.mtf_contradiction_penalty) document.getElementById('mtf-contradiction-penalty').value = config.mtf_contradiction_penalty;
+                
+                // Volume Pattern Settings
+                if (config.volume_spike_threshold) document.getElementById('volume-spike-threshold').value = config.volume_spike_threshold;
+                
+                // Pip-Based TP/SL
+                if (config.use_pip_based_sl !== undefined) document.getElementById('use-pip-based-sl').value = config.use_pip_based_sl.toString();
+                if (config.sl_pips) document.getElementById('sl-pips').value = config.sl_pips;
+                if (config.use_pip_based_tp !== undefined) document.getElementById('use-pip-based-tp').value = config.use_pip_based_tp.toString();
+                if (config.tp_pips) document.getElementById('tp-pips').value = config.tp_pips;
+                
+                // Update pip-based controls state
+                togglePipBasedControls();
                 
                 console.log('✅ Configuration loaded successfully');
                 console.log('RSI Overbought loaded as:', config.rsi_overbought);
                 
+                // Load ML configuration
+                if (config.pattern_enabled !== undefined) document.getElementById('pattern_enabled').checked = config.pattern_enabled;
+                if (config.sentiment_enabled !== undefined) document.getElementById('sentiment_enabled').checked = config.sentiment_enabled;
+                if (config.ml_enabled !== undefined) document.getElementById('ml_enabled').checked = config.ml_enabled;
+                
+                if (config.technical_weight) document.getElementById('technical_weight').value = config.technical_weight;
+                if (config.ml_weight) document.getElementById('ml_weight').value = config.ml_weight;
+                if (config.sentiment_weight) document.getElementById('sentiment_weight').value = config.sentiment_weight;
+                if (config.pattern_weight) document.getElementById('pattern_weight').value = config.pattern_weight;
+                
+                if (config.ml_min_confidence) document.getElementById('ml_min_confidence').value = config.ml_min_confidence;
+                if (config.ml_require_agreement) document.getElementById('ml_require_agreement').value = config.ml_require_agreement;
+                
+                if (config.ml_model_path) document.getElementById('ml_model_path').value = config.ml_model_path;
+                if (config.ml_training_data_path) document.getElementById('ml_training_data_path').value = config.ml_training_data_path;
+                if (config.news_data_path) document.getElementById('news_data_path').value = config.news_data_path;
+                
+                if (config.ml_auto_retrain !== undefined) document.getElementById('ml_auto_retrain').checked = config.ml_auto_retrain;
+                if (config.ml_retrain_frequency) document.getElementById('ml_retrain_frequency').value = config.ml_retrain_frequency;
+                if (config.ml_min_training_samples) document.getElementById('ml_min_training_samples').value = config.ml_min_training_samples;
+                
+                if (config.pattern_min_confidence) document.getElementById('pattern_min_confidence').value = config.pattern_min_confidence;
+                if (config.pattern_lookback) document.getElementById('pattern_lookback').value = config.pattern_lookback;
+                
+                if (config.sentiment_cache_duration) document.getElementById('sentiment_cache_duration').value = config.sentiment_cache_duration;
+                if (config.sentiment_min_confidence) document.getElementById('sentiment_min_confidence').value = config.sentiment_min_confidence;
+                
             } catch (error) {
                 console.error('❌ Failed to load configuration:', error);
+            }
+        }
+        
+        // ML Feature Functions
+        async function trainMLModel() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Training...';
+            
+            showMLStatus('Starting ML model training...', 'info');
+            
+            try {
+                // Get paths from config inputs
+                const trainingDataPath = document.getElementById('ml_training_data_path')?.value || 'data/training_data.csv';
+                const modelPath = document.getElementById('ml_model_path')?.value || 'models/ml_signal_model.pkl';
+                
+                const response = await fetch('/api/ml/train', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        training_data_path: trainingDataPath,
+                        model_path: modelPath
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const stats = result.statistics || {};
+                    let statusText = '✅ Model trained successfully!\n';
+                    statusText += `Samples: ${stats.samples || 'N/A'}\n`;
+                    statusText += `Accuracy: ${stats.accuracy || 'N/A'}%\n`;
+                    statusText += `Precision: ${stats.precision || 'N/A'}%\n`;
+                    statusText += `Recall: ${stats.recall || 'N/A'}%`;
+                    
+                    showMLStatus(statusText, 'success');
+                    showToast('ML model trained successfully!', 'success');
+                } else {
+                    showMLStatus('❌ Training failed: ' + result.message, 'error');
+                    showToast('Training failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMLStatus('❌ Training error: ' + error.message, 'error');
+                showToast('Training error', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🎓 Train ML Model';
+            }
+        }
+        
+        async function testMLFeatures() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Testing...';
+            
+            showMLStatus('Testing ML features...', 'info');
+            
+            try {
+                const response = await fetch('/api/ml/test');
+                const result = await response.json();
+                
+                if (result.success) {
+                    let statusText = '✅ ML Features Test Results:\n';
+                    statusText += `Pattern Recognition: ${result.pattern_recognition ? '✓' : '✗'}\n`;
+                    statusText += `Sentiment Analysis: ${result.sentiment_analysis ? '✓' : '✗'}\n`;
+                    statusText += `ML Model: ${result.ml_model ? '✓' : '✗'}\n`;
+                    statusText += `Integration: ${result.integration ? '✓' : '✗'}`;
+                    
+                    showMLStatus(statusText, 'success');
+                    showToast('ML features test complete', 'success');
+                } else {
+                    showMLStatus('❌ Test failed: ' + result.error, 'error');
+                    showToast('Test failed', 'error');
+                }
+            } catch (error) {
+                showMLStatus('❌ Test error: ' + error.message, 'error');
+                showToast('Test error', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🧪 Test ML Features';
+            }
+        }
+        
+        async function viewMLStats() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Loading...';
+            
+            try {
+                const response = await fetch('/api/ml/stats');
+                const stats = await response.json();
+                
+                if (stats.success) {
+                    let statusText = '📊 ML Statistics:\n';
+                    statusText += `Model Trained: ${stats.model_trained ? 'Yes' : 'No'}\n`;
+                    if (stats.model_trained) {
+                        statusText += `Training Samples: ${stats.training_samples}\n`;
+                        statusText += `Model Accuracy: ${(stats.accuracy * 100).toFixed(1)}%\n`;
+                        statusText += `Last Trained: ${stats.last_trained}\n`;
+                    }
+                    statusText += `Patterns Detected (24h): ${stats.patterns_detected || 0}\n`;
+                    statusText += `Sentiment Analyzed (24h): ${stats.sentiment_analyzed || 0}`;
+                    
+                    showMLStatus(statusText, 'info');
+                } else {
+                    showMLStatus('❌ Failed to load stats', 'error');
+                }
+            } catch (error) {
+                showMLStatus('❌ Error loading stats: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📈 View ML Statistics';
+            }
+        }
+        
+        async function exportMLData() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Exporting...';
+            
+            showMLStatus('Exporting training data...', 'info');
+            
+            try {
+                const response = await fetch('/api/ml/export');
+                const blob = await response.blob();
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ml_training_data_' + new Date().toISOString().split('T')[0] + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showMLStatus('✅ Training data exported successfully', 'success');
+                showToast('Data exported successfully', 'success');
+            } catch (error) {
+                showMLStatus('❌ Export error: ' + error.message, 'error');
+                showToast('Export failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Export Training Data';
+            }
+        }
+        
+        function showMLStatus(message, type) {
+            const statusDiv = document.getElementById('ml-status-display');
+            const statusText = document.getElementById('ml-status-text');
+            
+            statusDiv.style.display = 'block';
+            statusText.textContent = message;
+            statusText.style.whiteSpace = 'pre-line';
+            
+            // Color based on type
+            if (type === 'success') {
+                statusDiv.style.borderLeft = '4px solid #10b981';
+                statusText.style.color = '#10b981';
+            } else if (type === 'error') {
+                statusDiv.style.borderLeft = '4px solid #ef4444';
+                statusText.style.color = '#ef4444';
+            } else {
+                statusDiv.style.borderLeft = '4px solid #60a5fa';
+                statusText.style.color = '#60a5fa';
             }
         }
         

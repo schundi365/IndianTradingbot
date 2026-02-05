@@ -184,6 +184,125 @@ def config_api():
                 if obv_period < 10 or obv_period > 50:
                     return jsonify({'status': 'error', 'message': 'OBV period must be between 10 and 50'})
             
+            # Validate trend detection settings
+            if 'trend_detection_sensitivity' in new_config:
+                sensitivity = new_config.get('trend_detection_sensitivity', 5)
+                if sensitivity < 1 or sensitivity > 10:
+                    return jsonify({'status': 'error', 'message': 'Trend detection sensitivity must be between 1 and 10'})
+            
+            if 'min_trend_confidence' in new_config:
+                try:
+                    trend_confidence = float(new_config.get('min_trend_confidence', 0.6))
+                    if trend_confidence < 0.2 or trend_confidence > 0.9:
+                        return jsonify({'status': 'error', 'message': 'Min trend confidence must be between 20% and 90%'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'Min trend confidence must be a valid number between 20% and 90%'})
+            
+            # Validate EMA settings
+            if 'ema_fast_period' in new_config and 'ema_slow_period' in new_config:
+                ema_fast = new_config.get('ema_fast_period', 20)
+                ema_slow = new_config.get('ema_slow_period', 50)
+                if ema_fast >= ema_slow:
+                    return jsonify({'status': 'error', 'message': 'Fast EMA period must be less than Slow EMA period'})
+                if ema_fast < 5 or ema_fast > 50:
+                    return jsonify({'status': 'error', 'message': 'Fast EMA period must be between 5 and 50'})
+                if ema_slow < 20 or ema_slow > 100:
+                    return jsonify({'status': 'error', 'message': 'Slow EMA period must be between 20 and 100'})
+            
+            # Validate Aroon settings
+            if 'aroon_period' in new_config:
+                aroon_period = new_config.get('aroon_period', 25)
+                if aroon_period < 14 or aroon_period > 50:
+                    return jsonify({'status': 'error', 'message': 'Aroon period must be between 14 and 50'})
+            
+            if 'aroon_threshold' in new_config:
+                aroon_threshold = new_config.get('aroon_threshold', 70)
+                if aroon_threshold < 50 or aroon_threshold > 90:
+                    return jsonify({'status': 'error', 'message': 'Aroon threshold must be between 50 and 90'})
+            
+            # Validate market structure settings
+            if 'min_swing_strength' in new_config:
+                swing_strength = new_config.get('min_swing_strength', 3)
+                if swing_strength < 2 or swing_strength > 10:
+                    return jsonify({'status': 'error', 'message': 'Min swing strength must be between 2 and 10'})
+            
+            if 'structure_break_threshold' in new_config:
+                try:
+                    break_threshold = float(new_config.get('structure_break_threshold', 0.001))
+                    if break_threshold < 0.0005 or break_threshold > 0.005:
+                        return jsonify({'status': 'error', 'message': 'Structure break threshold must be between 0.05% and 0.5%'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'Structure break threshold must be a valid number'})
+            
+            # Validate divergence settings
+            if 'divergence_lookback' in new_config:
+                div_lookback = new_config.get('divergence_lookback', 50)
+                if div_lookback < 20 or div_lookback > 100:
+                    return jsonify({'status': 'error', 'message': 'Divergence lookback must be between 20 and 100'})
+            
+            if 'min_divergence_strength' in new_config:
+                try:
+                    div_strength = float(new_config.get('min_divergence_strength', 0.3))
+                    if div_strength < 0.1 or div_strength > 0.8:
+                        return jsonify({'status': 'error', 'message': 'Min divergence strength must be between 0.1 and 0.8'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'Min divergence strength must be a valid number'})
+            
+            # Validate trendline settings
+            if 'max_trendlines' in new_config:
+                max_trendlines = new_config.get('max_trendlines', 5)
+                if max_trendlines < 2 or max_trendlines > 10:
+                    return jsonify({'status': 'error', 'message': 'Max trendlines must be between 2 and 10'})
+            
+            if 'min_trendline_touches' in new_config:
+                min_touches = new_config.get('min_trendline_touches', 2)
+                if min_touches < 2 or min_touches > 5:
+                    return jsonify({'status': 'error', 'message': 'Min trendline touches must be between 2 and 5'})
+            
+            if 'trendline_angle_min' in new_config and 'trendline_angle_max' in new_config:
+                angle_min = new_config.get('trendline_angle_min', 10)
+                angle_max = new_config.get('trendline_angle_max', 80)
+                if angle_min >= angle_max:
+                    return jsonify({'status': 'error', 'message': 'Min trendline angle must be less than max angle'})
+                if angle_min < 5 or angle_min > 30:
+                    return jsonify({'status': 'error', 'message': 'Min trendline angle must be between 5 and 30 degrees'})
+                if angle_max < 60 or angle_max > 85:
+                    return jsonify({'status': 'error', 'message': 'Max trendline angle must be between 60 and 85 degrees'})
+            
+            # Validate multi-timeframe settings
+            if 'mtf_weight' in new_config:
+                try:
+                    mtf_weight = float(new_config.get('mtf_weight', 0.3))
+                    if mtf_weight < 0.1 or mtf_weight > 0.5:
+                        return jsonify({'status': 'error', 'message': 'MTF weight must be between 0.1 and 0.5'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'MTF weight must be a valid number'})
+            
+            if 'mtf_alignment_threshold' in new_config:
+                try:
+                    mtf_threshold = float(new_config.get('mtf_alignment_threshold', 0.6))
+                    if mtf_threshold < 0.3 or mtf_threshold > 0.9:
+                        return jsonify({'status': 'error', 'message': 'MTF alignment threshold must be between 0.3 and 0.9'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'MTF alignment threshold must be a valid number'})
+            
+            if 'mtf_contradiction_penalty' in new_config:
+                try:
+                    mtf_penalty = float(new_config.get('mtf_contradiction_penalty', 0.4))
+                    if mtf_penalty < 0.1 or mtf_penalty > 0.8:
+                        return jsonify({'status': 'error', 'message': 'MTF contradiction penalty must be between 0.1 and 0.8'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'MTF contradiction penalty must be a valid number'})
+            
+            # Validate volume pattern settings
+            if 'volume_spike_threshold' in new_config:
+                try:
+                    vol_spike = float(new_config.get('volume_spike_threshold', 1.5))
+                    if vol_spike < 1.2 or vol_spike > 3.0:
+                        return jsonify({'status': 'error', 'message': 'Volume spike threshold must be between 1.2 and 3.0'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'Volume spike threshold must be a valid number'})
+            
             # Validate MACD histogram threshold
             if 'macd_min_histogram' in new_config:
                 try:
@@ -236,7 +355,7 @@ def config_api():
 
 
 def apply_logging_level(level):
-    """Apply logging level change to the running bot"""
+    """Apply logging level change to the running bot and trend detection system"""
     try:
         if level == 'minimal':
             logging.getLogger().setLevel(logging.WARNING)
@@ -250,6 +369,17 @@ def apply_logging_level(level):
         elif level == 'debug':
             logging.getLogger().setLevel(logging.DEBUG)
             logger.info("🔧 Logging level changed to DEBUG (everything)")
+        
+        # Apply logging level to trend detection system if available
+        try:
+            # Import and update trend detection logging
+            from src.trend_detection_engine import trend_logger
+            trend_logger.set_logging_level(level)
+            logger.info(f"🔍 Trend detection logging level updated to: {level}")
+        except ImportError:
+            logger.debug("Trend detection system not available for logging level update")
+        except Exception as e:
+            logger.warning(f"Failed to update trend detection logging level: {e}")
         
         # Store the level for the bot to use
         current_config['logging_level'] = level
@@ -655,6 +785,238 @@ def close_position(ticket):
         logger.error(f"Error closing position {ticket}: {str(e)}")
         mt5.shutdown()
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/trend-detection/status', methods=['GET'])
+def trend_detection_status():
+    """Get current trend detection analysis status and signals"""
+    try:
+        if not mt5.initialize():
+            return jsonify({'status': 'error', 'message': 'MT5 not connected'})
+        
+        # Get current configuration
+        config = config_manager.get_config()
+        
+        # Check if trend detection is enabled
+        if not config.get('use_trend_detection', False):
+            mt5.shutdown()
+            return jsonify({
+                'status': 'success',
+                'enabled': False,
+                'message': 'Trend detection is disabled in configuration'
+            })
+        
+        # Get symbols from config
+        symbols = config.get('symbols', ['XAUUSD'])
+        timeframe = config.get('timeframe', 30)
+        
+        # Initialize trend detection engine
+        try:
+            from src.trend_detection_engine import TrendDetectionEngine
+            trend_engine = TrendDetectionEngine(config)
+        except ImportError as e:
+            mt5.shutdown()
+            return jsonify({
+                'status': 'error',
+                'message': f'Trend detection engine not available: {str(e)}'
+            })
+        
+        # Analyze each symbol
+        symbol_analyses = {}
+        
+        for symbol in symbols[:3]:  # Limit to first 3 symbols for performance
+            try:
+                # Get market data
+                import pandas as pd
+                from datetime import datetime, timedelta
+                
+                # Map timeframe to MT5 constant
+                timeframe_map = {
+                    1: mt5.TIMEFRAME_M1,
+                    5: mt5.TIMEFRAME_M5,
+                    15: mt5.TIMEFRAME_M15,
+                    30: mt5.TIMEFRAME_M30,
+                    16385: mt5.TIMEFRAME_H1,
+                    16388: mt5.TIMEFRAME_H4,
+                    16408: mt5.TIMEFRAME_D1
+                }
+                
+                mt5_timeframe = timeframe_map.get(timeframe, mt5.TIMEFRAME_M30)
+                
+                # Get historical data
+                bars = 200  # Sufficient for analysis
+                rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, bars)
+                
+                if rates is None or len(rates) < 50:
+                    symbol_analyses[symbol] = {
+                        'status': 'error',
+                        'message': 'Insufficient data'
+                    }
+                    continue
+                
+                # Convert to DataFrame
+                df = pd.DataFrame(rates)
+                df['time'] = pd.to_datetime(df['time'], unit='s')
+                df.set_index('time', inplace=True)
+                
+                # Add basic indicators needed for trend detection
+                # Calculate EMAs
+                df['ema_20'] = df['close'].ewm(span=20).mean()
+                df['ema_50'] = df['close'].ewm(span=50).mean()
+                
+                # Calculate RSI
+                delta = df['close'].diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                df['rsi'] = 100 - (100 / (1 + rs))
+                
+                # Calculate MACD
+                exp1 = df['close'].ewm(span=12).mean()
+                exp2 = df['close'].ewm(span=26).mean()
+                df['macd'] = exp1 - exp2
+                df['macd_signal'] = df['macd'].ewm(span=9).mean()
+                df['macd_histogram'] = df['macd'] - df['macd_signal']
+                
+                # Perform trend analysis
+                analysis_result = trend_engine.analyze_trend_change(df, symbol)
+                
+                # Extract key information
+                current_price = df['close'].iloc[-1]
+                
+                # Summarize signals
+                signals_summary = []
+                for signal in analysis_result.signals:
+                    signals_summary.append({
+                        'type': signal.signal_type,
+                        'strength': round(signal.strength, 3),
+                        'confidence': round(signal.confidence, 3),
+                        'source': signal.source,
+                        'price_level': round(signal.price_level, 5),
+                        'factors': signal.supporting_factors
+                    })
+                
+                # Market structure info
+                structure_info = None
+                if analysis_result.market_structure:
+                    structure_info = {
+                        'break_type': analysis_result.market_structure.break_type,
+                        'break_level': round(analysis_result.market_structure.break_level, 5),
+                        'volume_confirmed': analysis_result.market_structure.volume_confirmation,
+                        'strength': round(analysis_result.market_structure.strength, 3),
+                        'confirmed': analysis_result.market_structure.confirmed
+                    }
+                
+                # Divergences info
+                divergences_info = []
+                for div in analysis_result.divergences:
+                    divergences_info.append({
+                        'type': div.divergence_type,
+                        'indicator': div.indicator,
+                        'strength': round(div.strength, 3),
+                        'validated': div.validated
+                    })
+                
+                # Aroon signal info
+                aroon_info = None
+                if analysis_result.aroon_signal:
+                    aroon_info = {
+                        'aroon_up': round(analysis_result.aroon_signal.aroon_up, 2),
+                        'aroon_down': round(analysis_result.aroon_signal.aroon_down, 2),
+                        'oscillator': round(analysis_result.aroon_signal.oscillator, 2),
+                        'signal_type': analysis_result.aroon_signal.signal_type,
+                        'trend_strength': round(analysis_result.aroon_signal.trend_strength, 3)
+                    }
+                
+                # EMA signal info
+                ema_info = None
+                if analysis_result.ema_signal:
+                    ema_info = {
+                        'fast_ema': round(analysis_result.ema_signal.fast_ema, 5),
+                        'slow_ema': round(analysis_result.ema_signal.slow_ema, 5),
+                        'separation': round(analysis_result.ema_signal.separation, 3),
+                        'signal_type': analysis_result.ema_signal.signal_type,
+                        'momentum_strength': round(analysis_result.ema_signal.momentum_strength, 3),
+                        'crossover_confirmed': analysis_result.ema_signal.crossover_confirmed
+                    }
+                
+                # Multi-timeframe info
+                mtf_info = None
+                if analysis_result.timeframe_alignment:
+                    mtf_info = {
+                        'primary_timeframe': analysis_result.timeframe_alignment.primary_timeframe,
+                        'higher_timeframe': analysis_result.timeframe_alignment.higher_timeframe,
+                        'alignment_score': round(analysis_result.timeframe_alignment.alignment_score, 3),
+                        'confirmation_level': analysis_result.timeframe_alignment.confirmation_level
+                    }
+                
+                # Volume confirmation info
+                volume_info = None
+                if analysis_result.volume_confirmation:
+                    volume_info = {
+                        'volume_spike': analysis_result.volume_confirmation.volume_spike,
+                        'volume_ratio': round(analysis_result.volume_confirmation.volume_ratio, 2),
+                        'strength': round(analysis_result.volume_confirmation.strength, 3)
+                    }
+                
+                # Early warnings
+                early_warnings = []
+                for warning in analysis_result.early_warnings:
+                    early_warnings.append({
+                        'type': warning.warning_type,
+                        'confidence': round(warning.confidence, 3),
+                        'probability_score': round(warning.probability_score, 3),
+                        'description': warning.description,
+                        'factors': warning.factors,
+                        'strength': round(warning.strength, 3)
+                    })
+                
+                symbol_analyses[symbol] = {
+                    'status': 'success',
+                    'current_price': round(current_price, 5),
+                    'overall_confidence': round(analysis_result.confidence, 3),
+                    'signals_count': len(signals_summary),
+                    'signals': signals_summary,
+                    'market_structure': structure_info,
+                    'divergences': divergences_info,
+                    'aroon_signal': aroon_info,
+                    'ema_signal': ema_info,
+                    'trendline_breaks': len(analysis_result.trendline_breaks),
+                    'mtf_alignment': mtf_info,
+                    'volume_confirmation': volume_info,
+                    'early_warnings': early_warnings,
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+            except Exception as e:
+                logger.error(f"Error analyzing {symbol}: {str(e)}")
+                symbol_analyses[symbol] = {
+                    'status': 'error',
+                    'message': str(e)
+                }
+        
+        mt5.shutdown()
+        
+        return jsonify({
+            'status': 'success',
+            'enabled': True,
+            'config': {
+                'sensitivity': config.get('trend_detection_sensitivity', 5),
+                'min_confidence': config.get('min_trend_confidence', 0.6),
+                'early_signals': config.get('enable_early_signals', True),
+                'mtf_confirmation': config.get('enable_mtf_confirmation', True)
+            },
+            'symbols': symbol_analyses,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in trend detection status: {str(e)}")
+        mt5.shutdown()
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get trend detection status: {str(e)}'
+        })
 
 
 @app.route('/api/analysis/performance', methods=['GET'])
@@ -1091,6 +1453,337 @@ def logs_info():
         return jsonify(info)
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
+@app.route('/api/ml/train', methods=['POST'])
+def train_ml_model():
+    """Train ML model with training data"""
+    try:
+        data = request.json
+        training_data_path = data.get('training_data_path', 'data/training_data.csv')
+        model_path = data.get('model_path', 'models/ml_signal_model.pkl')
+        
+        logger.info(f"Training ML model with data from: {training_data_path}")
+        
+        # Check if training data exists
+        from pathlib import Path
+        if not Path(training_data_path).exists():
+            return jsonify({
+                'status': 'error',
+                'message': f'Training data not found: {training_data_path}'
+            })
+        
+        # Import ML components
+        try:
+            from src.ml_signal_generator import MLSignalGenerator
+        except ImportError as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'ML components not available: {str(e)}'
+            })
+        
+        # Load training data
+        import pandas as pd
+        df = pd.read_csv(training_data_path)
+        
+        if len(df) < 50:
+            return jsonify({
+                'status': 'error',
+                'message': f'Insufficient training data: {len(df)} samples (minimum 50 required)'
+            })
+        
+        # Prepare features and labels
+        feature_columns = ['rsi', 'macd', 'macd_signal', 'adx', 'atr', 'ema_fast', 'ema_slow', 'volume']
+        
+        # Check if all required columns exist
+        missing_cols = set(feature_columns) - set(df.columns)
+        if missing_cols:
+            return jsonify({
+                'status': 'error',
+                'message': f'Missing required columns: {", ".join(missing_cols)}'
+            })
+        
+        X = df[feature_columns]
+        y = df['profitable'].values
+        
+        # Train model
+        ml_generator = MLSignalGenerator(logger=logger)
+        
+        # Set model path before training
+        ml_generator.model_path = model_path
+        
+        success = ml_generator.train_model(X, y)
+        
+        if success:
+            # Get model statistics
+            from sklearn.model_selection import train_test_split
+            from sklearn.metrics import accuracy_score, precision_score, recall_score
+            
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            y_pred = ml_generator.model.predict(X_test)
+            
+            accuracy = accuracy_score(y_test, y_pred)
+            precision = precision_score(y_test, y_pred, zero_division=0)
+            recall = recall_score(y_test, y_pred, zero_division=0)
+            
+            logger.info(f"ML model trained successfully - Accuracy: {accuracy:.2%}")
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'ML model trained successfully',
+                'statistics': {
+                    'samples': len(df),
+                    'accuracy': round(accuracy * 100, 2),
+                    'precision': round(precision * 100, 2),
+                    'recall': round(recall * 100, 2),
+                    'model_path': model_path
+                }
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to train ML model'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error training ML model: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Training failed: {str(e)}'
+        })
+
+
+@app.route('/api/ml/test', methods=['GET'])
+def test_ml_features():
+    """Test ML features with current market data"""
+    try:
+        # Get configuration
+        config = config_manager.get_config()
+        
+        if not config.get('ml_enabled', False):
+            return jsonify({
+                'status': 'warning',
+                'message': 'ML features are disabled in configuration'
+            })
+        
+        # Import ML components
+        try:
+            from src.ml_integration import MLIntegration
+        except ImportError as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'ML components not available: {str(e)}'
+            })
+        
+        # Initialize ML integration
+        ml_integration = MLIntegration(config, logger=logger)
+        
+        # Test with first symbol
+        symbols = config.get('symbols', ['XAUUSD'])
+        test_symbol = symbols[0]
+        
+        # Get market data
+        if not mt5.initialize():
+            return jsonify({
+                'status': 'error',
+                'message': 'MT5 not connected'
+            })
+        
+        timeframe = config.get('timeframe', 30)
+        timeframe_map = {
+            1: mt5.TIMEFRAME_M1,
+            5: mt5.TIMEFRAME_M5,
+            15: mt5.TIMEFRAME_M15,
+            30: mt5.TIMEFRAME_M30,
+            16385: mt5.TIMEFRAME_H1,
+            16388: mt5.TIMEFRAME_H4,
+            16408: mt5.TIMEFRAME_D1
+        }
+        mt5_timeframe = timeframe_map.get(timeframe, mt5.TIMEFRAME_M30)
+        
+        rates = mt5.copy_rates_from_pos(test_symbol, mt5_timeframe, 0, 100)
+        mt5.shutdown()
+        
+        if rates is None or len(rates) < 50:
+            return jsonify({
+                'status': 'error',
+                'message': 'Insufficient market data'
+            })
+        
+        # Prepare market data
+        import pandas as pd
+        df = pd.DataFrame(rates)
+        
+        market_data = {
+            'close': df['close'].tolist(),
+            'high': df['high'].tolist(),
+            'low': df['low'].tolist(),
+            'open': df['open'].tolist(),
+            'volume': df['tick_volume'].tolist()
+        }
+        
+        # Get enhanced signal
+        enhanced_signals = ml_integration.get_enhanced_signal(
+            symbol=test_symbol,
+            market_data=market_data,
+            technical_signal='NEUTRAL',
+            technical_confidence=0.5
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'symbol': test_symbol,
+            'signals': enhanced_signals,
+            'message': 'ML features tested successfully'
+        })
+    
+    except Exception as e:
+        logger.error(f"Error testing ML features: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Test failed: {str(e)}'
+        })
+
+
+@app.route('/api/ml/stats', methods=['GET'])
+def get_ml_stats():
+    """Get ML model statistics"""
+    try:
+        config = config_manager.get_config()
+        model_path = config.get('ml_model_path', 'models/ml_signal_model.pkl')
+        
+        from pathlib import Path
+        model_file = Path(model_path)
+        
+        if not model_file.exists():
+            return jsonify({
+                'status': 'warning',
+                'message': 'ML model not trained yet',
+                'model_exists': False
+            })
+        
+        # Get model file info
+        import os
+        from datetime import datetime
+        
+        stats = {
+            'status': 'success',
+            'model_exists': True,
+            'model_path': str(model_file),
+            'model_size': model_file.stat().st_size,
+            'last_modified': datetime.fromtimestamp(model_file.stat().st_mtime).isoformat(),
+            'ml_enabled': config.get('ml_enabled', False),
+            'sentiment_enabled': config.get('sentiment_enabled', False),
+            'pattern_enabled': config.get('pattern_enabled', True)
+        }
+        
+        # Try to load model and get additional stats
+        try:
+            from src.ml_signal_generator import MLSignalGenerator
+            ml_gen = MLSignalGenerator(logger=logger)
+            
+            if ml_gen.load_model(model_path):
+                stats['model_loaded'] = True
+                stats['is_trained'] = ml_gen.is_trained
+            else:
+                stats['model_loaded'] = False
+        except Exception as e:
+            stats['model_load_error'] = str(e)
+        
+        return jsonify(stats)
+    
+    except Exception as e:
+        logger.error(f"Error getting ML stats: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get stats: {str(e)}'
+        })
+
+
+@app.route('/api/ml/export', methods=['GET'])
+def export_training_data():
+    """Export training data from trade history"""
+    try:
+        days = int(request.args.get('days', 30))
+        
+        if not mt5.initialize():
+            return jsonify({
+                'status': 'error',
+                'message': 'MT5 not connected'
+            })
+        
+        from_date = datetime.now() - timedelta(days=days)
+        deals = mt5.history_deals_get(from_date, datetime.now())
+        
+        if deals is None or len(deals) == 0:
+            mt5.shutdown()
+            return jsonify({
+                'status': 'error',
+                'message': 'No trade history found'
+            })
+        
+        # Extract trade data
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        fieldnames = ['timestamp', 'symbol', 'close', 'rsi', 'macd', 'macd_signal', 'adx', 'atr',
+                     'ema_fast', 'ema_slow', 'volume', 'profitable']
+        
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        # Group deals by position
+        positions_dict = {}
+        for deal in deals:
+            position_id = deal.position_id
+            if position_id not in positions_dict:
+                positions_dict[position_id] = {'entry': None, 'exit': None}
+            
+            if deal.entry == mt5.DEAL_ENTRY_IN:
+                positions_dict[position_id]['entry'] = deal
+            elif deal.entry == mt5.DEAL_ENTRY_OUT:
+                positions_dict[position_id]['exit'] = deal
+        
+        # Export completed trades
+        for position_id, deals_pair in positions_dict.items():
+            entry_deal = deals_pair['entry']
+            exit_deal = deals_pair['exit']
+            
+            if entry_deal and exit_deal:
+                writer.writerow({
+                    'timestamp': datetime.fromtimestamp(exit_deal.time).isoformat(),
+                    'symbol': exit_deal.symbol,
+                    'close': exit_deal.price,
+                    'rsi': 0,  # Would need to calculate from historical data
+                    'macd': 0,
+                    'macd_signal': 0,
+                    'adx': 0,
+                    'atr': 0,
+                    'ema_fast': 0,
+                    'ema_slow': 0,
+                    'volume': exit_deal.volume,
+                    'profitable': 1 if exit_deal.profit > 0 else 0
+                })
+        
+        mt5.shutdown()
+        
+        csv_data = output.getvalue()
+        
+        from flask import Response
+        return Response(
+            csv_data,
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=training_data.csv'}
+        )
+    
+    except Exception as e:
+        logger.error(f"Error exporting training data: {str(e)}")
+        mt5.shutdown()
+        return jsonify({
+            'status': 'error',
+            'message': f'Export failed: {str(e)}'
+        })
 
 
 def update_config_file(new_config):

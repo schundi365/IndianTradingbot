@@ -1,0 +1,4 @@
+# file: C:\Users\srika\Labs\AgenticAI\Bots\tradegold\src\aroon_indicator.py
+# hypothesis_version: 6.150.2
+
+[0.2, 0.3, 0.4, 0.5, 0.7, 1.0, 100, 'aroon_down', 'aroon_oscillator', 'aroon_range', 'aroon_up', 'bearish', 'bearish_cross', 'breakout_probability', 'bullish', 'bullish_cross', 'consolidation', 'duration_bars', 'high', 'insufficient_data', 'loose', 'low', 'max_aroon', 'moderate', 'moderate_bearish', 'moderate_bullish', 'reason', 'strength', 'strong_bearish', 'strong_bearish_cross', 'strong_bullish', 'strong_bullish_cross', 'tight', 'tight_consolidation', 'trending', 'type', 'very_strong_bearish', 'very_strong_bullish', 'weakening_bearish', 'weakening_bullish']

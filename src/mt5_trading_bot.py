@@ -376,18 +376,97 @@ class MT5TradingBot:
         
         return df
     
-    def calculate_stop_loss(self, entry_price, direction, atr):
+    def calculate_price_from_pips(self, symbol, entry_price, pips, direction, is_sl=True):
         """
-        Calculate stop loss based on ATR
+        Calculate price from pip value
+        
+        Args:
+            symbol (str): Trading symbol
+            entry_price (float): Entry price
+            pips (float): Number of pips
+            direction (int): 1 for buy, -1 for sell
+            is_sl (bool): True for stop loss, False for take profit
+            
+        Returns:
+            float: Calculated price
+        """
+        symbol_info = mt5.symbol_info(symbol)
+        if not symbol_info:
+            logging.error(f"Cannot get symbol info for {symbol}")
+            return entry_price
+        
+        point = symbol_info.point
+        digits = symbol_info.digits
+        
+        # For 5-digit and 3-digit brokers, multiply pips by 10 to get points
+        # For 2-digit brokers (like gold), pips = points
+        if digits == 5 or digits == 3:
+            price_distance = pips * 10 * point
+        else:
+            price_distance = pips * point
+        
+        # Calculate price based on direction and whether it's SL or TP
+        if direction == 1:  # Buy
+            if is_sl:
+                price = entry_price - price_distance
+            else:  # TP
+                price = entry_price + price_distance
+        else:  # Sell
+            if is_sl:
+                price = entry_price + price_distance
+            else:  # TP
+                price = entry_price - price_distance
+        
+        return price
+    
+    def calculate_pips_from_price(self, symbol, price_difference):
+        """
+        Calculate pip value from price difference
+        
+        Args:
+            symbol (str): Trading symbol
+            price_difference (float): Difference in price units
+            
+        Returns:
+            float: Difference in pips
+        """
+        symbol_info = mt5.symbol_info(symbol)
+        if not symbol_info:
+            return 0
+        
+        point = symbol_info.point
+        digits = symbol_info.digits
+        
+        # Calculate points
+        points = price_difference / point
+        
+        # For 5-digit and 3-digit brokers, divide by 10 to get actual pips
+        if digits == 5 or digits == 3:
+            pips = points / 10
+        else:
+            pips = points
+        
+        return pips
+    
+    def calculate_stop_loss(self, entry_price, direction, atr, symbol=None):
+        """
+        Calculate stop loss based on ATR or fixed pips
         
         Args:
             entry_price (float): Entry price
             direction (int): 1 for buy, -1 for sell
-            atr (float): Average True Range value
+            atr (float): Average True Range value (in symbol's price units)
+            symbol (str): Trading symbol (required for pip-based calculation)
             
         Returns:
             float: Stop loss price
         """
+        # Check if using pip-based SL
+        if self.config.get('use_pip_based_sl', False) and symbol:
+            sl_pips = self.config.get('sl_pips', 50)
+            return self.calculate_price_from_pips(symbol, entry_price, sl_pips, direction, is_sl=True)
+        
+        # Default: ATR-based SL
         if direction == 1:  # Buy
             sl = entry_price - (self.atr_multiplier * atr)
         else:  # Sell
@@ -395,18 +474,25 @@ class MT5TradingBot:
         
         return sl
     
-    def calculate_take_profit(self, entry_price, stop_loss, direction):
+    def calculate_take_profit(self, entry_price, stop_loss, direction, symbol=None):
         """
-        Calculate take profit based on risk:reward ratio
+        Calculate take profit based on risk:reward ratio or fixed pips
         
         Args:
             entry_price (float): Entry price
             stop_loss (float): Stop loss price
             direction (int): 1 for buy, -1 for sell
+            symbol (str): Trading symbol (required for pip-based calculation)
             
         Returns:
             float: Take profit price
         """
+        # Check if using pip-based TP
+        if self.config.get('use_pip_based_tp', False) and symbol:
+            tp_pips = self.config.get('tp_pips', 100)
+            return self.calculate_price_from_pips(symbol, entry_price, tp_pips, direction, is_sl=False)
+        
+        # Default: Risk:reward ratio based TP
         risk = abs(entry_price - stop_loss)
         reward = risk * self.reward_ratio
         
@@ -417,7 +503,7 @@ class MT5TradingBot:
         
         return tp
     
-    def calculate_multiple_take_profits(self, entry_price, stop_loss, direction, ratios=None):
+    def calculate_multiple_take_profits(self, entry_price, stop_loss, direction, ratios=None, symbol=None):
         """
         Calculate multiple take profit levels for partial closing
         
@@ -426,6 +512,7 @@ class MT5TradingBot:
             stop_loss (float): Stop loss price
             direction (int): 1 for buy, -1 for sell
             ratios (list): List of risk:reward ratios (uses self.tp_levels if None)
+            symbol (str): Trading symbol (required for pip-based calculation)
             
         Returns:
             list: List of take profit prices
@@ -433,10 +520,30 @@ class MT5TradingBot:
         if ratios is None:
             ratios = self.tp_levels
         
+        # Check if using pip-based TP
+        if self.config.get('use_pip_based_tp', False) and symbol:
+            tp_pips_base = self.config.get('tp_pips', 100)
+            tp_prices = []
+            
+            # Calculate TP for each level using pip multipliers
+            for i, ratio in enumerate(ratios):
+                # Multiply base pips by the ratio
+                tp_pips = tp_pips_base * ratio
+                tp = self.calculate_price_from_pips(symbol, entry_price, tp_pips, direction, is_sl=False)
+                tp_prices.append(tp)
+                
+                logging.info(f"  TP Level {i+1}: {tp_pips:.1f} pips (ratio {ratio}) = {tp:.5f}")
+            
+            return tp_prices
+        
+        # Default: Risk:reward ratio based TP
         risk = abs(entry_price - stop_loss)
         tp_prices = []
         
-        for ratio in ratios:
+        logging.info(f"  Using ratio-based TP calculation:")
+        logging.info(f"    Entry: {entry_price}, SL: {stop_loss}, Risk: {risk:.5f}")
+        
+        for i, ratio in enumerate(ratios):
             reward = risk * ratio
             
             if direction == 1:  # Buy
@@ -445,6 +552,7 @@ class MT5TradingBot:
                 tp = entry_price - reward
             
             tp_prices.append(tp)
+            logging.info(f"    TP Level {i+1}: ratio {ratio}, reward {reward:.5f} = {tp:.5f}")
         
         return tp_prices
     
@@ -543,13 +651,237 @@ class MT5TradingBot:
         
         return lot_sizes
     
-    def check_entry_signal(self, df):
+    def get_trend_analysis(self, symbol, df=None):
+        """
+        Get comprehensive trend analysis for a symbol
+        
+        Args:
+            symbol (str): Trading symbol
+            df (pd.DataFrame, optional): Price data (will fetch if not provided)
+            
+        Returns:
+            dict: Trend analysis results or None if trend detection disabled
+        """
+        if not self.trend_detection_engine:
+            return None
+        
+        try:
+            # Get price data if not provided
+            if df is None:
+                df = self.get_historical_data(symbol, self.timeframe, 200)
+                if df is None or len(df) < 50:
+                    logging.warning(f"Insufficient data for trend analysis of {symbol}")
+                    return None
+                
+                # Calculate indicators
+                df = self.calculate_indicators(df)
+            
+            # Get comprehensive trend analysis
+            analysis_result = self.trend_detection_engine.analyze_trend_change(df, symbol)
+            
+            # Convert to dictionary for easier consumption
+            trend_data = {
+                'symbol': symbol,
+                'timestamp': datetime.now().isoformat(),
+                'overall_confidence': analysis_result.confidence,
+                'signals_count': len(analysis_result.signals),
+                'signals': [],
+                'market_structure': None,
+                'divergences': [],
+                'aroon_signal': None,
+                'ema_signal': None,
+                'trendline_breaks': [],
+                'timeframe_alignment': None,
+                'volume_confirmation': None,
+                'early_warnings': []
+            }
+            
+            # Process signals
+            for signal in analysis_result.signals:
+                trend_data['signals'].append({
+                    'type': signal.signal_type,
+                    'source': signal.source,
+                    'confidence': signal.confidence,
+                    'strength': signal.strength,
+                    'price_level': signal.price_level,
+                    'supporting_factors': signal.supporting_factors,
+                    'timestamp': signal.timestamp.isoformat()
+                })
+            
+            # Process market structure
+            if analysis_result.market_structure:
+                ms = analysis_result.market_structure
+                trend_data['market_structure'] = {
+                    'break_type': ms.break_type,
+                    'break_level': ms.break_level,
+                    'previous_level': ms.previous_level,
+                    'volume_confirmation': ms.volume_confirmation,
+                    'strength': ms.strength,
+                    'confirmed': ms.confirmed
+                }
+            
+            # Process divergences
+            for div in analysis_result.divergences:
+                trend_data['divergences'].append({
+                    'type': div.divergence_type,
+                    'indicator': div.indicator,
+                    'strength': div.strength,
+                    'validated': div.validated,
+                    'price_points_count': len(div.price_points),
+                    'indicator_points_count': len(div.indicator_points)
+                })
+            
+            # Process Aroon signal
+            if analysis_result.aroon_signal:
+                aroon = analysis_result.aroon_signal
+                trend_data['aroon_signal'] = {
+                    'aroon_up': aroon.aroon_up,
+                    'aroon_down': aroon.aroon_down,
+                    'oscillator': aroon.oscillator,
+                    'signal_type': aroon.signal_type,
+                    'trend_strength': aroon.trend_strength
+                }
+            
+            # Process EMA signal
+            if analysis_result.ema_signal:
+                ema = analysis_result.ema_signal
+                trend_data['ema_signal'] = {
+                    'signal_type': ema.signal_type,
+                    'fast_ema': ema.fast_ema,
+                    'slow_ema': ema.slow_ema,
+                    'separation': ema.separation,
+                    'momentum_strength': ema.momentum_strength,
+                    'crossover_confirmed': ema.crossover_confirmed
+                }
+            
+            # Process trendline breaks
+            for tl_break in analysis_result.trendline_breaks:
+                trend_data['trendline_breaks'].append({
+                    'line_type': tl_break.trendline.line_type,
+                    'break_point_price': tl_break.break_point[1],
+                    'volume_confirmation': tl_break.volume_confirmation,
+                    'retest_confirmed': tl_break.retest_confirmed,
+                    'break_strength': tl_break.break_strength,
+                    'trendline_strength': tl_break.trendline.strength,
+                    'touch_points': tl_break.trendline.touch_points
+                })
+            
+            # Process timeframe alignment
+            if analysis_result.timeframe_alignment:
+                mta = analysis_result.timeframe_alignment
+                trend_data['timeframe_alignment'] = {
+                    'primary_timeframe': mta.primary_timeframe,
+                    'higher_timeframe': mta.higher_timeframe,
+                    'alignment_score': mta.alignment_score,
+                    'confirmation_level': mta.confirmation_level
+                }
+            
+            # Process volume confirmation
+            if analysis_result.volume_confirmation:
+                vc = analysis_result.volume_confirmation
+                trend_data['volume_confirmation'] = {
+                    'volume_spike': vc.volume_spike,
+                    'volume_ratio': vc.volume_ratio,
+                    'strength': vc.strength
+                }
+            
+            # Process early warnings
+            for warning in analysis_result.early_warnings:
+                trend_data['early_warnings'].append({
+                    'warning_type': warning.warning_type,
+                    'confidence': warning.confidence,
+                    'probability_score': warning.probability_score,
+                    'price_level': warning.price_level,
+                    'current_price': warning.current_price,
+                    'factors': warning.factors,
+                    'strength': warning.strength,
+                    'description': warning.description,
+                    'timestamp': warning.timestamp.isoformat()
+                })
+            
+            return trend_data
+            
+        except Exception as e:
+            logging.error(f"Error getting trend analysis for {symbol}: {e}")
+            import traceback
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            return None
+    
+    def get_trend_summary(self, symbol, df=None):
+        """
+        Get a simplified trend summary for quick assessment
+        
+        Args:
+            symbol (str): Trading symbol
+            df (pd.DataFrame, optional): Price data (will fetch if not provided)
+            
+        Returns:
+            dict: Simplified trend summary
+        """
+        trend_analysis = self.get_trend_analysis(symbol, df)
+        
+        if not trend_analysis:
+            return {
+                'symbol': symbol,
+                'trend_available': False,
+                'message': 'Trend detection not available'
+            }
+        
+        # Determine overall trend direction
+        bullish_signals = [s for s in trend_analysis['signals'] if 'bullish' in s['type']]
+        bearish_signals = [s for s in trend_analysis['signals'] if 'bearish' in s['type']]
+        
+        if len(bullish_signals) > len(bearish_signals):
+            trend_direction = 'bullish'
+            signal_strength = sum(s['confidence'] * s['strength'] for s in bullish_signals) / len(bullish_signals) if bullish_signals else 0
+        elif len(bearish_signals) > len(bullish_signals):
+            trend_direction = 'bearish'
+            signal_strength = sum(s['confidence'] * s['strength'] for s in bearish_signals) / len(bearish_signals) if bearish_signals else 0
+        else:
+            trend_direction = 'neutral'
+            signal_strength = 0.5
+        
+        # Determine confidence level
+        confidence = trend_analysis['overall_confidence']
+        if confidence >= 0.8:
+            confidence_level = 'high'
+        elif confidence >= 0.6:
+            confidence_level = 'medium'
+        else:
+            confidence_level = 'low'
+        
+        # Key factors
+        key_factors = []
+        if trend_analysis['market_structure'] and trend_analysis['market_structure']['confirmed']:
+            key_factors.append('structure_break')
+        if trend_analysis['divergences']:
+            key_factors.append('divergence')
+        if trend_analysis['trendline_breaks']:
+            key_factors.append('trendline_break')
+        if trend_analysis['timeframe_alignment'] and trend_analysis['timeframe_alignment']['confirmation_level'] in ['strong', 'moderate']:
+            key_factors.append('mtf_confirmation')
+        
+        return {
+            'symbol': symbol,
+            'trend_available': True,
+            'trend_direction': trend_direction,
+            'confidence': confidence,
+            'confidence_level': confidence_level,
+            'signal_strength': signal_strength,
+            'signals_count': trend_analysis['signals_count'],
+            'key_factors': key_factors,
+            'early_warnings_count': len(trend_analysis['early_warnings']),
+            'timestamp': trend_analysis['timestamp']
+        }
+
+    def check_entry_signal(self, df, symbol="unknown"):
         """
         Check for entry signals with RSI and MACD filtering
         WITH DETAILED CALCULATION LOGGING
         
         Args:
             df (pd.DataFrame): Price data with indicators
+            symbol (str): Trading symbol for logging and trend detection
             
         Returns:
             int: 1 for buy, -1 for sell, 0 for no signal
@@ -985,31 +1317,90 @@ class MT5TradingBot:
             signal_type_str = "buy" if signal == 1 else "sell"
             
             try:
+                # Get comprehensive trend analysis
+                trend_analysis = self.trend_detection_engine.analyze_trend_change(df, symbol)
+                
+                # Check if trend supports the signal
                 should_trade, trend_confidence = self.trend_detection_engine.should_trade_trend(df, signal_type_str)
                 
                 if should_trade:
                     logging.info(f"  ✅ TREND DETECTION CONFIRMED!")
                     logging.info(f"     Trend analysis supports {signal_type_str.upper()} signal")
-                    logging.info(f"     Trend confidence: {trend_confidence:.2f}")
+                    logging.info(f"     Overall trend confidence: {trend_confidence:.3f}")
+                    logging.info(f"     Analysis confidence: {trend_analysis.confidence:.3f}")
                     
-                    # Get detailed trend signals for logging
-                    trend_signals = self.trend_detection_engine.get_trend_signals(df, signal_type_str)
-                    if trend_signals:
-                        logging.info(f"     Supporting trend factors:")
-                        for ts in trend_signals:
-                            logging.info(f"       - {ts.source}: {ts.confidence:.2f} confidence")
-                            for factor in ts.supporting_factors:
-                                logging.info(f"         * {factor}")
+                    # Log detailed trend analysis results
+                    if trend_analysis.signals:
+                        logging.info(f"     Active trend signals ({len(trend_analysis.signals)}):")
+                        for i, ts in enumerate(trend_analysis.signals[:3], 1):  # Show top 3
+                            logging.info(f"       {i}. {ts.source}: {ts.signal_type}")
+                            logging.info(f"          Confidence: {ts.confidence:.3f}, Strength: {ts.strength:.3f}")
+                            logging.info(f"          Factors: {', '.join(ts.supporting_factors)}")
+                    
+                    # Log market structure analysis
+                    if trend_analysis.market_structure:
+                        ms = trend_analysis.market_structure
+                        logging.info(f"     Market Structure: {ms.break_type}")
+                        logging.info(f"       Break Level: {ms.break_level:.5f}")
+                        logging.info(f"       Volume Confirmed: {ms.volume_confirmation}")
+                        logging.info(f"       Strength: {ms.strength:.3f}")
+                    
+                    # Log divergence analysis
+                    if trend_analysis.divergences:
+                        logging.info(f"     Divergences detected ({len(trend_analysis.divergences)}):")
+                        for div in trend_analysis.divergences:
+                            logging.info(f"       - {div.divergence_type}: strength {div.strength:.3f}")
+                    
+                    # Log multi-timeframe confirmation
+                    if trend_analysis.timeframe_alignment:
+                        mta = trend_analysis.timeframe_alignment
+                        logging.info(f"     Multi-Timeframe: {mta.confirmation_level}")
+                        logging.info(f"       Primary: {mta.primary_timeframe}, Higher: {mta.higher_timeframe}")
+                        logging.info(f"       Alignment Score: {mta.alignment_score:.3f}")
+                    
+                    # Log early warnings if any
+                    if trend_analysis.early_warnings:
+                        high_confidence_warnings = [w for w in trend_analysis.early_warnings if w.confidence >= 0.7]
+                        if high_confidence_warnings:
+                            logging.info(f"     Early Warnings ({len(high_confidence_warnings)} high confidence):")
+                            for warning in high_confidence_warnings[:2]:  # Show top 2
+                                logging.info(f"       - {warning.warning_type}: {warning.description}")
+                                logging.info(f"         Confidence: {warning.confidence:.3f}")
+                    
+                    # Apply trend confidence boost to signal strength
+                    if trend_confidence > 0.8:
+                        logging.info(f"     🚀 HIGH CONFIDENCE TREND - Signal strength boosted!")
+                    elif trend_confidence > 0.7:
+                        logging.info(f"     📈 GOOD TREND CONFIRMATION - Signal validated")
+                    else:
+                        logging.info(f"     ✅ TREND CONFIRMATION - Minimum requirements met")
+                        
                 else:
                     logging.info(f"  ❌ TREND DETECTION REJECTED!")
                     logging.info(f"     Trend analysis does not support {signal_type_str.upper()} signal")
-                    logging.info(f"     Trend confidence: {trend_confidence:.2f} (min required: {self.trend_detection_engine.min_confidence:.2f})")
+                    logging.info(f"     Trend confidence: {trend_confidence:.3f} (min required: {self.trend_detection_engine.min_confidence:.3f})")
+                    
+                    # Log why the trend detection failed
+                    if trend_analysis.signals:
+                        conflicting_signals = [s for s in trend_analysis.signals 
+                                             if (signal == 1 and 'bearish' in s.signal_type) or 
+                                                (signal == -1 and 'bullish' in s.signal_type)]
+                        if conflicting_signals:
+                            logging.info(f"     Conflicting trend signals detected:")
+                            for cs in conflicting_signals:
+                                logging.info(f"       - {cs.source}: {cs.signal_type} (confidence: {cs.confidence:.3f})")
+                    
+                    if trend_analysis.timeframe_alignment and trend_analysis.timeframe_alignment.confirmation_level == 'contradictory':
+                        logging.info(f"     Higher timeframe contradicts signal")
+                    
                     logging.info("="*80)
                     return 0
                     
             except Exception as e:
                 logging.error(f"  ⚠️  Trend detection error: {e}")
                 logging.info(f"     Proceeding without trend detection filter")
+                import traceback
+                logging.error(f"Traceback: {traceback.format_exc()}")
         else:
             if not self.trend_detection_engine:
                 logging.info("  ⚠️  Advanced trend detection disabled")
@@ -1146,7 +1537,7 @@ class MT5TradingBot:
         lot_sizes = self.split_lot_size(total_lot_size)
         
         # Calculate multiple TP levels
-        tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, direction)
+        tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, direction, symbol=symbol)
         
         # Round prices
         digits = symbol_info.digits
@@ -1580,6 +1971,73 @@ class MT5TradingBot:
         
         return True
     
+    def check_drawdown_limit(self):
+        """
+        Check if maximum drawdown limit has been exceeded
+        Tracks peak equity and current drawdown from peak
+        
+        Returns:
+            bool: True if can continue trading, False if drawdown limit exceeded
+        """
+        from datetime import datetime, timedelta
+        
+        # Get account info
+        account_info = mt5.account_info()
+        if not account_info:
+            return True  # Can't check, allow trading
+        
+        current_equity = account_info.equity
+        initial_balance = account_info.balance
+        
+        # Initialize peak equity tracking if not exists
+        if not hasattr(self, 'peak_equity'):
+            self.peak_equity = current_equity
+            self.peak_equity_date = datetime.now()
+        
+        # Update peak equity if current is higher
+        if current_equity > self.peak_equity:
+            self.peak_equity = current_equity
+            self.peak_equity_date = datetime.now()
+            logging.info(f"📈 New peak equity: ${self.peak_equity:.2f}")
+        
+        # Calculate drawdown from peak
+        drawdown = self.peak_equity - current_equity
+        drawdown_percent = (drawdown / self.peak_equity * 100) if self.peak_equity > 0 else 0
+        
+        max_drawdown_percent = self.config.get('max_drawdown_percent', 10.0)
+        
+        # Check if drawdown limit exceeded
+        if drawdown_percent >= max_drawdown_percent:
+            logging.error("=" * 80)
+            logging.error("🚨 MAXIMUM DRAWDOWN LIMIT EXCEEDED 🚨")
+            logging.error("=" * 80)
+            logging.error(f"Peak Equity: ${self.peak_equity:.2f} (on {self.peak_equity_date.strftime('%Y-%m-%d %H:%M')})")
+            logging.error(f"Current Equity: ${current_equity:.2f}")
+            logging.error(f"Drawdown: ${drawdown:.2f} ({drawdown_percent:.2f}%)")
+            logging.error(f"Maximum Allowed: {max_drawdown_percent}%")
+            logging.error("=" * 80)
+            logging.error("⚠️  TRADING PAUSED - Manual intervention required")
+            logging.error("⚠️  Review trading strategy and risk management")
+            logging.error("⚠️  Reset peak equity or adjust max_drawdown_percent to resume")
+            logging.error("=" * 80)
+            return False
+        
+        # Log warning when approaching limit (at 80%)
+        if drawdown_percent >= max_drawdown_percent * 0.8:
+            logging.warning("=" * 80)
+            logging.warning(f"⚠️  APPROACHING DRAWDOWN LIMIT: {drawdown_percent:.2f}% of {max_drawdown_percent}%")
+            logging.warning(f"   Peak Equity: ${self.peak_equity:.2f}")
+            logging.warning(f"   Current Equity: ${current_equity:.2f}")
+            logging.warning(f"   Drawdown: ${drawdown:.2f}")
+            logging.warning(f"   Remaining: ${(max_drawdown_percent * self.peak_equity / 100) - drawdown:.2f} ({max_drawdown_percent - drawdown_percent:.2f}%)")
+            logging.warning("=" * 80)
+        
+        # Log current drawdown status periodically
+        if drawdown_percent > 0:
+            logging.info(f"📊 Drawdown Status: {drawdown_percent:.2f}% from peak (${drawdown:.2f})")
+        
+        return True
+    
     def run_strategy(self, symbol):
         """
         Execute trading strategy for a symbol
@@ -1595,6 +2053,12 @@ class MT5TradingBot:
         # Check daily loss limit before trading
         if not self.check_daily_loss_limit():
             logging.warning(f"⚠️  Daily loss limit reached - skipping {symbol}")
+            logging.info("="*80)
+            return
+        
+        # Check drawdown limit before trading
+        if not self.check_drawdown_limit():
+            logging.error(f"🚨 Drawdown limit exceeded - skipping {symbol}")
             logging.info("="*80)
             return
         
@@ -1625,7 +2089,7 @@ class MT5TradingBot:
         logging.info("")
         
         # Check for entry signal
-        signal = self.check_entry_signal(df)
+        signal = self.check_entry_signal(df, symbol)
         
         if signal == 0:
             logging.info(f"Completed analysis for {symbol}")
@@ -1735,13 +2199,13 @@ class MT5TradingBot:
             entry_price = tick.ask if signal == 1 else tick.bid
             
             # Calculate SL
-            stop_loss = self.calculate_stop_loss(entry_price, signal, current_atr)
+            stop_loss = self.calculate_stop_loss(entry_price, signal, current_atr, symbol)
             
             # Calculate position size
             total_lot_size = self.calculate_position_size(symbol, entry_price, stop_loss)
             
             # Use configured TP levels
-            tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, signal)
+            tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, signal, symbol=symbol)
             allocations = self.partial_close_percent
         
         # Round prices
@@ -1771,7 +2235,7 @@ class MT5TradingBot:
                 logging.error(f"Failed to open split positions for {symbol}")
         else:
             # Use single position with one TP
-            take_profit = self.calculate_take_profit(entry_price, stop_loss, signal)
+            take_profit = self.calculate_take_profit(entry_price, stop_loss, signal, symbol)
             take_profit = round(take_profit, digits)
             
             logging.info(f"Using single position strategy")

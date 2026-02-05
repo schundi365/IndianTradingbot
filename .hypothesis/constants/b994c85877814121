@@ -1,0 +1,4 @@
+# file: C:\Users\srika\Labs\AgenticAI\Bots\tradegold\src\divergence_detector.py
+# hypothesis_version: 6.150.2
+
+[0.0, 0.0001, 0.001, 0.002, 0.04, 0.1, 0.2, 0.4, 0.5, 1.0, 100, 3600, 'MACD', 'RSI', 'analysis_timestamp', 'close', 'divergence_count', 'divergence_threshold', 'error', 'has_divergence', 'high', 'indicator_points', 'inf', 'low', 'macd', 'macd_divergence', 'macd_fast', 'macd_histogram', 'macd_signal', 'macd_slow', 'min_swing_separation', 'price_points', 'rsi', 'rsi_divergence', 'rsi_overbought', 'rsi_oversold', 'rsi_period', 'strength', 'strongest_divergence', 'timestamp', 'type', 'validated', 'validation_swings']

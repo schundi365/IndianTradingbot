@@ -439,8 +439,10 @@ class AdaptiveRiskManager:
             elif recent_trades_win_rate > 0.7:  # Winning streak
                 risk_multiplier *= 1.2  # Slightly increase risk
         
-        # Cap the multiplier
-        risk_multiplier = max(0.3, min(risk_multiplier, 1.5))
+        # Cap the multiplier using config values
+        max_mult = self.config.get('max_risk_multiplier', 1.5)
+        min_mult = self.config.get('min_risk_multiplier', 0.5)
+        risk_multiplier = max(min_mult, min(risk_multiplier, max_mult))
         
         logging.info(f"Risk Adjustment: Market={market_type}, Multiplier={risk_multiplier:.2f}")
         
