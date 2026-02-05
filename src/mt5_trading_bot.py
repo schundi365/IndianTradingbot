@@ -1175,7 +1175,11 @@ class MT5TradingBot:
         # Apply MACD confirmation (second most popular) - ENHANCED WITH THRESHOLD
         logging.info("-"*80)
         logging.info("🔍 MACD FILTER CHECK:")
-        if not pd.isna(latest['macd_histogram']):
+        
+        # Check if MACD filter is enabled
+        if not self.config.get('use_macd', True):
+            logging.info("  ⚪ MACD filter: DISABLED (skipping check)")
+        elif not pd.isna(latest['macd_histogram']):
             histogram = latest['macd_histogram']
             macd = latest['macd']
             macd_signal = latest['macd_signal']

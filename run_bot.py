@@ -9,7 +9,7 @@ import os
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from config import get_config
+from config_manager import get_config_manager
 from mt5_trading_bot import MT5TradingBot
 
 
@@ -19,8 +19,9 @@ def main():
     print("=" * 60)
     print()
     
-    # Load configuration
-    config = get_config()
+    # Load configuration from JSON file (not hardcoded config.py)
+    config_manager = get_config_manager()
+    config = config_manager.get_config()
     
     # Display configuration
     print("Configuration:")
@@ -31,6 +32,7 @@ def main():
     print(f"  Fast MA: {config['fast_ma_period']}, Slow MA: {config['slow_ma_period']}")
     print(f"  ATR Period: {config['atr_period']}, Multiplier: {config['atr_multiplier']}")
     print(f"  Trailing Stop: {'Enabled' if config['enable_trailing_stop'] else 'Disabled'}")
+    print(f"  MACD Filter: {'Enabled' if config.get('use_macd', True) else 'Disabled'}")
     print()
     
     # Confirmation
