@@ -750,9 +750,10 @@ class CircuitBreaker:
 
 class PerformanceTimer:
     """Context manager for timing operations"""
-    def __init__(self, operation_name: str, logger: logging.Logger = None):
+    def __init__(self, operation_name: str, logger: logging.Logger = None, warning_threshold_ms: float = 100):
         self.operation_name = operation_name
         self.logger = logger or logging.getLogger(__name__)
+        self.warning_threshold_ms = warning_threshold_ms
         self.start_time = None
         
     def __enter__(self):
@@ -761,8 +762,8 @@ class PerformanceTimer:
         
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = (time.perf_counter() - self.start_time) * 1000  # Convert to milliseconds
-        if elapsed > 100:  # Log if over 100ms threshold
-            self.logger.warning(f"⚠️ Performance: {self.operation_name} took {elapsed:.1f}ms (>100ms threshold)")
+        if elapsed > self.warning_threshold_ms:  # Log if over threshold
+            self.logger.warning(f"⚠️ Performance: {self.operation_name} took {elapsed:.1f}ms (>{self.warning_threshold_ms:.0f}ms threshold)")
         else:
             self.logger.debug(f"⏱️ Performance: {self.operation_name} took {elapsed:.1f}ms")
 
@@ -2081,7 +2082,9 @@ class TrendDetectionEngine:
         # Start performance timer and memory monitoring
         analysis_start_time = time.perf_counter()
         
-        with PerformanceTimer(f"Trend Analysis - {symbol}", self.logger) as timer:
+        # Use config threshold for performance warnings
+        warning_threshold = self.config.get('max_analysis_time_ms', 250)
+        with PerformanceTimer(f"Trend Analysis - {symbol}", self.logger, warning_threshold) as timer:
             with self.memory_manager.memory_monitor(f"trend_analysis_{symbol}"):
                 
                 # Update performance stats

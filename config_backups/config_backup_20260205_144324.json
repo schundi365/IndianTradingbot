@@ -23,7 +23,7 @@
     "magic_number": 123456,
     "lot_size": 0.01,
     "risk_percent": 1,
-    "reward_ratio": 2,
+    "reward_ratio": 1.2,
     "min_trade_confidence": 0.6,
     "max_daily_loss_percent": 6,
     "fast_ma_period": 20,
@@ -64,8 +64,8 @@
         30
     ],
     "max_lot_per_order": 0.5,
-    "max_trades_total": 50,
-    "max_trades_per_symbol": 10,
+    "max_trades_total": 10,
+    "max_trades_per_symbol": 3,
     "enable_trailing_stop": true,
     "trail_activation": 1.5,
     "trail_distance": 1,
@@ -80,7 +80,7 @@
     "obv_period": 20,
     "update_interval": 60,
     "version": "2.1.0",
-    "last_updated": "2026-02-05T10:24:00.923257",
+    "last_updated": "2026-02-05T14:39:07.452856",
     "max_daily_loss": 5,
     "symbol_atr_multipliers": {
         "ADAUSD": 2.5,
@@ -247,7 +247,7 @@
     "ml_model_path": "models/ml_signal_model.pkl",
     "ml_training_data_path": "data/training_data.csv",
     "news_data_path": "",
-    "ml_auto_retrain": false,
+    "ml_auto_retrain": true,
     "ml_retrain_frequency": "weekly",
     "ml_min_training_samples": 100,
     "pattern_min_confidence": 0.6,
@@ -257,5 +257,6 @@
     "ml_min_agreement": 2,
     "ml_retrain_frequency_days": 30,
     "pattern_lookback_bars": 50,
-    "sentiment_cache_duration_hours": 24
+    "sentiment_cache_duration_hours": 24,
+    "max_analysis_time_ms": 250
 }
