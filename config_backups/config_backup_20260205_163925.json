@@ -34,7 +34,7 @@
     "macd_fast": 12,
     "macd_slow": 26,
     "macd_signal": 9,
-    "macd_min_histogram": 0.0003,
+    "macd_min_histogram": 0.0005,
     "atr_period": 14,
     "atr_multiplier": 2,
     "adx_min_strength": 25,
@@ -50,7 +50,7 @@
     "news_buffer_minutes": 60,
     "use_split_orders": true,
     "num_positions": 3,
-    "tp_level_1": 1.5,
+    "tp_level_1": 1,
     "tp_level_2": 2,
     "tp_level_3": 3,
     "tp_levels": [
@@ -80,7 +80,7 @@
     "obv_period": 20,
     "update_interval": 60,
     "version": "2.1.0",
-    "last_updated": "2026-02-05T10:33:59.294889",
+    "last_updated": "2026-02-05T16:31:03.578405",
     "max_daily_loss": 5,
     "symbol_atr_multipliers": {
         "ADAUSD": 2.5,
@@ -247,7 +247,7 @@
     "ml_model_path": "models/ml_signal_model.pkl",
     "ml_training_data_path": "data/training_data.csv",
     "news_data_path": "",
-    "ml_auto_retrain": false,
+    "ml_auto_retrain": true,
     "ml_retrain_frequency": "weekly",
     "ml_min_training_samples": 100,
     "pattern_min_confidence": 0.6,
@@ -257,5 +257,6 @@
     "ml_min_agreement": 2,
     "ml_retrain_frequency_days": 30,
     "pattern_lookback_bars": 50,
-    "sentiment_cache_duration_hours": 24
+    "sentiment_cache_duration_hours": 24,
+    "max_analysis_time_ms": 250
 }
