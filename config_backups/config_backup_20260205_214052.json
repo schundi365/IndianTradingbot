@@ -34,7 +34,7 @@
     "macd_fast": 12,
     "macd_slow": 26,
     "macd_signal": 9,
-    "macd_min_histogram": 0.0003,
+    "macd_min_histogram": 0.0005,
     "atr_period": 14,
     "atr_multiplier": 2,
     "adx_min_strength": 25,
@@ -50,13 +50,13 @@
     "news_buffer_minutes": 60,
     "use_split_orders": true,
     "num_positions": 3,
-    "tp_level_1": 1.5,
+    "tp_level_1": 1,
     "tp_level_2": 2,
     "tp_level_3": 3,
     "tp_levels": [
-        1.5,
-        2.5,
-        4.0
+        1.0,
+        2.0,
+        3.0
     ],
     "partial_close_percent": [
         40,
@@ -80,7 +80,7 @@
     "obv_period": 20,
     "update_interval": 60,
     "version": "2.1.0",
-    "last_updated": "2026-02-05T11:07:45.040615",
+    "last_updated": "2026-02-05T21:21:10.998231",
     "max_daily_loss": 5,
     "symbol_atr_multipliers": {
         "ADAUSD": 2.5,
@@ -234,7 +234,7 @@
     "use_pip_based_sl": false,
     "sl_pips": 50,
     "use_pip_based_tp": true,
-    "tp_pips": 100,
+    "tp_pips": 250,
     "pattern_enabled": true,
     "sentiment_enabled": false,
     "ml_enabled": true,

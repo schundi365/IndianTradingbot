@@ -757,7 +757,57 @@
                             <div class="form-group">
                                 <label>Risk/Reward Ratio</label>
                                 <input type="number" id="reward-ratio" value="2.0" step="0.1" min="1.0" max="5.0">
-                                <small style="color: #94a3b8;">Minimum 1:2 recommended</small>
+                                <small style="color: #94a3b8;">Minimum 1:2 recommended (only used if pip-based disabled)</small>
+                            </div>
+                            
+                            <!-- Pip-Based TP/SL Controls -->
+                            <div style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); border-radius: 8px; color: white;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                    <span style="font-size: 18px;">🎯</span>
+                                    <strong style="font-size: 15px;">TP/SL Calculation Method</strong>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                                    <strong>⚠️ CRITICAL:</strong> Both SL and TP must use the same calculation method!<br>
+                                    <small>Mixing methods causes SL > TP (negative risk/reward)</small>
+                                </div>
+                                
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label style="color: white; font-weight: bold;">Stop Loss Method</label>
+                                    <select id="use-pip-based-sl" onchange="updateTPSLMethodWarning()" style="background: rgba(255,255,255,0.9); color: #1e293b;">
+                                        <option value="false">ATR-Based (Adaptive to volatility)</option>
+                                        <option value="true">Pip-Based (Fixed distance)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" id="sl-pips-group" style="display: none; margin-bottom: 15px;">
+                                    <label style="color: white; font-weight: bold;">Stop Loss (Pips)</label>
+                                    <input type="number" id="sl-pips" value="50" step="5" min="10" max="500" style="background: rgba(255,255,255,0.9); color: #1e293b;">
+                                    <small style="color: rgba(255,255,255,0.9);">Distance from entry in pips</small>
+                                </div>
+                                
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label style="color: white; font-weight: bold;">Take Profit Method</label>
+                                    <select id="use-pip-based-tp" onchange="updateTPSLMethodWarning()" style="background: rgba(255,255,255,0.9); color: #1e293b;">
+                                        <option value="false">Ratio-Based (Multiple of SL)</option>
+                                        <option value="true">Pip-Based (Fixed distance)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" id="tp-pips-group" style="display: none; margin-bottom: 15px;">
+                                    <label style="color: white; font-weight: bold;">Take Profit Base (Pips)</label>
+                                    <input type="number" id="tp-pips" value="100" step="10" min="20" max="1000" style="background: rgba(255,255,255,0.9); color: #1e293b;">
+                                    <small style="color: rgba(255,255,255,0.9);">Base TP distance (multiplied by TP levels)</small>
+                                </div>
+                                
+                                <div id="tpsl-method-warning" style="display: none; background: rgba(220, 38, 38, 0.9); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                                    <strong>❌ WARNING: Inconsistent Methods!</strong><br>
+                                    <small>SL and TP use different calculation methods. This can cause SL > TP!</small>
+                                </div>
+                                
+                                <div id="tpsl-method-ok" style="display: none; background: rgba(34, 197, 94, 0.9); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                                    <strong>✓ Methods Consistent</strong><br>
+                                    <small id="tpsl-method-description"></small>
+                                </div>
                             </div>
                             
                             <div class="form-group">
@@ -2444,6 +2494,48 @@
                 warning.style.display = 'block';
             }
             return true;
+        }
+        
+        // TP/SL Method Validation
+        function updateTPSLMethodWarning() {
+            const usePipSL = document.getElementById('use-pip-based-sl').value === 'true';
+            const usePipTP = document.getElementById('use-pip-based-tp').value === 'true';
+            const warning = document.getElementById('tpsl-method-warning');
+            const ok = document.getElementById('tpsl-method-ok');
+            const description = document.getElementById('tpsl-method-description');
+            const slPipsGroup = document.getElementById('sl-pips-group');
+            const tpPipsGroup = document.getElementById('tp-pips-group');
+            
+            // Show/hide pip input fields
+            slPipsGroup.style.display = usePipSL ? 'block' : 'none';
+            tpPipsGroup.style.display = usePipTP ? 'block' : 'none';
+            
+            // Check consistency
+            if (usePipSL !== usePipTP) {
+                warning.style.display = 'block';
+                ok.style.display = 'none';
+            } else {
+                warning.style.display = 'none';
+                ok.style.display = 'block';
+                
+                if (usePipSL && usePipTP) {
+                    const slPips = parseInt(document.getElementById('sl-pips').value) || 50;
+                    const tpPips = parseInt(document.getElementById('tp-pips').value) || 100;
+                    const tpLevels = [
+                        parseFloat(document.getElementById('tp-level-1').value) || 1.5,
+                        parseFloat(document.getElementById('tp-level-2').value) || 2.5,
+                        parseFloat(document.getElementById('tp-level-3').value) || 4.0
+                    ];
+                    
+                    description.innerHTML = `Both use pip-based calculation:<br>` +
+                        `SL: ${slPips} pips | ` +
+                        `TP1: ${Math.round(tpPips * tpLevels[0])} pips | ` +
+                        `TP2: ${Math.round(tpPips * tpLevels[1])} pips | ` +
+                        `TP3: ${Math.round(tpPips * tpLevels[2])} pips`;
+                } else {
+                    description.innerHTML = 'Both use ATR/ratio-based calculation (adaptive to volatility)';
+                }
+            }
         }
         
         function validateAnalysisBars() {
@@ -4694,11 +4786,11 @@
             document.getElementById('adx-min').value = config.adx_min;
             
             // Pip-Based TP/SL
-            if (config.use_pip_based_sl !== undefined) document.getElementById('use-pip-based-sl').value = config.use_pip_based_sl;
-            if (config.sl_pips !== undefined) document.getElementById('sl-pips').value = config.sl_pips;
-            if (config.use_pip_based_tp !== undefined) document.getElementById('use-pip-based-tp').value = config.use_pip_based_tp;
-            if (config.tp_pips !== undefined) document.getElementById('tp-pips').value = config.tp_pips;
-            togglePipBasedControls();
+            document.getElementById('use-pip-based-sl').value = config.use_pip_based_sl !== undefined ? String(config.use_pip_based_sl) : 'false';
+            document.getElementById('sl-pips').value = config.sl_pips || 50;
+            document.getElementById('use-pip-based-tp').value = config.use_pip_based_tp !== undefined ? String(config.use_pip_based_tp) : 'false';
+            document.getElementById('tp-pips').value = config.tp_pips || 100;
+            updateTPSLMethodWarning();
             
             // Filters
             document.getElementById('use-rsi').value = config.use_rsi;
@@ -4715,9 +4807,12 @@
             // Position Management
             document.getElementById('use-split-orders').value = config.use_split_orders;
             document.getElementById('num-positions').value = config.num_positions;
-            document.getElementById('tp-level-1').value = config.tp_level_1;
-            document.getElementById('tp-level-2').value = config.tp_level_2;
-            document.getElementById('tp-level-3').value = config.tp_level_3;
+            
+            // Load TP levels from array (with fallback to individual fields for backward compatibility)
+            const tpLevels = config.tp_levels || [config.tp_level_1 || 1.5, config.tp_level_2 || 2.5, config.tp_level_3 || 4.0];
+            document.getElementById('tp-level-1').value = tpLevels[0];
+            document.getElementById('tp-level-2').value = tpLevels[1];
+            document.getElementById('tp-level-3').value = tpLevels[2];
             document.getElementById('max-lot-per-order').value = config.max_lot_per_order || 0.5;
             document.getElementById('max-trades-total').value = config.max_trades_total;
             document.getElementById('max-trades-per-symbol').value = config.max_trades_per_symbol;
@@ -4815,9 +4910,11 @@
                 // Position Management
                 use_split_orders: document.getElementById('use-split-orders').value === 'true',
                 num_positions: parseInt(document.getElementById('num-positions').value),
-                tp_level_1: parseFloat(document.getElementById('tp-level-1').value),
-                tp_level_2: parseFloat(document.getElementById('tp-level-2').value),
-                tp_level_3: parseFloat(document.getElementById('tp-level-3').value),
+                tp_levels: [
+                    parseFloat(document.getElementById('tp-level-1').value),
+                    parseFloat(document.getElementById('tp-level-2').value),
+                    parseFloat(document.getElementById('tp-level-3').value)
+                ],
                 max_lot_per_order: parseFloat(document.getElementById('max-lot-per-order').value),
                 max_trades_total: parseInt(document.getElementById('max-trades-total').value),
                 max_trades_per_symbol: parseInt(document.getElementById('max-trades-per-symbol').value),

@@ -280,74 +280,6 @@ class MT5TradingBot:
         mt5.shutdown()
         logging.info("MT5 connection closed")
     
-    def is_mt5_connected(self):
-        """
-        Check if MT5 is actually connected without forcing reconnect
-        
-        Returns:
-            bool: True if connected and responsive
-        """
-        try:
-            # Quick connectivity check
-            account_info = mt5.account_info()
-            if account_info is None:
-                return False
-            return True
-        except Exception as e:
-            logging.debug(f"MT5 connection check failed: {e}")
-            return False
-    
-    def ensure_mt5_connection(self):
-        """
-        Ensure MT5 connection is active, reconnect only if necessary
-        
-        Returns:
-            bool: True if connected or successfully reconnected
-        """
-        # First check if already connected
-        if self.is_mt5_connected():
-            logging.debug("MT5 connection is healthy")
-            return True
-        
-        # Only reconnect if actually disconnected
-        logging.warning("⚠️  MT5 connection lost, attempting to reconnect...")
-        mt5.shutdown()
-        time.sleep(1)
-        
-        if mt5.initialize():
-            logging.info("✅ MT5 reconnected successfully")
-            return True
-        else:
-            logging.error("❌ Failed to reconnect MT5")
-            return False
-    
-    def periodic_connection_check(self):
-        """
-        Periodically verify MT5 connection is healthy
-        Call this at start of each analysis cycle
-        """
-        # Only check every 5 minutes to avoid overhead
-        current_time = time.time()
-        
-        # Initialize tracking variables if not exists
-        if not hasattr(self, 'last_connection_check'):
-            self.last_connection_check = 0
-            self.connection_check_interval = 300  # 5 minutes
-        
-        # Skip if checked recently
-        if current_time - self.last_connection_check < self.connection_check_interval:
-            return True
-        
-        self.last_connection_check = current_time
-        logging.debug("🔍 Performing periodic MT5 connection health check...")
-        
-        if not self.is_mt5_connected():
-            logging.warning("⚠️  Periodic connection check failed - reconnecting...")
-            return self.ensure_mt5_connection()
-        
-        logging.debug("✅ MT5 connection healthy")
-        return True
-    
     def get_historical_data(self, symbol, timeframe, bars=200):
         """
         Fetch historical price data from MT5 with improved error handling
@@ -360,44 +292,38 @@ class MT5TradingBot:
         Returns:
             pd.DataFrame: Historical price data
         """
+        # Try up to 3 times with retry logic
         max_retries = 3
-        
         for attempt in range(max_retries):
-            # Try to get data
             rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
             
-            # Success!
             if rates is not None and len(rates) > 0:
                 df = pd.DataFrame(rates)
                 df['time'] = pd.to_datetime(df['time'], unit='s')
                 return df
             
-            # Failed - check error
+            # Check error type
             error = mt5.last_error()
             error_code = error[0] if error else 0
             
-            # IPC errors (-10004, -10001) - usually means "busy", not "disconnected"
+            # If IPC error (-10004 or -10001), try to reconnect
             if error_code in [-10004, -10001]:
-                if attempt < max_retries - 1:
-                    # Just retry with short delay - DON'T reconnect!
-                    logging.debug(f"IPC busy for {symbol} (code: {error_code}), retry {attempt + 1}/{max_retries}")
-                    time.sleep(0.3)  # Short delay
-                    continue
+                logging.warning(f"IPC connection error for {symbol} (code: {error_code}), attempting to reconnect MT5...")
+                mt5.shutdown()
+                time.sleep(2)
+                if mt5.initialize():
+                    logging.info("MT5 reconnected successfully")
+                    continue  # Retry immediately after reconnect
                 else:
-                    # Last attempt - check if actually disconnected
-                    logging.warning(f"⚠️  IPC error on final attempt for {symbol}")
-                    if not self.ensure_mt5_connection():
-                        logging.error(f"❌ MT5 connection lost and reconnect failed for {symbol}")
-                        return None
-                    time.sleep(0.5)
-                    continue
+                    logging.error("Failed to reconnect MT5")
+                    return None
             
-            # Other errors - retry with longer delay
+            # If failed, log and retry
             if attempt < max_retries - 1:
-                logging.warning(f"⚠️  Data fetch error for {symbol} (code: {error_code}), retry {attempt + 1}/{max_retries}")
-                time.sleep(1)
+                logging.warning(f"Failed to get data for {symbol} (attempt {attempt + 1}/{max_retries}), retrying...")
+                time.sleep(2)  # Wait 2 seconds before retry
             else:
-                logging.error(f"❌ Failed to get {symbol} data after {max_retries} attempts. Error: {error}")
+                logging.error(f"Failed to get data for {symbol} after {max_retries} attempts. Error: {error}")
         
         return None
     
@@ -1399,7 +1325,7 @@ class MT5TradingBot:
                 trend_analysis = self.trend_detection_engine.analyze_trend_change(df, symbol)
                 
                 # Check if trend supports the signal
-                should_trade, trend_confidence = self.trend_detection_engine.should_trade_trend(df, signal_type_str, symbol)
+                should_trade, trend_confidence = self.trend_detection_engine.should_trade_trend(df, signal_type_str)
                 
                 if should_trade:
                     logging.info(f"  ✅ TREND DETECTION CONFIRMED!")
@@ -2052,10 +1978,7 @@ class MT5TradingBot:
     def check_drawdown_limit(self):
         """
         Check if maximum drawdown limit has been exceeded
-        Tracks peak balance (not equity) and current drawdown from peak
-        
-        Note: Uses balance (realized P&L) not equity (includes unrealized P&L)
-        to avoid false drawdown triggers from temporary unrealized profits
+        Tracks peak equity and current drawdown from peak
         
         Returns:
             bool: True if can continue trading, False if drawdown limit exceeded
@@ -2067,36 +1990,23 @@ class MT5TradingBot:
         if not account_info:
             return True  # Can't check, allow trading
         
-        # Use BALANCE (realized P&L) not equity (includes unrealized P&L)
-        # This prevents false peaks from temporary unrealized profits
-        current_balance = account_info.balance
         current_equity = account_info.equity
+        initial_balance = account_info.balance
         
-        # Initialize peak balance tracking if not exists
-        if not hasattr(self, 'peak_balance'):
-            self.peak_balance = current_balance
-            self.peak_balance_date = datetime.now()
-            logging.info(f"📊 Initial peak balance set: ${self.peak_balance:.2f}")
+        # Initialize peak equity tracking if not exists
+        if not hasattr(self, 'peak_equity'):
+            self.peak_equity = current_equity
+            self.peak_equity_date = datetime.now()
         
-        # SAFETY CHECK: Reset peak if it's unreasonably high compared to current balance
-        # This prevents false alarms from incorrect peak values (e.g., from demo accounts, tests, or bugs)
-        # If peak is more than 10x current balance, it's likely incorrect
-        if self.peak_balance > current_balance * 10:
-            logging.warning(f"⚠️  Peak balance (${self.peak_balance:.2f}) is {self.peak_balance/current_balance:.1f}x current balance (${current_balance:.2f})")
-            logging.warning(f"⚠️  This suggests the peak was set incorrectly - resetting to current balance")
-            self.peak_balance = current_balance
-            self.peak_balance_date = datetime.now()
-            logging.info(f"📊 Peak balance reset to: ${self.peak_balance:.2f}")
+        # Update peak equity if current is higher
+        if current_equity > self.peak_equity:
+            self.peak_equity = current_equity
+            self.peak_equity_date = datetime.now()
+            logging.info(f"📈 New peak equity: ${self.peak_equity:.2f}")
         
-        # Update peak balance if current is higher (only based on realized P&L)
-        if current_balance > self.peak_balance:
-            self.peak_balance = current_balance
-            self.peak_balance_date = datetime.now()
-            logging.info(f"📈 New peak balance: ${self.peak_balance:.2f} (realized P&L)")
-        
-        # Calculate drawdown from peak BALANCE
-        drawdown = self.peak_balance - current_balance
-        drawdown_percent = (drawdown / self.peak_balance * 100) if self.peak_balance > 0 else 0
+        # Calculate drawdown from peak
+        drawdown = self.peak_equity - current_equity
+        drawdown_percent = (drawdown / self.peak_equity * 100) if self.peak_equity > 0 else 0
         
         max_drawdown_percent = self.config.get('max_drawdown_percent', 10.0)
         
@@ -2105,15 +2015,14 @@ class MT5TradingBot:
             logging.error("=" * 80)
             logging.error("🚨 MAXIMUM DRAWDOWN LIMIT EXCEEDED 🚨")
             logging.error("=" * 80)
-            logging.error(f"Peak Balance: ${self.peak_balance:.2f} (on {self.peak_balance_date.strftime('%Y-%m-%d %H:%M')})")
-            logging.error(f"Current Balance: ${current_balance:.2f}")
-            logging.error(f"Current Equity: ${current_equity:.2f} (includes unrealized P&L)")
+            logging.error(f"Peak Equity: ${self.peak_equity:.2f} (on {self.peak_equity_date.strftime('%Y-%m-%d %H:%M')})")
+            logging.error(f"Current Equity: ${current_equity:.2f}")
             logging.error(f"Drawdown: ${drawdown:.2f} ({drawdown_percent:.2f}%)")
             logging.error(f"Maximum Allowed: {max_drawdown_percent}%")
             logging.error("=" * 80)
             logging.error("⚠️  TRADING PAUSED - Manual intervention required")
             logging.error("⚠️  Review trading strategy and risk management")
-            logging.error("⚠️  Reset peak balance or adjust max_drawdown_percent to resume")
+            logging.error("⚠️  Reset peak equity or adjust max_drawdown_percent to resume")
             logging.error("=" * 80)
             return False
         
@@ -2121,11 +2030,10 @@ class MT5TradingBot:
         if drawdown_percent >= max_drawdown_percent * 0.8:
             logging.warning("=" * 80)
             logging.warning(f"⚠️  APPROACHING DRAWDOWN LIMIT: {drawdown_percent:.2f}% of {max_drawdown_percent}%")
-            logging.warning(f"   Peak Balance: ${self.peak_balance:.2f}")
-            logging.warning(f"   Current Balance: ${current_balance:.2f}")
-            logging.warning(f"   Current Equity: ${current_equity:.2f} (includes unrealized P/L)")
+            logging.warning(f"   Peak Equity: ${self.peak_equity:.2f}")
+            logging.warning(f"   Current Equity: ${current_equity:.2f}")
             logging.warning(f"   Drawdown: ${drawdown:.2f}")
-            logging.warning(f"   Remaining: ${(max_drawdown_percent * self.peak_balance / 100) - drawdown:.2f} ({max_drawdown_percent - drawdown_percent:.2f}%)")
+            logging.warning(f"   Remaining: ${(max_drawdown_percent * self.peak_equity / 100) - drawdown:.2f} ({max_drawdown_percent - drawdown_percent:.2f}%)")
             logging.warning("=" * 80)
         
         # Log current drawdown status periodically
@@ -2134,7 +2042,6 @@ class MT5TradingBot:
         
         return True
     
-    
     def run_strategy(self, symbol):
         """
         Execute trading strategy for a symbol
@@ -2142,11 +2049,7 @@ class MT5TradingBot:
         Args:
             symbol (str): Trading symbol
         """
-        # Check connection health periodically (every 5 minutes)
-        if not self.periodic_connection_check():
-            logging.error(f"❌ MT5 connection unavailable, skipping {symbol}")
-            return
-        
+        logging.info("")
         logging.info("╔" + "="*78 + "╗")
         logging.info(f"║ ANALYZING {symbol:^70} ║")
         logging.info("╚" + "="*78 + "╝")

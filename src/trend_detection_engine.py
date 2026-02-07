@@ -2978,18 +2978,19 @@ class TrendDetectionEngine:
                 'error': str(e)
             }
     
-    def get_trend_signals(self, df: pd.DataFrame, signal_type: str) -> List[TrendSignal]:
+    def get_trend_signals(self, df: pd.DataFrame, signal_type: str, symbol: str = "unknown") -> List[TrendSignal]:
         """
         Get trend signals for a specific signal type
         
         Args:
             df: Price data with indicators
             signal_type: 'buy' or 'sell'
+            symbol: Trading symbol (default: "unknown" for backward compatibility)
             
         Returns:
             List of relevant trend signals
         """
-        analysis_result = self.analyze_trend_change(df, "unknown")
+        analysis_result = self.analyze_trend_change(df, symbol)
         
         if signal_type.lower() == 'buy':
             return [s for s in analysis_result.signals if 'bullish' in s.signal_type]
@@ -3212,21 +3213,22 @@ class TrendDetectionEngine:
         """
         return self._calculate_trend_confidence(signals)
     
-    def should_trade_trend(self, df: pd.DataFrame, signal_type: str) -> Tuple[bool, float]:
+    def should_trade_trend(self, df: pd.DataFrame, signal_type: str, symbol: str = "unknown") -> Tuple[bool, float]:
         """
         Determine if trend conditions support trading
         
         Args:
             df: Price data with indicators
             signal_type: 'buy' or 'sell'
+            symbol: Trading symbol (default: "unknown" for backward compatibility)
             
         Returns:
             Tuple of (should_trade, confidence_score)
         """
-        analysis_result = self.analyze_trend_change(df, "unknown")
+        analysis_result = self.analyze_trend_change(df, symbol)
         
         # Check if we have relevant signals
-        relevant_signals = self.get_trend_signals(df, signal_type)
+        relevant_signals = self.get_trend_signals(df, signal_type, symbol)
         
         if not relevant_signals:
             return False, 0.0

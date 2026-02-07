@@ -325,6 +325,38 @@ def config_api():
                 if update_interval < 30 or update_interval > 300:
                     return jsonify({'status': 'error', 'message': 'Update interval must be between 30 and 300 seconds'})
             
+            # Validate pip-based TP/SL settings
+            if 'use_pip_based_sl' in new_config and 'use_pip_based_tp' in new_config:
+                use_pip_sl = new_config.get('use_pip_based_sl', False)
+                use_pip_tp = new_config.get('use_pip_based_tp', False)
+                
+                # CRITICAL: Both must use the same method
+                if use_pip_sl != use_pip_tp:
+                    return jsonify({
+                        'status': 'error', 
+                        'message': 'TP and SL must use the same calculation method! Mixing methods causes SL > TP (negative risk/reward).'
+                    })
+                
+                # Validate pip values if pip-based is enabled
+                if use_pip_sl:
+                    sl_pips = new_config.get('sl_pips', 50)
+                    if sl_pips < 10 or sl_pips > 500:
+                        return jsonify({'status': 'error', 'message': 'SL pips must be between 10 and 500'})
+                
+                if use_pip_tp:
+                    tp_pips = new_config.get('tp_pips', 100)
+                    if tp_pips < 20 or tp_pips > 1000:
+                        return jsonify({'status': 'error', 'message': 'TP pips must be between 20 and 1000'})
+                    
+                    # Validate that TP base is greater than SL
+                    if use_pip_sl:
+                        sl_pips = new_config.get('sl_pips', 50)
+                        if tp_pips <= sl_pips:
+                            return jsonify({
+                                'status': 'error', 
+                                'message': f'TP base ({tp_pips} pips) must be greater than SL ({sl_pips} pips)'
+                            })
+            
             # Update configuration using config manager
             if config_manager.update_config(new_config):
                 # Reload current_config from config manager
