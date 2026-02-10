@@ -70,7 +70,7 @@ MIN_RISK_MULTIPLIER = 0.3
 # MOVING AVERAGE STRATEGY - M5 OPTIMIZED
 # ==============================================================================
 FAST_MA_PERIOD = 10         # 10-period EMA
-SLOW_MA_PERIOD = 20         # 20-period EMA
+SLOW_MA_PERIOD = 21         # 21-period EMA
 MA_TYPE = 'EMA'
 
 WAIT_FOR_CONFIRMATION = True

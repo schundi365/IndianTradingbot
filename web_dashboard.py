@@ -140,6 +140,31 @@ def config_api():
                 if start_hour < 0 or start_hour > 23 or end_hour < 0 or end_hour > 23:
                     return jsonify({'status': 'error', 'message': 'Trading hours must be between 0 and 23'})
             
+            # Validate hour filter
+            if 'dead_hours' in new_config:
+                dead_hours = new_config.get('dead_hours', [])
+                if not isinstance(dead_hours, list):
+                    return jsonify({'status': 'error', 'message': 'Dead hours must be a list'})
+                for hour in dead_hours:
+                    if not isinstance(hour, int) or hour < 0 or hour > 23:
+                        return jsonify({'status': 'error', 'message': 'Dead hours must be integers between 0 and 23'})
+            
+            if 'golden_hours' in new_config:
+                golden_hours = new_config.get('golden_hours', [])
+                if not isinstance(golden_hours, list):
+                    return jsonify({'status': 'error', 'message': 'Golden hours must be a list'})
+                for hour in golden_hours:
+                    if not isinstance(hour, int) or hour < 0 or hour > 23:
+                        return jsonify({'status': 'error', 'message': 'Golden hours must be integers between 0 and 23'})
+            
+            if 'roc_threshold' in new_config:
+                try:
+                    roc_threshold = float(new_config.get('roc_threshold', 0.15))
+                    if roc_threshold < 0.05 or roc_threshold > 1.0:
+                        return jsonify({'status': 'error', 'message': 'ROC threshold must be between 0.05 and 1.0'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'ROC threshold must be a valid number'})
+            
             # Validate position management
             num_positions = new_config.get('num_positions', 1)
             if num_positions < 1 or num_positions > 5:
@@ -167,6 +192,32 @@ def config_api():
             analysis_bars = new_config.get('analysis_bars', 200)
             if analysis_bars < 50 or analysis_bars > 1000:
                 return jsonify({'status': 'error', 'message': 'Analysis bars must be between 50 and 1000'})
+            
+            # Validate trailing stop parameters
+            if 'trail_activation' in new_config:
+                trail_activation = new_config.get('trail_activation', 1.0)
+                if trail_activation < 0.1 or trail_activation > 5.0:
+                    return jsonify({'status': 'error', 'message': 'Trail activation must be between 0.1 and 5.0 ATR'})
+            
+            if 'trail_distance' in new_config:
+                trail_distance = new_config.get('trail_distance', 0.8)
+                if trail_distance < 0.1 or trail_distance > 3.0:
+                    return jsonify({'status': 'error', 'message': 'Trail distance must be between 0.1 and 3.0 ATR'})
+            
+            # Validate time-based exit parameters
+            if 'max_hold_minutes' in new_config:
+                max_hold_minutes = new_config.get('max_hold_minutes', 45)
+                if max_hold_minutes < 5 or max_hold_minutes > 480:
+                    return jsonify({'status': 'error', 'message': 'Max hold time must be between 5 and 480 minutes (8 hours)'})
+            
+            # Validate breakeven threshold
+            if 'breakeven_atr_threshold' in new_config:
+                try:
+                    be_threshold = float(new_config.get('breakeven_atr_threshold', 0.3))
+                    if be_threshold < 0.1 or be_threshold > 2.0:
+                        return jsonify({'status': 'error', 'message': 'Breakeven ATR threshold must be between 0.1 and 2.0'})
+                except (ValueError, TypeError):
+                    return jsonify({'status': 'error', 'message': 'Breakeven ATR threshold must be a valid number'})
             
             # Validate volume filter settings
             if 'min_volume_ma' in new_config:

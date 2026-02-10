@@ -57,7 +57,7 @@ class ConfigManager:
             'min_trend_confidence': 0.30,
             'max_daily_loss_percent': 5,
             'fast_ma_period': 10,
-            'slow_ma_period': 20,
+            'slow_ma_period': 21,
             'rsi_period': 14,
             'rsi_overbought': 75,
             'rsi_oversold': 25,
@@ -76,18 +76,38 @@ class ConfigManager:
             'enable_trading_hours': False,
             'trading_start_hour': 0,
             'trading_end_hour': 23,
+            'enable_hour_filter': True,
+            'dead_hours': [0, 1, 2, 17, 20, 21, 22],
+            'golden_hours': [8, 11, 13, 14, 15, 19, 23],
+            'roc_threshold': 0.15,
             'avoid_news_trading': False,
             'news_buffer_minutes': 60,
             'use_split_orders': True,
             'num_positions': 3,
-            'tp_levels': [1.5, 2.5, 4.0],
+            'tp_levels': [1, 1.5, 2.5],
+            'scalp_tp_caps': {
+                'XAUUSD': 2.0,   # Max 200 points on Gold
+                'XAGUSD': 0.25,  # Max 250 points on Silver
+                'XPTUSD': 3.0,   # Platinum
+                'XPDUSD': 5.0,   # Palladium
+                'DEFAULT': 0.01  # Forex: ~100 points
+            },
             'partial_close_percent': [40, 30, 30],
             'max_lot_per_order': 0.5,
             'max_trades_total': 999,
             'max_trades_per_symbol': 10,
             'enable_trailing_stop': True,
-            'trail_activation': 1.5,
-            'trail_distance': 1,
+            'trail_activation': 1.0,
+            'trail_distance': 0.8,
+            'enable_time_based_exit': False,
+            'max_hold_minutes': 45,
+            'enable_breakeven_stop': True,
+            'breakeven_atr_threshold': 0.3,
+            # Pip-Based TP/SL
+            'use_pip_based_sl': False,
+            'sl_pips': 50,
+            'use_pip_based_tp': False,
+            'tp_pips': 100,
             'use_adaptive_risk': True,
             'max_risk_multiplier': 1.5,
             'min_risk_multiplier': 0.5,
@@ -98,6 +118,7 @@ class ConfigManager:
             'volume_ma_period': 20,
             'obv_period': 20,
             'update_interval': 60,
+            'analysis_bars': 200,
             # ML Features Configuration
             'ml_enabled': False,
             'sentiment_enabled': False,

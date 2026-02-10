@@ -147,7 +147,7 @@ MIN_RISK_MULTIPLIER = 0.5
 # MOVING AVERAGES - INDUSTRY STANDARD
 # ==============================================================================
 FAST_MA_PERIOD = 10
-SLOW_MA_PERIOD = 30
+SLOW_MA_PERIOD = 21
 MA_TYPE = 'EMA'                 # Exponential MA
 
 WAIT_FOR_CONFIRMATION = True
@@ -186,14 +186,23 @@ MAX_ATR_VALUE = 999999
 # ==============================================================================
 ENABLE_TRAILING_STOP = True
 
-TRAIL_ACTIVATION_ATR = 1
-TRAIL_DISTANCE_ATR = 0.8
+TRAIL_ACTIVATION_ATR = 1      # ATR multiplier to activate trailing (default: 1.0, aggressive: 0.5)
+TRAIL_DISTANCE_ATR = 0.8      # ATR multiplier for trail distance (default: 0.8, tight: 0.4)
 TRAIL_TYPE = 'atr'
 
 TRAIL_PERCENT = 2.0
 BREAKEVEN_ACTIVATION_PIPS = 50  # Move to breakeven after 50 pips
 BREAKEVEN_PLUS_PIPS = 10
 TRAIL_START_PIPS = 100
+
+# ==============================================================================
+# PROACTIVE PROFIT BOOKING
+# ==============================================================================
+ENABLE_TIME_BASED_EXIT = False      # Force close positions after max hold time
+MAX_HOLD_MINUTES = 45                # Maximum minutes to hold a position (default: 45)
+
+ENABLE_BREAKEVEN_STOP = True         # Move SL to entry once profitable
+BREAKEVEN_ATR_THRESHOLD = 0.3        # ATR multiplier to trigger breakeven (default: 0.3)
 
 # ==============================================================================
 # TRAILING TAKE PROFIT
@@ -219,6 +228,16 @@ TRADING_START_HOUR = 0
 TRADING_END_HOUR = 23
 
 TRADING_DAYS = [0, 1, 2, 3, 4]  # Monday to Friday
+
+# ==============================================================================
+# HOUR-BASED FILTERING - AVOID LOSING HOURS
+# ==============================================================================
+# Based on historical analysis: Hours 1am and 5pm UTC account for £12,388 in losses
+# Dead hours show consistent losses, Golden hours show consistent profits
+ENABLE_HOUR_FILTER = True
+DEAD_HOURS = [0, 1, 2, 17, 20, 21, 22]  # UTC hours with consistent losses
+GOLDEN_HOURS = [8, 11, 13, 14, 15, 19, 23]  # UTC hours with consistent profits
+ROC_THRESHOLD = 0.15  # 0.15% move in 3 candles for momentum signal
 
 # ==============================================================================
 # TREND FILTER - H4 FOR MAJOR TREND
@@ -280,6 +299,7 @@ USE_SCALPING_MODE = False
 UPDATE_INTERVAL = 60            # Check every 60 seconds
 LOG_LEVEL = 'INFO'
 SAVE_TRADE_HISTORY = True
+ANALYSIS_BARS = 200             # Number of bars to fetch for analysis
 
 # ==============================================================================
 # NOTIFICATIONS
@@ -412,6 +432,10 @@ def get_config():
         'breakeven_activation_pips': BREAKEVEN_ACTIVATION_PIPS,
         'breakeven_plus_pips': BREAKEVEN_PLUS_PIPS,
         'trail_start_pips': TRAIL_START_PIPS,
+        'enable_time_based_exit': ENABLE_TIME_BASED_EXIT,
+        'max_hold_minutes': MAX_HOLD_MINUTES,
+        'enable_breakeven_stop': ENABLE_BREAKEVEN_STOP,
+        'breakeven_atr_threshold': BREAKEVEN_ATR_THRESHOLD,
         'enable_trailing_tp': ENABLE_TRAILING_TP,
         'trailing_tp_ratio': TRAILING_TP_RATIO,
         'magic_number': MAGIC_NUMBER,
@@ -422,6 +446,10 @@ def get_config():
         'trading_start_hour': TRADING_START_HOUR,
         'trading_end_hour': TRADING_END_HOUR,
         'trading_days': TRADING_DAYS,
+        'enable_hour_filter': ENABLE_HOUR_FILTER,
+        'dead_hours': DEAD_HOURS,
+        'golden_hours': GOLDEN_HOURS,
+        'roc_threshold': ROC_THRESHOLD,
         'use_trend_filter': USE_TREND_FILTER,
         'trend_timeframe': TREND_TIMEFRAME,
         'trend_ma_period': TREND_MA_PERIOD,
@@ -443,6 +471,7 @@ def get_config():
         'update_interval': UPDATE_INTERVAL,
         'log_level': LOG_LEVEL,
         'save_trade_history': SAVE_TRADE_HISTORY,
+        'analysis_bars': ANALYSIS_BARS,
         'enable_telegram': ENABLE_TELEGRAM,
         'telegram_token': TELEGRAM_TOKEN,
         'telegram_chat_id': TELEGRAM_CHAT_ID,

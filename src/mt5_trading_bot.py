@@ -29,6 +29,16 @@ try:
     ADAPTIVE_RISK_AVAILABLE = True
 except ImportError:
     ADAPTIVE_RISK_AVAILABLE = False
+    logging.warning("Adaptive risk management not available")
+
+# Import ML integration
+try:
+    from src.ml_integration import MLIntegration
+    ML_INTEGRATION_AVAILABLE = True
+except ImportError:
+    ML_INTEGRATION_AVAILABLE = False
+    logging.warning("ML integration not available")
+    ADAPTIVE_RISK_AVAILABLE = False
     logging.warning("Adaptive Risk Manager not available")
 
 # Import volume analyzer
@@ -76,8 +86,8 @@ class MT5TradingBot:
         self.reward_ratio = config.get('reward_ratio', 2.0)  # Risk:Reward ratio
         
         # Moving average parameters
-        self.fast_ma_period = config.get('fast_ma_period', 20)
-        self.slow_ma_period = config.get('slow_ma_period', 50)
+        self.fast_ma_period = config.get('fast_ma_period', 10)
+        self.slow_ma_period = config.get('slow_ma_period', 21)
         self.atr_period = config.get('atr_period', 14)
         self.atr_multiplier = config.get('atr_multiplier', 2.0)
         
@@ -93,7 +103,7 @@ class MT5TradingBot:
         # Split orders configuration
         self.use_split_orders = config.get('use_split_orders', True)
         self.num_positions = config.get('num_positions', 3)  # Split into 3 positions
-        self.tp_levels = config.get('tp_levels', [1.5, 2.5, 4.0])  # R:R ratios for each TP
+        self.tp_levels = config.get('tp_levels', [1, 1.5, 2.5])  # R:R ratios for each TP
         self.partial_close_percent = config.get('partial_close_percent', [40, 30, 30])  # % of total for each level
         
         # Max lots per order
@@ -129,11 +139,41 @@ class MT5TradingBot:
             if self.use_trend_detection and not TREND_DETECTION_AVAILABLE:
                 logging.warning("Trend detection requested but module not available")
         
+        # ML Integration
+        self.ml_enabled = config.get('ml_enabled', False)
+        if self.ml_enabled and ML_INTEGRATION_AVAILABLE:
+            try:
+                self.ml_integration = MLIntegration(config, logger=logging)
+                logging.info("=" * 80)
+                logging.info("✅ ML INTEGRATION INITIALIZED")
+                logging.info(f"   ML Enabled: {self.ml_enabled}")
+                logging.info(f"   Pattern Recognition: {config.get('pattern_enabled', True)}")
+                logging.info(f"   Sentiment Analysis: {config.get('sentiment_enabled', False)}")
+                logging.info(f"   ML Min Confidence: {config.get('ml_min_confidence', 0.6)}")
+                logging.info(f"   Technical Weight: {config.get('technical_weight', 0.4)}")
+                logging.info(f"   ML Weight: {config.get('ml_weight', 0.3)}")
+                logging.info(f"   Pattern Weight: {config.get('pattern_weight', 0.3)}")
+                logging.info("=" * 80)
+            except Exception as e:
+                logging.error(f"❌ ML Integration initialization failed: {e}")
+                import traceback
+                logging.error(traceback.format_exc())
+                self.ml_integration = None
+        else:
+            self.ml_integration = None
+            if self.ml_enabled and not ML_INTEGRATION_AVAILABLE:
+                logging.warning("⚠️  ML Integration requested but module not available")
+            else:
+                logging.info("⚪ ML Integration disabled in config")
+        
         self.positions = {}
         self.split_position_groups = {}  # Track groups of split positions
         
         # Price level protection
         self.prevent_worse_entries = config.get('prevent_worse_entries', True)
+        
+        # Analysis parameters
+        self.analysis_bars = config.get('analysis_bars', 200)  # Number of bars to fetch for analysis
         
     def check_existing_position_prices(self, symbol, signal):
         """
@@ -403,7 +443,7 @@ class MT5TradingBot:
     
     def calculate_indicators(self, df):
         """
-        Calculate technical indicators (Enhanced with RSI)
+        Calculate technical indicators (Enhanced with early signal detection)
         
         Args:
             df (pd.DataFrame): Price data
@@ -411,9 +451,21 @@ class MT5TradingBot:
         Returns:
             pd.DataFrame: Data with calculated indicators
         """
-        # Moving Averages
-        df['fast_ma'] = df['close'].rolling(window=self.fast_ma_period).mean()
-        df['slow_ma'] = df['close'].rolling(window=self.slow_ma_period).mean()
+        # Moving Averages - Using EMA for faster signal response
+        df['fast_ma'] = df['close'].ewm(span=self.fast_ma_period, adjust=False).mean()
+        df['slow_ma'] = df['close'].ewm(span=self.slow_ma_period, adjust=False).mean()
+        
+        # ══════════════════════════════════════════════════════════════
+        # EARLY SIGNAL DETECTION - Extra fast EMAs
+        # ══════════════════════════════════════════════════════════════
+        # EMA6/12 micro-crossover catches moves 2-3 candles before main crossover
+        # This gives earlier entry at better prices
+        # ══════════════════════════════════════════════════════════════
+        df['ema6'] = df['close'].ewm(span=6, adjust=False).mean()
+        df['ema12'] = df['close'].ewm(span=12, adjust=False).mean()
+        
+        # Price momentum: rate-of-change over 3 bars (for momentum pre-signal)
+        df['roc3'] = df['close'].pct_change(3) * 100
         
         # ATR (Average True Range) for volatility-based stops
         df['high_low'] = df['high'] - df['low']
@@ -574,6 +626,27 @@ class MT5TradingBot:
             tp = entry_price + reward
         else:  # Sell
             tp = entry_price - reward
+
+        # ── TP CAP: Prevent unrealistic TPs on volatile symbols ──────────
+        # Protects against huge TP on symbols like XAUUSD/XAGUSD
+        if symbol:
+            sym_upper = symbol.upper()
+            tp_caps = self.config.get('scalp_tp_caps', {
+                'XAUUSD': 2.0,   # max 200 pts on Gold
+                'XAGUSD': 0.25,  # max 250 pts on Silver
+                'XPTUSD': 3.0,   # Platinum
+                'XPDUSD': 5.0,   # Palladium
+                'DEFAULT': 0.01  # Forex: ~100 pts
+            })
+            cap = tp_caps.get(sym_upper, tp_caps.get('DEFAULT', 0.01))
+            actual_reward = abs(tp - entry_price)
+            if actual_reward > cap:
+                if direction == 1:
+                    tp = entry_price + cap
+                else:
+                    tp = entry_price - cap
+                logging.info(f"  🎯 TP CAP applied on {symbol}: capped at {cap} (was {actual_reward:.5f})")
+        # ─────────────────────────────────────────────────────────────────
         
         return tp
     
@@ -624,6 +697,24 @@ class MT5TradingBot:
                 tp = entry_price + reward
             else:  # Sell
                 tp = entry_price - reward
+
+            # Apply TP cap per symbol (scaled for each level)
+            if symbol:
+                sym_upper = symbol.upper()
+                tp_caps = self.config.get('scalp_tp_caps', {
+                    'XAUUSD': 2.0,
+                    'XAGUSD': 0.25,
+                    'XPTUSD': 3.0,
+                    'XPDUSD': 5.0,
+                    'DEFAULT': 0.01
+                })
+                cap = tp_caps.get(sym_upper, tp_caps.get('DEFAULT', 0.01))
+                # Scale cap with level: T1=1x, T2=1.5x, T3=2x
+                level_cap = cap * (1 + i * 0.5)
+                actual_reward = abs(tp - entry_price)
+                if actual_reward > level_cap:
+                    tp = (entry_price + level_cap) if direction == 1 else (entry_price - level_cap)
+                    logging.info(f"    🎯 TP Level {i+1} capped at {level_cap:.5f} for {symbol}")
             
             tp_prices.append(tp)
             logging.info(f"    TP Level {i+1}: ratio {ratio}, reward {reward:.5f} = {tp:.5f}")
@@ -984,7 +1075,69 @@ class MT5TradingBot:
         signal = 0
         signal_reason = ""
         
+        # ══════════════════════════════════════════════════════════════
+        # EARLY SIGNAL DETECTION METHODS
+        # ══════════════════════════════════════════════════════════════
+        # These methods catch signals 2-3 candles before main crossover
+        # Provides earlier entry at better prices
+        # ══════════════════════════════════════════════════════════════
+        
+        # METHOD 0A: EMA6/12 MICRO-CROSSOVER (Ultra-fast, catches moves 2-3 candles early)
+        logging.info("🔍 METHOD 0A: EMA6/12 MICRO-CROSSOVER (fastest signal):")
+        if 'ema6' in df.columns and 'ema12' in df.columns:
+            ema6_now = latest.get('ema6', float('nan'))
+            ema12_now = latest.get('ema12', float('nan'))
+            ema6_prev = previous.get('ema6', float('nan'))
+            ema12_prev = previous.get('ema12', float('nan'))
+            
+            import math
+            if not any(math.isnan(v) for v in [ema6_now, ema12_now, ema6_prev, ema12_prev]):
+                bullish_micro = ema6_now > ema12_now and ema6_prev <= ema12_prev
+                bearish_micro = ema6_now < ema12_now and ema6_prev >= ema12_prev
+                
+                if bullish_micro and latest['fast_ma'] > latest['slow_ma']:
+                    logging.info(f"  ✅ EMA6 crossed ABOVE EMA12 in uptrend - early BUY signal!")
+                    logging.info(f"     EMA6: {ema6_now:.5f}, EMA12: {ema12_now:.5f}")
+                    signal = 1
+                    signal_reason = "EMA6/12 Micro-Bullish Crossover"
+                elif bearish_micro and latest['fast_ma'] < latest['slow_ma']:
+                    logging.info(f"  ✅ EMA6 crossed BELOW EMA12 in downtrend - early SELL signal!")
+                    logging.info(f"     EMA6: {ema6_now:.5f}, EMA12: {ema12_now:.5f}")
+                    signal = -1
+                    signal_reason = "EMA6/12 Micro-Bearish Crossover"
+                else:
+                    logging.info(f"  ❌ No micro-crossover (EMA6={ema6_now:.5f}, EMA12={ema12_now:.5f})")
+        
+        # METHOD 0B: ROC MOMENTUM PRE-SIGNAL (fires when momentum surges before MA crosses)
+        if signal == 0 and 'roc3' in df.columns:
+            logging.info("-"*80)
+            logging.info("🔍 METHOD 0B: MOMENTUM ROC PRE-SIGNAL:")
+            roc = latest.get('roc3', float('nan'))
+            
+            import math
+            if not math.isnan(roc):
+                roc_threshold = self.config.get('roc_threshold', 0.15)  # 0.15% move in 3 candles
+                
+                if roc > roc_threshold and latest['ema6'] > latest['ema12']:
+                    logging.info(f"  ✅ Bullish ROC surge ({roc:+.3f}%) with EMA alignment")
+                    logging.info(f"     ROC threshold: {roc_threshold}%, EMA6 > EMA12")
+                    signal = 1
+                    signal_reason = "Bullish ROC Momentum"
+                elif roc < -roc_threshold and latest['ema6'] < latest['ema12']:
+                    logging.info(f"  ✅ Bearish ROC surge ({roc:+.3f}%) with EMA alignment")
+                    logging.info(f"     ROC threshold: -{roc_threshold}%, EMA6 < EMA12")
+                    signal = -1
+                    signal_reason = "Bearish ROC Momentum"
+                else:
+                    logging.info(f"  ❌ ROC {roc:+.3f}% below threshold or no EMA alignment")
+        
+        # ══════════════════════════════════════════════════════════════
+        # END EARLY SIGNAL DETECTION
+        # ══════════════════════════════════════════════════════════════
+        
         # METHOD 1: MA CROSSOVER (Original - High Confidence)
+        if signal == 0:
+            logging.info("-"*80)
         logging.info("🔍 METHOD 1: CHECKING MA CROSSOVER:")
         logging.info(f"  Previous: Fast MA={previous['fast_ma']:.5f}, Slow MA={previous['slow_ma']:.5f}")
         logging.info(f"  Current:  Fast MA={latest['fast_ma']:.5f}, Slow MA={latest['slow_ma']:.5f}")
@@ -1485,6 +1638,43 @@ class MT5TradingBot:
             else:
                 logging.info("  ⚠️  No signal to analyze with trend detection")
         
+        # ══════════════════════════════════════════════════════════════
+        # HOUR-BASED FILTERING - Block known dead hours
+        # ══════════════════════════════════════════════════════════════
+        # Based on historical analysis: Hours 1am and 5pm UTC account for £12,388 in losses
+        # Dead hours show consistent losses, Golden hours show consistent profits
+        # ══════════════════════════════════════════════════════════════
+        if signal != 0 and self.config.get('enable_hour_filter', True):
+            logging.info("-"*80)
+            logging.info("🕐 HOUR-BASED FILTER CHECK:")
+            
+            from datetime import datetime as _dt
+            current_hour = _dt.now().hour
+            dead_hours = self.config.get('dead_hours', [0, 1, 2, 17, 20, 21, 22])
+            golden_hours = self.config.get('golden_hours', [8, 11, 13, 14, 15, 19, 23])
+            
+            logging.info(f"  Current Hour (UTC): {current_hour}:xx")
+            logging.info(f"  Dead Hours:   {dead_hours}")
+            logging.info(f"  Golden Hours: {golden_hours}")
+            
+            if current_hour in dead_hours:
+                logging.info(f"  ❌ HOUR FILTER REJECTED!")
+                logging.info(f"     Hour {current_hour}:xx is a DEAD hour")
+                logging.info(f"     Historical data shows consistent losses at this hour")
+                logging.info(f"     Signal suppressed to protect capital")
+                logging.info(f"     Golden hours for trading: {golden_hours}")
+                logging.info("="*80)
+                return 0
+            elif current_hour in golden_hours:
+                logging.info(f"  ✅ HOUR FILTER PASSED!")
+                logging.info(f"     Hour {current_hour}:xx is a GOLDEN hour")
+                logging.info(f"     Historical data shows consistent profits at this hour")
+                logging.info(f"     Signal confirmed - optimal trading time")
+            else:
+                logging.info(f"  ⚠️  Hour {current_hour}:xx is NEUTRAL")
+                logging.info(f"     Not in dead hours or golden hours")
+                logging.info(f"     Proceeding with caution")
+        
         logging.info(f"✅ ALL FILTERS PASSED - {signal_type} SIGNAL CONFIRMED!")
         logging.info(f"   Signal will proceed to risk management and position opening")
         logging.info("="*80)
@@ -1870,6 +2060,61 @@ class MT5TradingBot:
         
         return updated_count
     
+    def _force_close_position(self, position):
+        """
+        Force-close a single position at market price.
+        Called by time-based exit logic in manage_positions.
+        
+        Args:
+            position: MT5 position object
+            
+        Returns:
+            bool: True if closed successfully
+        """
+        symbol = position.symbol
+        direction = 1 if position.type == mt5.ORDER_TYPE_BUY else -1
+        
+        # Get current price
+        tick = mt5.symbol_info_tick(symbol)
+        if tick is None:
+            logging.error(f"Failed to get tick for {symbol}")
+            return False
+        
+        close_price = tick.bid if direction == 1 else tick.ask
+        order_type = mt5.ORDER_TYPE_SELL if direction == 1 else mt5.ORDER_TYPE_BUY
+        
+        # Get symbol info
+        sym_info = mt5.symbol_info(symbol)
+        if sym_info is None:
+            logging.error(f"Failed to get symbol info for {symbol}")
+            return False
+        
+        # Prepare close request
+        request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "position": position.ticket,
+            "symbol": symbol,
+            "volume": position.volume,
+            "type": order_type,
+            "price": close_price,
+            "deviation": 20,
+            "magic": self.magic_number,
+            "comment": "time_exit",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC,
+        }
+        
+        # Send close order
+        result = mt5.order_send(request)
+        
+        if result is not None and result.retcode == mt5.TRADE_RETCODE_DONE:
+            logging.info(f"✅ Position {position.ticket} closed successfully at {close_price:.5f}")
+            return True
+        else:
+            error_msg = f"retcode={result.retcode}" if result else "no result"
+            logging.error(f"❌ Failed to close position {position.ticket}: {error_msg}")
+            return False
+    
     def manage_positions(self):
         """Check and manage all open positions with dynamic SL/TP"""
         positions = mt5.positions_get(magic=self.magic_number)
@@ -1896,6 +2141,77 @@ class MT5TradingBot:
                 if not verify_position or len(verify_position) == 0:
                     logging.debug(f"Position {ticket} already closed, skipping update")
                     continue
+                
+                # ══════════════════════════════════════════════════════════════
+                # PROACTIVE PROFIT BOOKING
+                # ══════════════════════════════════════════════════════════════
+                # Time-based exit: Close positions held too long
+                # Break-even: Move SL to entry once position reaches threshold
+                # ══════════════════════════════════════════════════════════════
+                
+                enable_time_exit = self.config.get('enable_time_based_exit', False)
+                enable_breakeven = self.config.get('enable_breakeven_stop', True)
+                
+                if enable_time_exit or enable_breakeven:
+                    position_open_time = datetime.fromtimestamp(position.time)
+                    hold_minutes = (datetime.now() - position_open_time).total_seconds() / 60
+                    
+                    # Action 1: Time-based exit
+                    if enable_time_exit:
+                        max_hold_minutes = self.config.get('max_hold_minutes', 45)
+                        
+                        if hold_minutes >= max_hold_minutes:
+                            close_result = self._force_close_position(position)
+                            if close_result:
+                                pnl = position.profit
+                                reason = "TIME LIMIT" if pnl >= 0 else "TIME STOP"
+                                logging.info(f"⏰ {reason}: Closed {symbol} after {hold_minutes:.0f}min | P&L: {pnl:.2f}")
+                            continue  # Skip further processing for this position
+                    
+                    # Action 2: Break-even stop
+                    if enable_breakeven:
+                        df_be = self.get_historical_data(symbol, self.timeframe, 20)
+                        if df_be is not None:
+                            df_be = self.calculate_indicators(df_be)
+                            atr_be = df_be.iloc[-1]['atr']
+                            tick_be = mt5.symbol_info_tick(symbol)
+                            
+                            if tick_be:
+                                cur_price = tick_be.bid if direction == 1 else tick_be.ask
+                                profit_atr = (cur_price - position.price_open) * direction / atr_be
+                                be_threshold = self.config.get('breakeven_atr_threshold', 0.3)
+                                
+                                if profit_atr >= be_threshold:
+                                    sym_info = mt5.symbol_info(symbol)
+                                    if sym_info:
+                                        spread = sym_info.spread * sym_info.point
+                                        
+                                        if direction == 1:  # BUY position
+                                            be_sl = round(position.price_open + spread, sym_info.digits)
+                                            if position.sl < be_sl:
+                                                result = mt5.order_send({
+                                                    "action": mt5.TRADE_ACTION_SLTP,
+                                                    "position": ticket,
+                                                    "sl": be_sl,
+                                                    "tp": position.tp
+                                                })
+                                                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                                                    logging.info(f"🔒 BREAK-EVEN: {symbol} SL moved to entry {be_sl:.5f}")
+                                        else:  # SELL position
+                                            be_sl = round(position.price_open - spread, sym_info.digits)
+                                            if position.sl == 0 or position.sl > be_sl:
+                                                result = mt5.order_send({
+                                                    "action": mt5.TRADE_ACTION_SLTP,
+                                                    "position": ticket,
+                                                    "sl": be_sl,
+                                                    "tp": position.tp
+                                                })
+                                                if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                                                    logging.info(f"🔒 BREAK-EVEN: {symbol} SL moved to entry {be_sl:.5f}")
+                
+                # ══════════════════════════════════════════════════════════════
+                # END PROACTIVE PROFIT BOOKING
+                # ══════════════════════════════════════════════════════════════
                 
                 # Get current data and market condition for dynamic adjustments
                 df = self.get_historical_data(symbol, self.timeframe, 100)
@@ -2177,13 +2493,14 @@ class MT5TradingBot:
         
         # Get data and calculate indicators
         logging.info(f"📈 Fetching historical data for {symbol} (Timeframe: M{self.timeframe})...")
-        df = self.get_historical_data(symbol, self.timeframe)
+        logging.info(f"   Requesting {self.analysis_bars} bars for analysis")
+        df = self.get_historical_data(symbol, self.timeframe, self.analysis_bars)
         if df is None:
             logging.error(f"❌ Failed to get data for {symbol}")
             logging.info("="*80)
             return
         
-        logging.info(f"✅ Retrieved {len(df)} bars of data")
+        logging.info(f"✅ Retrieved {len(df)} bars of data (requested: {self.analysis_bars})")
         logging.info(f"📊 Calculating technical indicators...")
         df = self.calculate_indicators(df)
         logging.info(f"✅ Indicators calculated successfully")
@@ -2199,6 +2516,100 @@ class MT5TradingBot:
         
         logging.info(f"🎯 {'BUY' if signal == 1 else 'SELL'} signal detected for {symbol}!")
         logging.info("")
+        
+        # === ML ENHANCED SIGNAL ANALYSIS ===
+        ml_approved = True  # Default to approved if ML is disabled
+        ml_confidence = 0.7  # Default technical confidence
+        ml_size_multiplier = 1.0  # Default position size multiplier
+        
+        if self.ml_integration:
+            try:
+                logging.info("=" * 80)
+                logging.info(f"🤖 ML ENHANCED SIGNAL ANALYSIS for {symbol}")
+                logging.info("=" * 80)
+                
+                # Prepare market data for ML
+                market_data = {
+                    'open': df['open'].values,
+                    'high': df['high'].values,
+                    'low': df['low'].values,
+                    'close': df['close'].values,
+                    'volume': df['volume'].values if 'volume' in df.columns else np.zeros(len(df)),
+                    'rsi': df['rsi'].values if 'rsi' in df.columns else np.zeros(len(df)),
+                    'macd': df['macd'].values if 'macd' in df.columns else np.zeros(len(df)),
+                    'signal_line': df['signal_line'].values if 'signal_line' in df.columns else np.zeros(len(df)),
+                    'adx': df['adx'].values if 'adx' in df.columns else np.zeros(len(df)),
+                    'atr': df['atr'].values if 'atr' in df.columns else np.zeros(len(df)),
+                    'fast_ma': df['fast_ma'].values if 'fast_ma' in df.columns else np.zeros(len(df)),
+                    'slow_ma': df['slow_ma'].values if 'slow_ma' in df.columns else np.zeros(len(df))
+                }
+                
+                # Get enhanced signal from ML
+                technical_signal = 'BUY' if signal == 1 else 'SELL'
+                technical_confidence = 0.7  # Base technical confidence
+                
+                enhanced_signals = self.ml_integration.get_enhanced_signal(
+                    symbol=symbol,
+                    market_data=market_data,
+                    technical_signal=technical_signal,
+                    technical_confidence=technical_confidence,
+                    news_data=None  # Can add news data if available
+                )
+                
+                # Check if ML approves the trade
+                min_confidence = self.config.get('ml_min_confidence', 0.6)
+                ml_approved = self.ml_integration.should_trade(enhanced_signals, min_confidence=min_confidence)
+                
+                combined_signal = enhanced_signals['combined']['signal']
+                ml_confidence = enhanced_signals['combined']['confidence']
+                
+                if ml_approved:
+                    logging.info("=" * 80)
+                    logging.info(f"✅ ML APPROVED: {combined_signal} signal")
+                    logging.info(f"   Combined Confidence: {ml_confidence:.4f} ({ml_confidence*100:.1f}%)")
+                    logging.info(f"   Minimum Required: {min_confidence:.4f} ({min_confidence*100:.1f}%)")
+                    
+                    # Get position size multiplier based on ML confidence
+                    ml_size_multiplier = self.ml_integration.get_signal_strength_multiplier(enhanced_signals)
+                    logging.info(f"   Position Size Multiplier: {ml_size_multiplier:.2f}x")
+                    
+                    # Log component analysis
+                    logging.info(f"\n   📊 Signal Components:")
+                    logging.info(f"      Technical: {enhanced_signals['technical']['signal']} "
+                               f"(conf={enhanced_signals['technical']['confidence']:.3f})")
+                    if self.config.get('ml_enabled', False):
+                        logging.info(f"      ML: {enhanced_signals['ml']['signal']} "
+                                   f"(conf={enhanced_signals['ml']['confidence']:.3f})")
+                    if self.config.get('pattern_enabled', False):
+                        logging.info(f"      Pattern: {enhanced_signals['pattern']['signal']} "
+                                   f"(conf={enhanced_signals['pattern']['confidence']:.3f})")
+                    if self.config.get('sentiment_enabled', False):
+                        logging.info(f"      Sentiment: {enhanced_signals['sentiment']['signal']} "
+                                   f"(conf={enhanced_signals['sentiment']['confidence']:.3f})")
+                    logging.info("=" * 80)
+                    logging.info("")
+                else:
+                    logging.warning("=" * 80)
+                    logging.warning(f"❌ ML REJECTED: Signal does not meet confidence threshold")
+                    logging.warning(f"   Combined Signal: {combined_signal}")
+                    logging.warning(f"   Combined Confidence: {ml_confidence:.4f} ({ml_confidence*100:.1f}%)")
+                    logging.warning(f"   Minimum Required: {min_confidence:.4f} ({min_confidence*100:.1f}%)")
+                    logging.warning(f"   Reason: Confidence too low or signal is NEUTRAL")
+                    logging.warning("=" * 80)
+                    logging.info("="*80)
+                    return  # Exit - ML rejected the trade
+                    
+            except Exception as e:
+                logging.error(f"⚠️  ML analysis error: {e}")
+                import traceback
+                logging.error(traceback.format_exc())
+                logging.warning(f"   Falling back to technical signal only")
+                ml_approved = True  # Fall back to technical signal
+                ml_confidence = 0.7
+                ml_size_multiplier = 1.0
+        else:
+            logging.info("⚪ ML Integration disabled - using technical signal only")
+            logging.info("")
         
         # === PRICE LEVEL PROTECTION ===
         can_trade, limit_price, price_reason = self.check_existing_position_prices(symbol, signal)
@@ -2279,7 +2690,12 @@ class MT5TradingBot:
             
             # Calculate position size with risk adjustment
             base_lot_size = self.calculate_position_size(symbol, entry_price, stop_loss)
-            total_lot_size = base_lot_size * risk_multiplier
+            total_lot_size = base_lot_size * risk_multiplier * ml_size_multiplier  # Apply ML multiplier
+            
+            logging.info(f"  Base Lot Size: {base_lot_size:.2f}")
+            logging.info(f"  Risk Multiplier: {risk_multiplier:.2f}x")
+            logging.info(f"  ML Multiplier: {ml_size_multiplier:.2f}x")
+            logging.info(f"  Final Lot Size: {total_lot_size:.2f}")
             
             # Update trailing parameters dynamically
             self.trail_activation = trailing_params['activation_atr']
@@ -2304,6 +2720,11 @@ class MT5TradingBot:
             
             # Calculate position size
             total_lot_size = self.calculate_position_size(symbol, entry_price, stop_loss)
+            total_lot_size = total_lot_size * ml_size_multiplier  # Apply ML multiplier
+            
+            logging.info(f"  Base Lot Size: {total_lot_size / ml_size_multiplier:.2f}")
+            logging.info(f"  ML Multiplier: {ml_size_multiplier:.2f}x")
+            logging.info(f"  Final Lot Size: {total_lot_size:.2f}")
             
             # Use configured TP levels
             tp_prices = self.calculate_multiple_take_profits(entry_price, stop_loss, signal, symbol=symbol)
@@ -2393,8 +2814,8 @@ if __name__ == "__main__":
         'reward_ratio': 2.0,  # 1:2 risk/reward
         
         # Moving average parameters
-        'fast_ma_period': 20,
-        'slow_ma_period': 50,
+        'fast_ma_period': 10,
+        'slow_ma_period': 21,
         
         # ATR-based stops
         'atr_period': 14,
