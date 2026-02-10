@@ -295,20 +295,42 @@ class MLIntegration:
         
         # Don't trade on neutral signals
         if signal == 'NEUTRAL':
+            self.logger.info("   ❌ Trade rejected: Combined signal is NEUTRAL")
             return False
         
         # Check confidence threshold
         if confidence < min_confidence:
+            self.logger.info(f"   ❌ Trade rejected: Confidence {confidence:.4f} < threshold {min_confidence:.4f}")
             return False
         
-        # Check signal agreement (at least 2 out of 3 components agree)
+        # Check signal agreement (at least 2 out of active components agree)
+        # Only count components that are enabled and not NEUTRAL
         agreement_count = 0
-        for component in ['technical', 'ml', 'sentiment', 'pattern']:
-            if component in enhanced_signals:
-                if enhanced_signals[component]['signal'] == signal:
-                    agreement_count += 1
+        active_components = 0
         
-        return agreement_count >= 2
+        for component in ['technical', 'ml', 'pattern', 'sentiment']:
+            if component in enhanced_signals:
+                component_signal = enhanced_signals[component].get('signal', 'NEUTRAL')
+                component_confidence = enhanced_signals[component].get('confidence', 0.0)
+                
+                # Only count if component is active (not NEUTRAL and has confidence)
+                if component_signal != 'NEUTRAL' and component_confidence > 0:
+                    active_components += 1
+                    if component_signal == signal:
+                        agreement_count += 1
+        
+        # Need at least 2 active components agreeing
+        # If only 1 active component, allow it (edge case)
+        if active_components <= 1:
+            self.logger.info(f"   ✅ Trade approved: Only {active_components} active component(s)")
+            return True
+        
+        if agreement_count >= 2:
+            self.logger.info(f"   ✅ Trade approved: {agreement_count}/{active_components} components agree")
+            return True
+        else:
+            self.logger.info(f"   ❌ Trade rejected: Only {agreement_count}/{active_components} components agree (need 2+)")
+            return False
     
     def get_signal_strength_multiplier(self, enhanced_signals: Dict) -> float:
         """

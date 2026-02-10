@@ -51,116 +51,139 @@ class MLSignalGenerator:
         Extract ML features from market data
         
         Args:
-            data: Dictionary containing OHLCV and indicators
+            data: Dictionary containing OHLCV and indicators (can be arrays or single values)
             
         Returns:
             Feature array for ML model
         """
         features = []
-        feature_names_debug = []
         
         try:
-            self.logger.info("📊 ML FEATURE EXTRACTION - Starting feature extraction")
+            # Helper function to get latest value as scalar
+            def get_latest(value):
+                if isinstance(value, (list, np.ndarray)):
+                    if len(value) > 0:
+                        val = value[-1]
+                        # Ensure it's a scalar
+                        if isinstance(val, np.ndarray):
+                            return float(val.item())
+                        return float(val)
+                    return 0.0
+                # Already a scalar
+                if isinstance(value, (int, float, np.number)):
+                    return float(value)
+                return 0.0
+            
+            # Helper function to get array
+            def get_array(value):
+                if isinstance(value, (list, np.ndarray)):
+                    return np.array(value)
+                return np.array([value])
             
             # Price-based features
-            if 'close' in data and len(data['close']) > 0:
-                close = data['close']
-                current_close = close[-1] if len(close) > 0 else 0
-                price_return = (close[-1] - close[-2]) / close[-2] if len(close) > 1 else 0
-                volatility = np.std(close[-20:]) if len(close) >= 20 else 0
+            if 'close' in data:
+                close_array = get_array(data['close'])
+                current_close = get_latest(close_array)
+                
+                # Price return
+                if len(close_array) > 1:
+                    price_return = float((close_array[-1] - close_array[-2]) / close_array[-2])
+                else:
+                    price_return = 0.0
+                
+                # Volatility
+                if len(close_array) >= 20:
+                    volatility = float(np.std(close_array[-20:]))
+                else:
+                    volatility = 0.0
                 
                 features.extend([current_close, price_return, volatility])
-                feature_names_debug.extend(['close', 'return', 'volatility'])
-                
-                self.logger.info(f"   💰 Price Features:")
-                self.logger.info(f"      Current Close: {current_close:.5f}")
-                self.logger.info(f"      Price Return: {price_return:.5f} ({price_return*100:.2f}%)")
-                self.logger.info(f"      Volatility (20-period): {volatility:.5f}")
             
-            # Technical indicators
+            # Technical indicators (use latest values)
             if 'rsi' in data:
-                rsi_val = data['rsi']
+                rsi_val = get_latest(data['rsi'])
                 features.append(rsi_val)
-                feature_names_debug.append('rsi')
-                self.logger.info(f"   📈 RSI: {rsi_val:.2f}")
             
-            if 'macd' in data and 'macd_signal' in data:
-                macd_val = data['macd']
-                macd_signal_val = data['macd_signal']
-                macd_hist = macd_val - macd_signal_val
+            if 'macd' in data:
+                macd_val = get_latest(data['macd'])
+                features.append(macd_val)
+            
+            if 'signal_line' in data:
+                macd_signal_val = get_latest(data['signal_line'])
+                features.append(macd_signal_val)
                 
-                features.extend([macd_val, macd_signal_val, macd_hist])
-                feature_names_debug.extend(['macd', 'macd_signal', 'macd_histogram'])
-                
-                self.logger.info(f"   📊 MACD Features:")
-                self.logger.info(f"      MACD: {macd_val:.5f}")
-                self.logger.info(f"      Signal: {macd_signal_val:.5f}")
-                self.logger.info(f"      Histogram: {macd_hist:.5f}")
+                # MACD histogram
+                if 'macd' in data:
+                    macd_hist = get_latest(data['macd']) - macd_signal_val
+                    features.append(macd_hist)
             
             if 'adx' in data:
-                adx_val = data['adx']
+                adx_val = get_latest(data['adx'])
                 features.append(adx_val)
-                feature_names_debug.append('adx')
-                self.logger.info(f"   💪 ADX (Trend Strength): {adx_val:.2f}")
             
             if 'atr' in data:
-                atr_val = data['atr']
+                atr_val = get_latest(data['atr'])
                 features.append(atr_val)
-                feature_names_debug.append('atr')
-                self.logger.info(f"   📏 ATR (Volatility): {atr_val:.5f}")
             
             # Moving averages
-            if 'ema_fast' in data and 'ema_slow' in data:
-                ema_fast = data['ema_fast']
-                ema_slow = data['ema_slow']
-                ema_divergence = (ema_fast - ema_slow) / ema_slow
+            if 'fast_ma' in data:
+                ema_fast = get_latest(data['fast_ma'])
+                features.append(ema_fast)
+            
+            if 'slow_ma' in data:
+                ema_slow = get_latest(data['slow_ma'])
+                features.append(ema_slow)
                 
-                features.extend([ema_fast, ema_slow, ema_divergence])
-                feature_names_debug.extend(['ema_fast', 'ema_slow', 'ema_divergence'])
-                
-                self.logger.info(f"   📉 EMA Features:")
-                self.logger.info(f"      Fast EMA: {ema_fast:.5f}")
-                self.logger.info(f"      Slow EMA: {ema_slow:.5f}")
-                self.logger.info(f"      Divergence: {ema_divergence:.5f} ({ema_divergence*100:.2f}%)")
+                # EMA divergence
+                if 'fast_ma' in data:
+                    ema_fast = get_latest(data['fast_ma'])
+                    if ema_slow != 0:
+                        ema_divergence = (ema_fast - ema_slow) / ema_slow
+                    else:
+                        ema_divergence = 0.0
+                    features.append(ema_divergence)
             
             # Volume features
-            if 'volume' in data and len(data['volume']) > 0:
-                volume = data['volume']
-                current_volume = volume[-1] if len(volume) > 0 else 0
-                avg_volume = np.mean(volume[-20:]) if len(volume) >= 20 else 0
+            if 'volume' in data:
+                volume_array = get_array(data['volume'])
+                current_volume = get_latest(volume_array)
+                
+                if len(volume_array) >= 20:
+                    avg_volume = float(np.mean(volume_array[-20:]))
+                else:
+                    avg_volume = current_volume
                 
                 features.extend([current_volume, avg_volume])
-                feature_names_debug.extend(['volume', 'avg_volume'])
-                
-                volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
-                self.logger.info(f"   📊 Volume Features:")
-                self.logger.info(f"      Current Volume: {current_volume:.0f}")
-                self.logger.info(f"      Average Volume (20): {avg_volume:.0f}")
-                self.logger.info(f"      Volume Ratio: {volume_ratio:.2f}x")
             
-            # Bollinger Bands
-            if 'bb_upper' in data and 'bb_lower' in data and 'close' in data:
-                close_val = data['close'][-1] if len(data['close']) > 0 else 0
-                bb_upper = data['bb_upper']
-                bb_lower = data['bb_lower']
-                bb_position = (close_val - bb_lower) / (bb_upper - bb_lower) if bb_upper != bb_lower else 0.5
-                
-                features.append(bb_position)
-                feature_names_debug.append('bb_position')
-                
-                self.logger.info(f"   📊 Bollinger Bands:")
-                self.logger.info(f"      Upper: {bb_upper:.5f}")
-                self.logger.info(f"      Lower: {bb_lower:.5f}")
-                self.logger.info(f"      Position: {bb_position:.2f} (0=lower, 0.5=middle, 1=upper)")
+            # Convert all features to float to ensure they're scalars
+            features = [float(f) for f in features]
             
-            feature_array = np.array(features).reshape(1, -1)
-            self.logger.info(f"✅ ML FEATURE EXTRACTION - Extracted {len(features)} features successfully")
+            # Ensure we have the right number of features
+            # If model expects 8 features, only use first 8
+            if self.is_trained and len(self.feature_names) > 0:
+                expected_features = len(self.feature_names)
+                if len(features) > expected_features:
+                    self.logger.warning(f"⚠️  Feature count mismatch: got {len(features)}, expected {expected_features}")
+                    self.logger.warning(f"   Truncating to {expected_features} features")
+                    features = features[:expected_features]
+                elif len(features) < expected_features:
+                    self.logger.warning(f"⚠️  Feature count mismatch: got {len(features)}, expected {expected_features}")
+                    self.logger.warning(f"   Padding with zeros to {expected_features} features")
+                    features.extend([0.0] * (expected_features - len(features)))
+            
+            feature_array = np.array(features, dtype=np.float64).reshape(1, -1)
+            self.logger.info(f"✅ ML FEATURE EXTRACTION - Extracted {len(features)} features")
             
             return feature_array
             
         except Exception as e:
             self.logger.error(f"❌ ML FEATURE EXTRACTION - Error extracting features: {e}")
-            return np.zeros((1, 15))  # Return default feature array
+            import traceback
+            self.logger.error(traceback.format_exc())
+            # Return default feature array matching expected size
+            if self.is_trained and len(self.feature_names) > 0:
+                return np.zeros((1, len(self.feature_names)), dtype=np.float64)
+            return np.zeros((1, 8), dtype=np.float64)  # Default to 8 features
     
     def train_model(self, historical_data: pd.DataFrame, labels: np.ndarray):
         """
