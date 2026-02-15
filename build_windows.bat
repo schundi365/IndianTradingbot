@@ -113,6 +113,8 @@ pyinstaller ^
     --exclude-module=scipy ^
     --exclude-module=IPython ^
     --exclude-module=jupyter ^
+    --exclude-module=pytest ^
+    --exclude-module=xgboost.testing ^
     --collect-all=flask ^
     --collect-all=werkzeug ^
     --collect-all=jinja2 ^
