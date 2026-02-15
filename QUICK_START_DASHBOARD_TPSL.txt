@@ -1,0 +1,115 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                  DASHBOARD TP/SL CONTROLS - QUICK START                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📍 LOCATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Dashboard → Configuration Tab → "TP/SL Calculation Method" section
+  URL: http://localhost:5000
+
+🎯 WHAT YOU'LL SEE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Orange/Red gradient box with:
+  • Stop Loss Method dropdown
+  • Stop Loss Pips input (if pip-based selected)
+  • Take Profit Method dropdown  
+  • Take Profit Base Pips input (if pip-based selected)
+  • Status indicator (red warning or green OK)
+
+⚠️ CRITICAL RULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BOTH SL AND TP MUST USE THE SAME METHOD!
+  
+  ❌ WRONG: SL = ATR-Based, TP = Pip-Based
+  ✓ RIGHT: SL = Pip-Based, TP = Pip-Based
+  ✓ RIGHT: SL = ATR-Based, TP = Ratio-Based
+
+🚀 QUICK SETUP (RECOMMENDED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Stop Loss Method: Select "Pip-Based (Fixed distance)"
+  2. Stop Loss (Pips): Enter 50
+  3. Take Profit Method: Select "Pip-Based (Fixed distance)"
+  4. Take Profit Base (Pips): Enter 100
+  5. Check for green "✓ Methods Consistent" message
+  6. Scroll down and click "Save Configuration"
+  7. Restart bot
+
+  Result: SL=50 pips, TP1=150, TP2=250, TP3=400 pips
+
+📊 STATUS INDICATORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🔴 RED WARNING
+     "❌ WARNING: Inconsistent Methods!"
+     → Fix: Change both to same method
+  
+  🟢 GREEN OK
+     "✓ Methods Consistent"
+     "SL: 50 pips | TP1: 150 pips | TP2: 250 pips | TP3: 400 pips"
+     → Ready to save!
+
+💡 RECOMMENDED SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Conservative:  SL=30 pips,  TP=90 pips   (1:3 risk/reward)
+  Balanced:      SL=50 pips,  TP=100 pips  (1:2 risk/reward)
+  Aggressive:    SL=80 pips,  TP=160 pips  (1:2 risk/reward)
+  Scalping:      SL=15 pips,  TP=30 pips   (1:2 risk/reward)
+
+🔧 TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Run automated tests:
+  $ python test_dashboard_tpsl_controls.py
+
+  Manual test:
+  1. Open http://localhost:5000
+  2. Try setting SL=ATR-Based, TP=Pip-Based
+  3. Should see red warning
+  4. Change both to Pip-Based
+  5. Should see green OK
+
+❓ COMMON ISSUES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Q: Can't save configuration
+  A: Check for red warning. Fix validation errors first.
+
+  Q: Settings not applying
+  A: Restart bot after saving configuration.
+
+  Q: Still seeing old behavior
+  A: Clear cache and restart:
+     $ python clear_all_cache.py
+     $ python web_dashboard.py
+
+  Q: Dashboard not loading
+  A: Start dashboard:
+     $ python web_dashboard.py
+
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • DASHBOARD_TPSL_USER_GUIDE.md - Detailed user guide
+  • DASHBOARD_TP_SL_CONTROLS_ADDED.md - Technical details
+  • SESSION_22_DASHBOARD_DRIVEN_CONFIG_COMPLETE.md - Full summary
+
+✅ CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [ ] Dashboard running (python web_dashboard.py)
+  [ ] Opened http://localhost:5000
+  [ ] Found TP/SL controls in Configuration tab
+  [ ] Set both methods to same type
+  [ ] Adjusted pip values
+  [ ] Saw green "✓ Methods Consistent" message
+  [ ] Clicked "Save Configuration"
+  [ ] Restarted bot
+  [ ] Verified first trade has correct SL/TP
+
+🎉 BENEFITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✓ No more hardcoded values
+  ✓ No manual config file editing
+  ✓ Real-time validation
+  ✓ Visual feedback
+  ✓ Prevents SL > TP issues
+  ✓ Easy to test different strategies
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  REMEMBER: Always use the same calculation method for both SL and TP!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

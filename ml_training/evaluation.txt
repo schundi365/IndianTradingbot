@@ -1,0 +1,11 @@
+Test Accuracy:       62.87% ✅ (realistic)
+Training Accuracy:   65.21%
+Validation Accuracy: 62.64%
+Overfitting Gap:     2.34% ✅ (under control)
+
+Cross-Validation:    62.88% ± 0.42%
+
+Per-Class Performance:
+- SELL:    Precision 75%, Recall 100% (very good)
+- NEUTRAL: Precision 53%, Recall 45% (moderate filtering)
+- BUY:     Precision 53%, Recall 44% (conservative)

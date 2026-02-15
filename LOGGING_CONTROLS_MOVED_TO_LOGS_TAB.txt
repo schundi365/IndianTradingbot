@@ -1,0 +1,113 @@
+===============================================================================
+LOGGING LEVEL CONTROLS MOVED TO SYSTEM LOGS TAB
+===============================================================================
+Date: 2026-02-02 01:30
+Status: ✅ COMPLETE - Logging controls now in the appropriate location
+
+🔄 CHANGES MADE:
+
+1. ✅ REMOVED from Configuration Tab:
+   - System Settings section with logging controls
+   - Moved out of configuration form area
+   - Cleaner configuration interface
+
+2. ✅ ADDED to System Logs Tab:
+   - Enhanced logging level controls at the top
+   - Better integration with log viewing
+   - More logical placement for log-related settings
+
+🎯 NEW LOGGING CONTROLS LAYOUT:
+
+📍 Location: System Logs Tab (top section)
+🎨 Design: 3-column grid layout with enhanced styling
+
+Column 1 - Logging Level:
+   - Dropdown with 4 levels (Minimal, Standard, Detailed, Debug)
+   - Current selection preserved
+   - Clear labeling
+
+Column 2 - Performance Impact:
+   - Visual guide showing impact of each level
+   - Helps users make informed decisions
+   - Performance warnings
+
+Column 3 - Actions:
+   - "Apply Logging Level" button
+   - "Refresh Logs" button
+   - Immediate feedback
+
+🔧 ENHANCED FUNCTIONALITY:
+
+✅ Smart Integration:
+   - Loads current logging level when logs tab opens
+   - Refreshes logs after level changes
+   - Preserves user selections
+
+✅ Better UX:
+   - Logging controls where logs are viewed
+   - Immediate visual feedback in logs
+   - Contextual help and tips
+
+✅ Improved Workflow:
+   1. User opens System Logs tab
+   2. Sees current logging level
+   3. Can adjust level as needed
+   4. Immediately sees impact in logs below
+   5. Can refresh logs to see changes
+
+📊 BENEFITS:
+
+🎯 Logical Placement:
+   - Logging controls with log viewing
+   - No need to switch between tabs
+   - Intuitive user experience
+
+⚡ Immediate Feedback:
+   - See logging changes instantly
+   - Visual confirmation of level changes
+   - Real-time log updates
+
+🔧 Better Integration:
+   - Loads current level from bot config
+   - Syncs with backend logging system
+   - Preserves settings across sessions
+
+💡 Enhanced Usability:
+   - Clear performance impact warnings
+   - Helpful tips and guidance
+   - One-click log refresh
+
+🚀 TECHNICAL IMPROVEMENTS:
+
+✅ JavaScript Functions Added:
+   - loadCurrentLoggingLevel() - Gets current level from server
+   - refreshLogs() - Refreshes log display
+   - Enhanced showTab() - Initializes logging controls
+
+✅ API Integration:
+   - Uses existing /api/logging/level endpoint
+   - Fetches current level from /api/config
+   - Real-time updates without page reload
+
+✅ UI/UX Enhancements:
+   - 3-column responsive grid layout
+   - Visual performance impact guide
+   - Contextual help and tips
+   - Consistent styling with dashboard theme
+
+🔄 USER WORKFLOW:
+1. Click "System Logs" tab
+2. See current logging level at top
+3. Adjust level if needed
+4. Click "Apply Logging Level"
+5. See confirmation toast
+6. Click "Refresh Logs" to see changes
+7. View updated logs with new detail level
+
+===============================================================================
+✅ LOGGING CONTROLS SUCCESSFULLY MOVED TO SYSTEM LOGS TAB
+===============================================================================
+
+The logging level controls are now in their logical location within the System Logs tab,
+providing users with immediate access to logging settings while viewing logs, creating
+a more intuitive and efficient user experience.

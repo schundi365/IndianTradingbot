@@ -1,0 +1,167 @@
+================================================================================
+RESTART BOT TO ACTIVATE NEW FEATURES
+================================================================================
+
+Date: 2026-02-05
+Session: 21
+
+================================================================================
+NEW FEATURES ADDED
+================================================================================
+
+1. ML CONFIDENCE FILTERING ✅
+   - Filters low-confidence ML signals
+   - Config: ml_min_confidence = 0.6 (60%)
+   - File: src/ml_integration.py
+
+2. DRAWDOWN PROTECTION ✅
+   - Pauses trading on high drawdown
+   - Config: max_drawdown_percent = 10 (10%)
+   - File: src/mt5_trading_bot.py
+
+3. FIXED HARDCODED VALUES ✅
+   - adaptive_risk_manager.py now uses config
+   - Config: max_risk_multiplier, min_risk_multiplier
+   - File: src/adaptive_risk_manager.py
+
+================================================================================
+HOW TO RESTART
+================================================================================
+
+Option 1: Using Python Script
+------------------------------
+python run_bot.py
+
+Option 2: Using Batch File
+---------------------------
+START_BOT_NOW.bat
+
+Option 3: Manual Restart
+-------------------------
+1. Stop current bot (Ctrl+C)
+2. Run: python run_bot.py
+
+================================================================================
+WHAT TO MONITOR
+================================================================================
+
+1. ML Confidence Filtering
+   Look for these log messages:
+   ✅ "ML signal accepted: BUY with confidence 0.750"
+   ⚠️  "ML signal filtered: confidence 0.550 < threshold 0.600"
+
+2. Drawdown Protection
+   Look for these log messages:
+   📈 "New peak equity: $10,500.00"
+   📊 "Drawdown Status: 2.35% from peak ($235.50)"
+   ⚠️  "APPROACHING DRAWDOWN LIMIT: 8.12% of 10%"
+   🚨 "MAXIMUM DRAWDOWN LIMIT EXCEEDED"
+
+3. Risk Multiplier
+   Look for these log messages:
+   "Risk Adjustment: Market=strong_trend, Multiplier=1.30"
+   (Should respect config values now)
+
+================================================================================
+CONFIGURATION
+================================================================================
+
+All features are configurable via dashboard:
+
+ML Features Section:
+- ML Min Confidence: 0.6 (default)
+  Range: 0.5 to 0.8
+  Higher = fewer but better quality ML signals
+
+Risk Management Section:
+- Max Drawdown Percent: 10 (default)
+  Range: 5 to 20
+  Lower = tighter protection, earlier pause
+
+- Max Risk Multiplier: 1.5 (default)
+  Range: 1.0 to 3.0
+  Controls maximum risk increase
+
+- Min Risk Multiplier: 0.5 (default)
+  Range: 0.1 to 1.0
+  Controls minimum risk decrease
+
+================================================================================
+TESTING RECOMMENDATIONS
+================================================================================
+
+1. Test ML Confidence Filtering
+   - Set ml_min_confidence to 0.7 (high threshold)
+   - Monitor logs for filtered signals
+   - Lower to 0.5 and observe more signals
+   - Find optimal balance for your strategy
+
+2. Test Drawdown Protection
+   - Current setting: 10% (good for most accounts)
+   - Monitor drawdown status in logs
+   - Adjust if needed based on your risk tolerance
+   - Test with lower value (5%) to see protection trigger
+
+3. Test Risk Multipliers
+   - Change values in dashboard
+   - Verify logs show new values being used
+   - Confirm risk adjustments respect new limits
+
+================================================================================
+BACKUPS CREATED
+================================================================================
+
+Before making changes, backups were created:
+- src/adaptive_risk_manager.py_backup_20260205_142712
+
+If you need to revert:
+1. Stop the bot
+2. Copy backup file back to original name
+3. Restart the bot
+
+================================================================================
+DOCUMENTATION
+================================================================================
+
+Detailed documentation available:
+1. ML_CONFIDENCE_AND_DRAWDOWN_PROTECTION_COMPLETE.md
+   - Complete implementation guide
+   - Usage examples and testing
+
+2. SESSION_21_FINAL_SUMMARY.md
+   - Summary of all changes
+   - Configuration guide
+
+3. CONFIG_KEYS_INVESTIGATION_COMPLETE.md
+   - Investigation results
+   - Config key locations
+
+================================================================================
+SUPPORT
+================================================================================
+
+If you encounter issues:
+1. Check logs for error messages
+2. Review documentation files
+3. Verify config values in dashboard
+4. Check that bot restarted successfully
+
+Common issues:
+- Bot not loading changes: Make sure to restart
+- Features not working: Check config values in dashboard
+- Errors in logs: Review error message and check file modifications
+
+================================================================================
+READY TO RESTART!
+================================================================================
+
+All changes are complete and ready for testing.
+
+Steps:
+1. Stop current bot (if running)
+2. Run: python run_bot.py
+3. Monitor logs for new features
+4. Test configuration changes
+5. Enjoy improved risk management!
+
+================================================================================

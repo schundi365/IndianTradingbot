@@ -1,0 +1,53 @@
+================================================================================
+RUN_BOT.PY FIXED - READY TO START
+================================================================================
+
+ISSUE:
+------
+AttributeError: 'ConfigManager' object has no attribute 'get_all'
+
+FIX:
+----
+Changed run_bot.py line 24 from:
+  config = config_manager.get_all()
+
+To:
+  config = config_manager.get_config()
+
+STATUS:
+-------
+✅ run_bot.py now correctly loads from bot_config.json
+✅ All dashboard settings will be respected
+✅ MACD filter will be disabled (use_macd: false)
+
+HOW TO START:
+-------------
+Simply run:
+  python run_bot.py
+
+Or use the batch file:
+  EMERGENCY_RESTART_BOT.bat
+
+WHAT YOU'LL SEE:
+----------------
+At startup, the bot will display:
+  Configuration:
+    Symbols: XAUUSD, XAGUSD, XPTUSD, XPDUSD, ...
+    Timeframe: 15
+    Risk per trade: 1%
+    Risk:Reward ratio: 1:2
+    Fast MA: 20, Slow MA: 50
+    ATR Period: 14, Multiplier: 2
+    Trailing Stop: Enabled
+    MACD Filter: Disabled    <-- Your setting from dashboard!
+
+Then in the logs:
+  🔍 MACD FILTER CHECK:
+    ⚪ MACD filter: DISABLED (skipping check)
+
+NO MORE:
+  ❌ MACD FILTER REJECTED!
+
+================================================================================
+READY TO START BOT NOW!
+================================================================================

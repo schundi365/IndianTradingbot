@@ -1,0 +1,156 @@
+================================================================================
+RESTART DASHBOARD TO ENABLE ML ENDPOINTS
+================================================================================
+
+The ML API endpoints have been added to web_dashboard.py, but the dashboard
+server needs to be restarted to load them.
+
+================================================================================
+HOW TO RESTART DASHBOARD
+================================================================================
+
+OPTION 1: Stop and Start (Recommended)
+---------------------------------------
+1. Find the terminal/command prompt running the dashboard
+2. Press Ctrl+C to stop the server
+3. Wait for it to fully stop
+4. Restart with: python web_dashboard.py
+   OR: python start_dashboard.py
+
+OPTION 2: Kill Process and Restart
+-----------------------------------
+Windows:
+1. Open Task Manager (Ctrl+Shift+Esc)
+2. Find "Python" processes
+3. End the one running web_dashboard.py
+4. Restart: python web_dashboard.py
+
+Linux/Mac:
+1. Find process: ps aux | grep web_dashboard
+2. Kill it: kill <process_id>
+3. Restart: python web_dashboard.py
+
+OPTION 3: Restart Computer (If all else fails)
+-----------------------------------------------
+1. Save all work
+2. Restart computer
+3. Start dashboard: python web_dashboard.py
+
+================================================================================
+VERIFY ML ENDPOINTS ARE WORKING
+================================================================================
+
+After restarting, open browser console (F12) and check:
+
+1. No more 404 errors for /api/ml/train
+2. Dashboard loads without errors
+3. ML Features section is visible in Configuration tab
+
+Test ML endpoints:
+1. Open dashboard: http://gemtrading:5000
+2. Go to Configuration tab
+3. Scroll to ML Features section
+4. Click "Test ML Features" button
+5. Should see response (not 404 error)
+
+================================================================================
+NEW ML API ENDPOINTS AVAILABLE
+================================================================================
+
+After restart, these endpoints will be available:
+
+1. POST /api/ml/train
+   - Train ML model with training data
+   - Returns accuracy statistics
+
+2. GET /api/ml/test
+   - Test ML features with current market data
+   - Returns enhanced signals
+
+3. GET /api/ml/stats
+   - Get ML model statistics
+   - Shows model status and configuration
+
+4. GET /api/ml/export
+   - Export training data from trade history
+   - Downloads CSV file
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: Still getting 404 errors after restart
+Solution: 
+- Make sure you restarted the correct Python process
+- Check web_dashboard.py has the new endpoints (search for "def train_ml_model")
+- Try hard refresh in browser (Ctrl+F5)
+
+Problem: Dashboard won't start
+Solution:
+- Check if port 5000 is already in use
+- Try: netstat -ano | findstr :5000 (Windows)
+- Kill the process using port 5000
+- Restart dashboard
+
+Problem: Network changed errors
+Solution:
+- These are normal when restarting the server
+- Wait 10 seconds after restart
+- Refresh browser (F5)
+- Errors should disappear
+
+Problem: Can't find the terminal running dashboard
+Solution:
+- Check all open terminals/command prompts
+- Look for one showing Flask/dashboard output
+- If can't find, use Task Manager to kill Python processes
+- Restart dashboard fresh
+
+================================================================================
+QUICK RESTART COMMAND
+================================================================================
+
+Windows (CMD):
+--------------
+# Stop current dashboard (Ctrl+C in its terminal)
+# Then run:
+python web_dashboard.py
+
+Windows (PowerShell):
+--------------------
+# Stop current dashboard (Ctrl+C in its terminal)
+# Then run:
+python web_dashboard.py
+
+Linux/Mac:
+----------
+# Stop current dashboard (Ctrl+C in its terminal)
+# Then run:
+python3 web_dashboard.py
+
+================================================================================
+AFTER RESTART - NEXT STEPS
+================================================================================
+
+1. Verify dashboard is running (no errors in terminal)
+2. Open browser: http://gemtrading:5000
+3. Check browser console (F12) - should be no 404 errors
+4. Go to Configuration → ML Features
+5. Set training data path: data/training_data.csv
+6. Click "Train ML Model" to test
+7. Should see success message (not 404 error)
+
+If you see success, ML endpoints are working! ✅
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+- Dashboard must be restarted whenever web_dashboard.py is modified
+- Browser cache may need clearing (Ctrl+F5)
+- MT5 must be running for ML training to work
+- Training data file must exist before training
+
+================================================================================
+
+Ready to restart? Follow the steps above!

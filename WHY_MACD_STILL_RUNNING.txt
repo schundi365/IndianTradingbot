@@ -1,0 +1,124 @@
+================================================================================
+WHY IS MACD FILTER STILL RUNNING?
+================================================================================
+
+YOUR LOG SHOWS (at 16:08:11):
+  🔍 MACD FILTER CHECK:
+  MACD Line:         -0.000838
+  ❌ MACD FILTER REJECTED!
+
+THIS MEANS: The bot is running OLD CODE (before the fix)
+
+================================================================================
+THE FIX IS IN THE CODE - BUT BOT HASN'T LOADED IT YET
+================================================================================
+
+✅ Config file shows: "use_macd": false (line 44 in bot_config.json)
+✅ Code fix is present: Line 1180 in src/mt5_trading_bot.py
+✅ No cache files found
+
+BUT: The bot process is still running the OLD version of the code!
+
+================================================================================
+WHY THIS HAPPENS
+================================================================================
+
+Python loads code into memory when the bot starts. Even if you:
+- Edit the .py files
+- Save the config
+- Clear cache
+
+The RUNNING bot process still has the OLD code in memory!
+
+The ONLY way to load new code is to:
+1. STOP the bot process completely
+2. START a new bot process
+
+================================================================================
+HOW TO FIX THIS - STEP BY STEP
+================================================================================
+
+STEP 1: STOP THE BOT
+--------------------
+In the terminal/command prompt where the bot is running:
+  Press: Ctrl+C
+
+Wait until you see the bot has stopped (no more log messages)
+
+STEP 2: VERIFY IT'S STOPPED
+----------------------------
+Run this to check for any lingering processes:
+  python force_stop_and_restart.py
+
+STEP 3: CLEAR CACHE
+-------------------
+  python clear_all_cache.py
+
+STEP 4: WAIT
+------------
+Wait 5 seconds for everything to clear
+
+STEP 5: START BOT
+-----------------
+  python run_bot.py
+
+================================================================================
+QUICK METHOD - USE THE BATCH FILE
+================================================================================
+
+Just run this (it does all steps above):
+  EMERGENCY_RESTART_BOT.bat
+
+This will:
+1. Force stop any running bot processes
+2. Clear all cache
+3. Verify the fix is in place
+4. Start the bot with new code
+
+================================================================================
+WHAT YOU SHOULD SEE AFTER RESTART
+================================================================================
+
+When the bot analyzes symbols, you should see:
+
+  --------------------------------------------------------------------------------
+  🔍 MACD FILTER CHECK:
+    ⚪ MACD filter: DISABLED (skipping check)
+  --------------------------------------------------------------------------------
+
+You should NOT see:
+  ❌ MACD FILTER REJECTED!
+  MACD Line: ...
+  MACD Histogram: ...
+
+================================================================================
+IF IT STILL DOESN'T WORK
+================================================================================
+
+1. Check if multiple bot instances are running:
+   - Open Task Manager (Ctrl+Shift+Esc)
+   - Look for multiple "python.exe" processes
+   - End all of them
+   - Start fresh
+
+2. Check the config is actually loaded:
+   - Look for this line in bot startup logs:
+     "Configuration loaded from C:\Users\...\bot_config.json"
+   - Verify the path is correct
+
+3. Check the timestamp:
+   - Your log shows 16:08:11
+   - After restart, you should see NEW timestamps
+   - If timestamps are old, the bot didn't restart
+
+================================================================================
+SUMMARY
+================================================================================
+
+The fix IS in the code.
+The config IS correct.
+The bot just needs to be RESTARTED to load the new code.
+
+Run: EMERGENCY_RESTART_BOT.bat
+
+================================================================================

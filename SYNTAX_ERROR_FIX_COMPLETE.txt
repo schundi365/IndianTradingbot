@@ -1,0 +1,32 @@
+SYNTAX ERROR FIX - COMPLETE
+===================================
+
+ISSUE RESOLVED:
+- SyntaxError: unterminated string literal (detected at line 794)
+- File: src/mt5_trading_bot.py
+- Error: "rsi_overbought', 75)" - malformed code
+
+ROOT CAUSE:
+- Lines 794 and 795 had malformed variable assignments
+- Missing proper assignment operator and config.get() calls
+- Likely caused by incomplete edit or copy-paste error
+
+CHANGES MADE:
+Line 794: rsi_overbought', 75)
+Fixed to: rsi_overbought = self.config.get('rsi_overbought', 75)
+
+Line 795: rsi_oversold', 25)  
+Fixed to: rsi_oversold = self.config.get('rsi_oversold', 25)
+
+VERIFICATION:
+✅ Python compilation successful (no syntax errors)
+✅ Import test successful
+✅ Bot can now be imported and run
+
+CONTEXT:
+- This was in the RSI filter section of the trading bot
+- The code gets RSI overbought/oversold thresholds from config
+- Default values are 75 (overbought) and 25 (oversold) - the optimized values
+
+STATUS: COMPLETE ✅
+The bot can now run without syntax errors.

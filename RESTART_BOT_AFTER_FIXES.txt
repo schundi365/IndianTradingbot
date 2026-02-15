@@ -1,0 +1,103 @@
+================================================================================
+CRITICAL FIXES APPLIED - RESTART BOT NOW
+================================================================================
+
+TWO CRITICAL BUGS FIXED:
+
+1. TP CALCULATION BUG (CRITICAL!)
+   - Split orders were calculating TP incorrectly
+   - Your XPDUSD trades had TP values of 266, 2.98, 185 (completely wrong!)
+   - Should have been around 1,641, 1,599, 1,535
+   - FIX: Added pip-based TP support to split orders
+   - FIX: Added detailed logging to track calculations
+
+2. "UNKNOWN" SYMBOL BUG
+   - Trend detection logs showed "unknown" instead of symbol name
+   - FIX: Added symbol parameter to check_entry_signal method
+   - FIX: Removed hardcoded "current_symbol" string
+
+================================================================================
+RESTART THE BOT NOW
+================================================================================
+
+1. Stop the current bot (Ctrl+C if running)
+
+2. Restart with:
+   python run_bot.py
+
+3. Watch the logs carefully for the first few trades
+
+================================================================================
+WHAT TO CHECK IN LOGS
+================================================================================
+
+✅ CORRECT SYMBOL NAMES:
+   Look for: "🔍 Starting trend analysis for XPDUSD (15)"
+   NOT: "🔍 Starting trend analysis for unknown (15)"
+
+✅ TP CALCULATION DETAILS:
+   Look for: "Using pip-based TP calculation:"
+   Look for: "TP Level 1: 150.0 pips (ratio 1.5) = 1691.024"
+
+✅ CORRECT TP VALUES IN MT5:
+   For SELL at 1,706:
+   - TP1 should be ~1,691 (150 pips below entry)
+   - TP2 should be ~1,681 (250 pips below entry)
+   - TP3 should be ~1,666 (400 pips below entry)
+
+================================================================================
+IF PROBLEMS PERSIST
+================================================================================
+
+If you still see bizarre TP values (like 266, 2.98, 185):
+1. Copy the full log output
+2. Copy the trade details from MT5
+3. Report back - there may be a deeper issue
+
+The nonsensical values suggest possible:
+- Memory corruption
+- Data type mismatch
+- MT5 API issue
+- Race condition
+
+================================================================================
+CONFIGURATION
+================================================================================
+
+Your current settings (bot_config.json):
+- use_pip_based_tp: true
+- tp_pips: 100
+- tp_levels: [1.5, 2.5, 4.0]
+- max_analysis_time_ms: 250
+
+This means:
+- TP Level 1: 100 × 1.5 = 150 pips
+- TP Level 2: 100 × 2.5 = 250 pips
+- TP Level 3: 100 × 4.0 = 400 pips
+
+================================================================================
+DASHBOARD CONTROLS
+================================================================================
+
+You can adjust these settings from the dashboard:
+- Pip-Based TP: Configuration → Position Management → Pip-Based TP/SL
+- Analysis Timeout: Configuration → Advanced Trend Detection → Performance
+
+================================================================================
+FILES MODIFIED
+================================================================================
+
+- src/mt5_trading_bot.py (fixes applied)
+- Backup created: src/mt5_trading_bot.py_backup_tp_fix_20260205_135518
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. ✅ Restart bot
+2. ⏳ Monitor first 2-3 trades closely
+3. ⏳ Verify TP values are correct
+4. ⏳ Check symbol names in logs
+5. ⏳ Report any remaining issues
+
+================================================================================

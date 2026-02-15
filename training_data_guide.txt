@@ -1,0 +1,339 @@
+================================================================================
+TRAINING DATA GUIDE - What Data Can You Use?
+================================================================================
+
+BEST DATA SOURCES (In Order of Quality)
+================================================================================
+
+1. YOUR BOT'S TRADE HISTORY ⭐⭐⭐⭐⭐ (BEST)
+   -----------------------------------------
+   Why: Matches your exact trading conditions
+   
+   What it includes:
+   - Entry/exit prices
+   - Indicators at trade time (RSI, MACD, ADX, ATR, EMAs)
+   - Trade outcome (profit/loss)
+   - Symbol and timeframe
+   
+   Where to get it:
+   - Bot logs: trading_bot.log
+   - MT5 trade history
+   - Dashboard trade history
+   
+   How much needed: 100+ trades minimum (200+ recommended)
+   
+   How to collect:
+   1. Run bot for 1-2 weeks
+   2. Let it make trades normally
+   3. Export trade history
+   4. Use for training
+
+2. DEMO ACCOUNT TRADING ⭐⭐⭐⭐ (SAFE & EFFECTIVE)
+   -----------------------------------------------
+   Why: Real market conditions, zero risk
+   
+   How to do it:
+   1. Switch MT5 to demo account
+   2. Run bot for 1-2 weeks
+   3. Collect 100+ trades
+   4. Export and use for training
+   
+   Advantages:
+   - Real market data
+   - No financial risk
+   - Matches your strategy
+   - Quick to collect
+
+3. HISTORICAL MT5 DATA ⭐⭐⭐ (GOOD FOR INITIAL TRAINING)
+   -----------------------------------------------------
+   Why: Large dataset available immediately
+   
+   What you need:
+   - Historical OHLCV data from MT5
+   - Calculate indicators
+   - Simulate trades
+   - Label outcomes
+   
+   How to get:
+   - MT5 built-in history
+   - Export to CSV
+   - Process with script
+
+4. EXTERNAL DATA SOURCES ⭐⭐ (SUPPLEMENTARY)
+   ------------------------------------------
+   Free sources:
+   - Yahoo Finance (stocks, forex)
+   - Alpha Vantage (API)
+   - Investing.com
+   
+   Paid sources:
+   - Quandl
+   - IEX Cloud
+   - TradingView
+   
+   Note: Must match your symbols and timeframes
+
+================================================================================
+DATA FORMAT REQUIRED
+================================================================================
+
+CSV Format with these columns:
+------------------------------
+timestamp,symbol,close,rsi,macd,macd_signal,adx,atr,ema_fast,ema_slow,volume,profitable
+
+Example:
+--------
+2024-01-15 10:00,EURUSD,1.0850,65.2,0.0015,0.0012,25.3,0.0015,1.0865,1.0855,1200,1
+2024-01-15 11:00,EURUSD,1.0855,67.1,0.0018,0.0014,26.1,0.0016,1.0868,1.0857,1350,1
+2024-01-15 12:00,EURUSD,1.0845,62.3,0.0012,0.0015,24.8,0.0014,1.0862,1.0856,1100,0
+
+Column Descriptions:
+-------------------
+timestamp     - When trade occurred
+symbol        - Trading pair (EURUSD, XAUUSD, etc.)
+close         - Close price at entry
+rsi           - RSI indicator value
+macd          - MACD value
+macd_signal   - MACD signal line
+adx           - ADX trend strength
+atr           - ATR volatility
+ema_fast      - Fast EMA value
+ema_slow      - Slow EMA value
+volume        - Trading volume
+profitable    - 1 if trade was profitable, 0 if loss
+
+Optional (improves accuracy):
+-----------------------------
+bb_upper      - Bollinger Band upper
+bb_lower      - Bollinger Band lower
+volume_ma     - Volume moving average
+profit_pips   - Actual profit in pips
+hold_time     - Trade duration in minutes
+
+================================================================================
+HOW TO COLLECT DATA
+================================================================================
+
+METHOD 1: From Bot Logs (Easiest)
+----------------------------------
+Your bot logs trades. Extract them:
+
+1. Check trading_bot.log file
+2. Look for trade entries
+3. Extract indicator values
+4. Label profitable (1) or loss (0)
+5. Save to CSV
+
+Use provided script:
+python extract_training_data_from_logs.py
+
+METHOD 2: From MT5 History
+---------------------------
+1. Open MT5
+2. Go to "Account History" tab
+3. Right-click → "Save as Report"
+4. Export as HTML or XML
+5. Parse and convert to CSV format
+
+METHOD 3: From Dashboard
+------------------------
+1. Open dashboard
+2. Go to "Trade History" tab
+3. Click "Export Training Data" button
+4. Downloads as CSV automatically
+
+METHOD 4: Collect Live (Recommended)
+-------------------------------------
+1. Run bot on demo account
+2. Let it trade for 1-2 weeks
+3. Aim for 100+ trades
+4. Export using Method 1, 2, or 3
+
+================================================================================
+MINIMUM REQUIREMENTS
+================================================================================
+
+Samples Needed:
+--------------
+Minimum: 100 trades
+Recommended: 200+ trades
+Ideal: 500+ trades
+
+More data = Better accuracy!
+
+Data Quality:
+------------
+✓ Mix of profitable and losing trades (balanced)
+✓ Multiple symbols (if you trade multiple)
+✓ Different market conditions
+✓ Recent data (last 3-6 months best)
+✓ Matches your actual trading timeframe
+
+Bad Data:
+---------
+✗ All wins or all losses (unbalanced)
+✗ Only one symbol (if you trade multiple)
+✗ Very old data (>1 year)
+✗ Different timeframe than you trade
+✗ Simulated data that doesn't match reality
+
+================================================================================
+QUICK START GUIDE
+================================================================================
+
+OPTION A: Use Your Existing Trades
+-----------------------------------
+If you've been running the bot:
+
+1. python extract_training_data_from_logs.py
+2. Check data/training_data.csv
+3. Verify 100+ rows
+4. Dashboard → ML Features → Train ML Model
+
+OPTION B: Collect New Data (Demo)
+----------------------------------
+If you're just starting:
+
+1. Switch MT5 to demo account
+2. Run bot: python run_bot.py
+3. Wait 1-2 weeks (100+ trades)
+4. python extract_training_data_from_logs.py
+5. Dashboard → ML Features → Train ML Model
+
+OPTION C: Use Historical Data
+------------------------------
+If you want to start immediately:
+
+1. Export MT5 historical data
+2. python prepare_historical_data.py
+3. Simulates trades on historical data
+4. Creates training_data.csv
+5. Dashboard → ML Features → Train ML Model
+
+================================================================================
+DATA STORAGE LOCATIONS
+================================================================================
+
+Default Paths:
+-------------
+Training Data: data/training_data.csv
+Trained Model: models/ml_signal_model.pkl
+Bot Logs: trading_bot.log
+MT5 History: (MT5 terminal folder)
+
+You can change these in dashboard:
+Dashboard → Configuration → ML Features → Data Paths
+
+================================================================================
+EXAMPLE: GOOD TRAINING DATA
+================================================================================
+
+Sample from data/training_data.csv:
+-----------------------------------
+timestamp,symbol,close,rsi,macd,macd_signal,adx,atr,ema_fast,ema_slow,volume,profitable
+2024-01-15 09:00,EURUSD,1.0850,65.2,0.0015,0.0012,25.3,0.0015,1.0865,1.0855,1200,1
+2024-01-15 10:30,EURUSD,1.0855,67.1,0.0018,0.0014,26.1,0.0016,1.0868,1.0857,1350,1
+2024-01-15 12:00,EURUSD,1.0845,62.3,0.0012,0.0015,24.8,0.0014,1.0862,1.0856,1100,0
+2024-01-15 14:30,XAUUSD,2045.50,58.7,2.5,2.1,28.5,25.3,2046.2,2044.8,850,1
+2024-01-15 16:00,XAUUSD,2048.20,71.2,3.2,2.8,31.2,26.1,2047.5,2045.2,920,1
+2024-01-16 09:00,EURUSD,1.0860,69.5,0.0020,0.0016,27.8,0.0017,1.0870,1.0858,1280,0
+
+This shows:
+- Multiple symbols (EURUSD, XAUUSD)
+- Mix of profitable (1) and losses (0)
+- All required indicators
+- Recent timestamps
+- Realistic values
+
+================================================================================
+TIPS FOR BEST RESULTS
+================================================================================
+
+1. COLLECT MORE DATA
+   - More samples = better accuracy
+   - Aim for 200+ trades minimum
+
+2. BALANCE YOUR DATA
+   - Try to have 40-60% profitable trades
+   - Not all wins or all losses
+
+3. USE RECENT DATA
+   - Last 3-6 months is best
+   - Market conditions change
+
+4. MATCH YOUR TRADING
+   - Same symbols you trade
+   - Same timeframe
+   - Same indicators
+
+5. INCLUDE VARIETY
+   - Different market conditions
+   - Trending and ranging markets
+   - High and low volatility
+
+6. CLEAN YOUR DATA
+   - Remove incomplete rows
+   - Check for errors
+   - Verify indicator values are reasonable
+
+7. UPDATE REGULARLY
+   - Retrain model monthly
+   - Add new trades to dataset
+   - Keep model current
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEM: Not enough data
+SOLUTION: Run bot on demo for 1-2 weeks
+
+PROBLEM: All trades are wins/losses
+SOLUTION: Adjust bot settings for more balanced results
+
+PROBLEM: Data format errors
+SOLUTION: Use provided extraction scripts
+
+PROBLEM: Model accuracy low (<60%)
+SOLUTION: Collect more data, ensure data quality
+
+PROBLEM: Can't find trade history
+SOLUTION: Check trading_bot.log or MT5 history tab
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Choose your data source (bot logs recommended)
+2. Collect/export 100+ trades
+3. Save as CSV in data/training_data.csv
+4. Open dashboard
+5. Go to Configuration → ML Features
+6. Set "Training Data Path" to your CSV
+7. Click "Train ML Model"
+8. Wait for training to complete
+9. Check accuracy (>60% is good, >70% is great)
+10. Enable ML predictions in dashboard
+
+================================================================================
+SCRIPTS PROVIDED
+================================================================================
+
+extract_training_data_from_logs.py
+- Extracts data from trading_bot.log
+- Creates data/training_data.csv
+- Ready to use for training
+
+prepare_historical_data.py
+- Uses MT5 historical data
+- Simulates trades
+- Creates training dataset
+
+validate_training_data.py
+- Checks your CSV format
+- Verifies data quality
+- Reports any issues
+
+================================================================================
+
+For more details, see: docs/ML_FEATURES_GUIDE.md

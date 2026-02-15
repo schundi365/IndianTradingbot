@@ -1,0 +1,47 @@
+CRITICAL ISSUE IDENTIFIED - DETAILED LOGGING NOT WORKING
+========================================================
+
+PROBLEM CONFIRMED:
+❌ The detailed logging code exists in src/mt5_trading_bot.py
+❌ But when the bot runs, it's using a DIFFERENT version of the code
+❌ The running bot shows basic logging instead of detailed logging
+❌ File modifications are not being reflected in the running code
+
+ROOT CAUSE ANALYSIS:
+1. ✅ The detailed logging code IS present in src/mt5_trading_bot.py
+2. ✅ The logging system works (confirmed with test_logging_directly.py)
+3. ❌ The bot is importing from a different source or cached version
+4. ❌ String replacements are failing due to encoding/character issues
+5. ❌ The running bot shows this version:
+   ```
+   # DETAILED LOGGING - FORCE EXECUTION
+   logging.info("="*80)
+   logging.info("🔧 DETAILED INDICATOR CALCULATION STARTING")
+   ```
+6. ✅ But the file contains this version:
+   ```
+   logging.info("🚨🚨🚨 CALCULATE_INDICATORS METHOD CALLED - DETAILED LOGGING STARTING 🚨🚨🚨")
+   ```
+
+POSSIBLE CAUSES:
+1. The bot is running from a compiled executable (dist/GEM_Trading_Bot.exe)
+2. There's a Python bytecode cache issue that's not being cleared
+3. The web dashboard is importing from a different path
+4. There are multiple versions of the file in different locations
+5. The simple_logging_fix.py overwrote the detailed logging with basic logging
+
+EVIDENCE:
+- Test shows method source contains basic logging, not detailed logging
+- File inspection shows detailed logging is present
+- String replacements fail due to character mismatches
+- Multiple backup files exist with different versions
+
+IMMEDIATE ACTION REQUIRED:
+1. Identify which version of the code is actually being executed
+2. Ensure the bot is running from the Python script, not executable
+3. Force complete module reload or restart all processes
+4. Verify the correct version of calculate_indicators is being called
+
+STATUS: DETAILED LOGGING IS NOT WORKING IN PRODUCTION
+The user is correct - no detailed logging is appearing in the trading_bot.log file.
+The bot is running with a basic logging version instead of the detailed version.

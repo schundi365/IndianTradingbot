@@ -1,0 +1,153 @@
+================================================================================
+PERFORMANCE WARNING THRESHOLD - FIXED
+================================================================================
+
+Date: 2026-02-05
+Issue: Hardcoded 100ms warning threshold despite max_analysis_time_ms = 250
+
+================================================================================
+THE ISSUE
+================================================================================
+
+You were seeing warnings like:
+   ⚠️ Performance: Trend Analysis - USDJPY took 161.0ms (>100ms threshold)
+
+Even though you set max_analysis_time_ms to 250 in config.
+
+================================================================================
+ROOT CAUSE
+================================================================================
+
+There were TWO different thresholds:
+
+1. max_analysis_time_ms (250ms) - When to STOP analysis
+   ✅ This was working correctly from config
+
+2. Warning threshold (100ms) - When to LOG a warning
+   ❌ This was HARDCODED at 100ms
+
+The warning was just informational - it didn't stop anything. But it was
+confusing because you set the limit to 250ms.
+
+================================================================================
+THE FIX
+================================================================================
+
+File Modified: src/trend_detection_engine.py
+
+1. Updated PerformanceTimer class:
+   - Added warning_threshold_ms parameter (default 100)
+   - Now uses configurable threshold instead of hardcoded 100
+
+2. Updated PerformanceTimer usage:
+   - Passes max_analysis_time_ms from config as warning threshold
+   - Now warnings only appear when exceeding YOUR configured limit
+
+================================================================================
+BEFORE (Hardcoded)
+================================================================================
+
+class PerformanceTimer:
+    def __init__(self, operation_name: str, logger: logging.Logger = None):
+        ...
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        elapsed = (time.perf_counter() - self.start_time) * 1000
+        if elapsed > 100:  # HARDCODED!
+            self.logger.warning(f"... (>100ms threshold)")
+
+Usage:
+    with PerformanceTimer(f"Trend Analysis - {symbol}", self.logger):
+        ...
+
+================================================================================
+AFTER (Configurable)
+================================================================================
+
+class PerformanceTimer:
+    def __init__(self, operation_name: str, logger: logging.Logger = None, 
+                 warning_threshold_ms: float = 100):
+        self.warning_threshold_ms = warning_threshold_ms
+        ...
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        elapsed = (time.perf_counter() - self.start_time) * 1000
+        if elapsed > self.warning_threshold_ms:  # CONFIGURABLE!
+            self.logger.warning(f"... (>{self.warning_threshold_ms:.0f}ms threshold)")
+
+Usage:
+    warning_threshold = self.config.get('max_analysis_time_ms', 250)
+    with PerformanceTimer(f"Trend Analysis - {symbol}", self.logger, warning_threshold):
+        ...
+
+================================================================================
+WHAT YOU'LL SEE NOW
+================================================================================
+
+With max_analysis_time_ms = 250:
+
+Before:
+   ⚠️ Performance: Trend Analysis - USDJPY took 161.0ms (>100ms threshold)
+   ❌ Warning even though under your 250ms limit
+
+After:
+   ✅ No warning (161ms is under 250ms threshold)
+   
+Only if analysis takes > 250ms:
+   ⚠️ Performance: Trend Analysis - USDJPY took 275.0ms (>250ms threshold)
+
+================================================================================
+CONFIGURATION
+================================================================================
+
+Config Key: max_analysis_time_ms
+Current Value: 250 (from your config)
+Default: 250
+
+This value now controls BOTH:
+1. When to stop analysis (timeout)
+2. When to log performance warning
+
+================================================================================
+TESTING
+================================================================================
+
+To test the fix:
+
+1. Restart the bot:
+   python run_bot.py
+
+2. Monitor logs for trend analysis:
+   - Should NOT see warnings for analysis < 250ms
+   - WILL see warnings for analysis > 250ms
+
+3. Test with different thresholds:
+   - Set max_analysis_time_ms to 150 in dashboard
+   - Restart bot
+   - Should see warnings for analysis > 150ms
+
+================================================================================
+ADDITIONAL NOTE: "unknown" Symbol
+================================================================================
+
+You also mentioned seeing:
+   🔍 Starting trend analysis for unknown (15)
+
+This is the same issue we fixed earlier in Session 20 - the symbol parameter
+not being passed in check_entry_signal(). That fix should already be in place.
+
+If you're still seeing "unknown", it means the bot is running old code.
+Make sure to restart the bot to load all the fixes.
+
+================================================================================
+SUMMARY
+================================================================================
+
+✅ Fixed hardcoded 100ms warning threshold
+✅ Now uses max_analysis_time_ms from config
+✅ Warnings only appear when exceeding YOUR configured limit
+✅ More consistent and less confusing
+
+Restart bot to see the fix in action!
+
+================================================================================

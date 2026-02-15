@@ -1,0 +1,15 @@
+ML MODEL EVALUATION REPORT
+================================================================================
+
+Model: models/ml_signal_model.pkl
+Data: data/ml_training_data.csv
+Samples: 638500
+
+Accuracy:  0.9999
+Precision: 0.9999
+Recall:    1.0000
+F1 Score:  0.9999
+
+Confusion Matrix:
+TN: 12, FP: 93
+FN: 0, TP: 638395

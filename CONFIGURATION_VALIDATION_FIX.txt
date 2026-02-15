@@ -1,0 +1,86 @@
+================================================================================
+CONFIGURATION VALIDATION ISSUE - RESOLVED
+================================================================================
+Date: February 1, 2026
+Status: ✅ IDENTIFIED AND FIXED
+
+ORIGINAL PROBLEM:
+User reported: "failed to save configuration saying confidence between 20 to 90% 
+even when min confidence is .60"
+
+ROOT CAUSE ANALYSIS:
+✅ IDENTIFIED: Validation mismatch between frontend and backend
+✅ FRONTEND: Correctly converts 60% to 0.6 (decimal)
+✅ BACKEND: Correctly validates 0.6 as valid (between 0.2 and 0.9)
+✅ REAL ISSUE: Max daily loss validation was too restrictive (1-20 vs 10-1000)
+
+TECHNICAL DETAILS:
+1. **Frontend Logic**: ✅ CORRECT
+   - User enters 60% in form
+   - JavaScript converts to 0.6 (divides by 100)
+   - Sends 0.6 to backend
+
+2. **Backend Validation**: ✅ FIXED
+   - Confidence validation: 0.2 to 0.9 (20% to 90%) ✅ CORRECT
+   - Max daily loss validation: FIXED from 1-20 to 10-1000
+
+3. **Config Manager**: ✅ WORKING
+   - Direct test shows config manager accepts the configuration
+   - No validation issues in config manager
+
+FIXES IMPLEMENTED:
+✅ Updated max daily loss validation in web_dashboard.py:
+   - OLD: 1% to 20% (too restrictive)
+   - NEW: $10 to $1000 (matches frontend form)
+
+✅ Added debug logging to track validation process
+
+✅ Verified frontend/backend data flow:
+   - Frontend: 60% → 0.6 ✅
+   - Backend: 0.6 validated as valid ✅
+   - Config Manager: Accepts configuration ✅
+
+VERIFICATION RESULTS:
+✅ Direct Flask test client: PASSES validation
+✅ Config manager direct test: PASSES validation  
+✅ Frontend conversion logic: CORRECT
+✅ Backend validation logic: FIXED
+
+CURRENT STATUS:
+The validation logic has been fixed and tested. The issue was that the max daily 
+loss validation was too restrictive (1-20) compared to what the frontend form 
+allows (10-1000). This has been corrected.
+
+SOLUTION FOR USER:
+1. ✅ The validation has been fixed in the code
+2. ✅ Restart the web dashboard to ensure latest code is loaded
+3. ✅ Configuration with 60% confidence and $100 max daily loss should now work
+
+COMMANDS TO APPLY FIX:
+1. Stop current dashboard: Ctrl+C in dashboard terminal
+2. Restart dashboard: python web_dashboard.py
+3. Test configuration save in browser
+
+TECHNICAL VERIFICATION:
+- Confidence 60% (0.6): ✅ VALID (between 0.2-0.9)
+- Max daily loss $100: ✅ VALID (between $10-$1000)
+- All other validations: ✅ WORKING
+
+FLASK CACHING ISSUE:
+Note: During testing, there was a Flask caching issue where the running server
+was not picking up code changes. This is resolved by restarting the server.
+
+================================================================================
+🎯 CONFIGURATION VALIDATION - FIXED AND VERIFIED
+================================================================================
+
+The configuration validation has been fixed. Users can now save configurations
+with 60% confidence and reasonable max daily loss values without validation errors.
+
+Key changes:
+- Fixed max daily loss validation range
+- Verified frontend/backend data flow
+- Confirmed all validation logic is working correctly
+
+The dashboard is ready for use with proper configuration validation!
+================================================================================

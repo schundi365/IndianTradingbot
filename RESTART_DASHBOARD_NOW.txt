@@ -1,0 +1,112 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    ⚠️  DASHBOARD RESTART REQUIRED ⚠️                         ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM:
+--------
+The analysis_bars fix is complete and working, but the dashboard process
+has OLD CODE cached in memory. Stop/Start bot button doesn't reload the code.
+
+VERIFICATION:
+-------------
+✅ Code is updated correctly in files
+✅ Fresh Python import loads updated code
+❌ Running dashboard has old code in memory
+
+SOLUTION - COMPLETE DASHBOARD RESTART:
+---------------------------------------
+
+STEP 1: STOP DASHBOARD
+   • Find the terminal/command window running web_dashboard.py
+   • Press Ctrl+C to stop it
+   • Wait for "Keyboard interrupt received" message
+   • Close the terminal window
+
+STEP 2: WAIT
+   • Wait 5-10 seconds for Python to fully exit
+   • This ensures all cached modules are cleared
+
+STEP 3: START DASHBOARD
+   • Open NEW terminal/command window
+   • Navigate to project folder:
+     cd C:\Users\srika\Labs\AgenticAI\Bots\tradegold
+   
+   • Start dashboard:
+     python web_dashboard.py
+   
+   • Wait for "Running on http://127.0.0.1:5000"
+
+STEP 4: START BOT
+   • Open browser: http://localhost:5000
+   • Click "Start Bot" button
+   • Wait for bot to initialize
+
+STEP 5: VERIFY FIX
+   • Check the log output
+   • You should now see:
+
+     📈 Fetching historical data for XAUUSD (Timeframe: M30)...
+        Requesting 100 bars for analysis              ← NEW LINE!
+     ✅ Retrieved 100 bars of data (requested: 100)   ← NEW FORMAT!
+
+   • OLD format was:
+     📈 Fetching historical data for XAUUSD (Timeframe: M30)...
+     ✅ Retrieved 200 bars of data                    ← No "Requesting" line
+
+WHY THIS IS NECESSARY:
+----------------------
+Python caches imported modules in memory for performance. When you:
+  • Edit source code files → Changes saved to disk ✅
+  • Stop/Start bot → Same Python process, cached code ❌
+  • Restart dashboard → New Python process, fresh code ✅
+
+The importlib.reload() in the code tries to reload, but sometimes
+Python's module cache is too aggressive and keeps old code.
+
+ALTERNATIVE (if above doesn't work):
+------------------------------------
+If you still see old format after dashboard restart:
+
+1. Close ALL Python processes:
+   • Task Manager → Find all python.exe
+   • End each process
+   
+2. Wait 10 seconds
+
+3. Start dashboard fresh:
+   python web_dashboard.py
+
+WHAT YOU'LL SEE AFTER FIX:
+--------------------------
+Every time bot analyzes a symbol, logs will show:
+
+📈 Fetching historical data for GBPAUD (Timeframe: M30)...
+   Requesting 100 bars for analysis
+✅ Retrieved 100 bars of data (requested: 100)
+
+The "Requesting X bars" line proves the bot is using your dashboard setting!
+
+CURRENT CONFIGURATION:
+----------------------
+• analysis_bars in bot_config.json: 100
+• analysis_bars in config.py default: 200
+• Bot will use: 100 (from bot_config.json)
+
+You can change this anytime in the dashboard Configuration tab.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK CHECKLIST:
+----------------
+☐ Stop dashboard (Ctrl+C in terminal)
+☐ Close terminal window
+☐ Wait 5-10 seconds
+☐ Open new terminal
+☐ Run: python web_dashboard.py
+☐ Open browser: http://localhost:5000
+☐ Click "Start Bot"
+☐ Check logs for "Requesting X bars" message
+
+═══════════════════════════════════════════════════════════════════════════════

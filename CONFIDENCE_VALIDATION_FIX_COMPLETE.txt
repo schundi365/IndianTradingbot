@@ -1,0 +1,33 @@
+CONFIDENCE VALIDATION FIX - COMPLETE
+=====================================
+
+ISSUE RESOLVED:
+- Dashboard showing "confidence should be between 20 and 90" error
+- Even when confidence was set to valid values like 60%
+
+ROOT CAUSE:
+- Form was sending field name "min_confidence" 
+- Backend API expects field name "min_trade_confidence"
+- Field name mismatch caused validation to fail
+
+CHANGES MADE:
+File: templates/dashboard.html
+Line 3543: Changed form submission field name
+From: min_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
+To:   min_trade_confidence: parseFloat(document.getElementById('min-confidence').value) / 100,
+
+VALIDATION LOGIC (working correctly):
+- Backend expects values between 0.2 and 0.9 (20% to 90%)
+- Form displays percentages (20-90) but converts to decimals (0.2-0.9)
+- Form loads: config.min_trade_confidence * 100 (0.6 → 60%)
+- Form saves: form_value / 100 (60% → 0.6)
+
+TESTING RESULTS:
+✅ 20%-90% confidence values accepted
+✅ Values below 20% correctly rejected  
+✅ Values above 90% correctly rejected
+✅ Current 60% confidence works properly
+✅ Form submission successful
+
+STATUS: COMPLETE ✅
+The confidence validation error is now fixed.

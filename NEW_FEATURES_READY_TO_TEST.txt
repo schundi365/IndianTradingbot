@@ -1,0 +1,170 @@
+================================================================================
+NEW FEATURES READY TO TEST - SESSION 21
+================================================================================
+
+Date: 2026-02-05
+Status: ✅ ALL FEATURES VERIFIED (18/18 checks passed)
+
+================================================================================
+VERIFICATION COMPLETE
+================================================================================
+
+✅ ML Confidence Filtering - IMPLEMENTED
+✅ Drawdown Protection - IMPLEMENTED  
+✅ Hardcoded Values Fixed - IMPLEMENTED
+✅ ML Model - EXISTS (182,070 bytes)
+✅ Config Keys - ALL PRESENT
+
+================================================================================
+HOW TO RESTART BOT
+================================================================================
+
+Option 1: Use Batch File (Easiest)
+-----------------------------------
+Double-click: RESTART_BOT_WITH_NEW_FEATURES.bat
+
+Option 2: Command Line
+----------------------
+python run_bot.py
+
+Option 3: Use Existing Batch File
+----------------------------------
+START_BOT_NOW.bat
+
+================================================================================
+WHAT TO LOOK FOR IN LOGS
+================================================================================
+
+When bot starts, you should see:
+
+1. ML Integration Initialization:
+   "ML Integration initialized"
+   "ML Min Confidence: 0.60"
+   "Weights - Technical: 0.40, ML: 0.30, Sentiment: 0.15, Pattern: 0.15"
+
+2. ML Confidence Filtering (when ML signals are generated):
+   ⚠️  "ML signal filtered: confidence 0.550 < threshold 0.600"
+   ✅ "ML signal accepted: BUY with confidence 0.750"
+
+3. Drawdown Protection (periodic updates):
+   📊 "Drawdown Status: 2.35% from peak ($235.50)"
+   📈 "New peak equity: $10,500.00"
+
+4. Drawdown Warnings (if approaching limit):
+   ⚠️  "APPROACHING DRAWDOWN LIMIT: 8.12% of 10%"
+
+5. Drawdown Limit Exceeded (if limit reached):
+   🚨 "MAXIMUM DRAWDOWN LIMIT EXCEEDED"
+   "Trading paused - Manual intervention required"
+
+================================================================================
+CURRENT CONFIGURATION
+================================================================================
+
+ML Features:
+- ml_enabled: true
+- ml_min_confidence: 0.6 (60% threshold)
+- ml_weight: 0.3
+
+Risk Management:
+- max_drawdown_percent: 10 (10% maximum drawdown)
+- max_risk_multiplier: 1.5
+- min_risk_multiplier: 0.5
+
+All configurable via dashboard!
+
+================================================================================
+TESTING RECOMMENDATIONS
+================================================================================
+
+1. Start the bot and monitor initial logs
+   - Look for "ML Min Confidence: 0.60"
+   - Verify no errors on startup
+
+2. Wait for ML signals to be generated
+   - Watch for ML confidence filtering messages
+   - Note which signals are filtered vs accepted
+
+3. Monitor drawdown tracking
+   - Check for "Drawdown Status" messages
+   - Verify peak equity updates
+
+4. Test configuration changes (optional)
+   - Change ml_min_confidence in dashboard (try 0.7)
+   - Change max_drawdown_percent in dashboard (try 5%)
+   - Restart bot and verify new values are used
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+If you don't see ML messages:
+- Check if ML is enabled: ml_enabled = true in config
+- Check if model is trained: models/ml_signal_model.pkl exists
+- Wait for signals to be generated (may take time)
+
+If you don't see drawdown messages:
+- Drawdown is only logged when there's actual drawdown
+- Peak equity updates when equity increases
+- Wait for some trading activity
+
+If bot won't start:
+- Check for error messages in console
+- Verify MT5 is running and logged in
+- Check bot_config.json is valid JSON
+
+================================================================================
+FILES CREATED FOR TESTING
+================================================================================
+
+1. test_ml_confidence_filtering.py
+   - Tests ML confidence filtering with different thresholds
+   - Run: python test_ml_confidence_filtering.py
+
+2. verify_new_features.py
+   - Comprehensive verification of all new features
+   - Run: python verify_new_features.py
+
+3. RESTART_BOT_WITH_NEW_FEATURES.bat
+   - Easy restart script
+   - Double-click to run
+
+4. NEW_FEATURES_READY_TO_TEST.txt (this file)
+   - Complete testing guide
+
+================================================================================
+DOCUMENTATION
+================================================================================
+
+Detailed documentation available:
+1. ML_CONFIDENCE_AND_DRAWDOWN_PROTECTION_COMPLETE.md
+   - Complete implementation guide
+   - Usage examples and configuration
+
+2. SESSION_21_FINAL_SUMMARY.md
+   - Summary of all changes
+   - Configuration guide
+
+3. RESTART_BOT_FOR_NEW_FEATURES.txt
+   - Quick restart guide
+
+================================================================================
+READY TO TEST!
+================================================================================
+
+All features are implemented and verified. The bot is ready to restart with:
+- ML confidence filtering
+- Drawdown protection
+- Fixed risk multipliers
+
+Simply restart the bot and monitor the logs to see the new features in action!
+
+To restart now:
+   python run_bot.py
+
+Or double-click:
+   RESTART_BOT_WITH_NEW_FEATURES.bat
+
+================================================================================
+ENJOY YOUR ENHANCED TRADING BOT! 🎉
+================================================================================

@@ -1,0 +1,96 @@
+================================================================================
+TREND DETECTION TIMEOUT FIX
+================================================================================
+Date: 2026-02-05
+Issue: Analysis timeout causing divergence detection to be skipped
+
+PROBLEM IDENTIFIED:
+-------------------
+The trend detection engine was timing out during analysis:
+- Default timeout: 100ms
+- Actual analysis time: 145ms, 139ms
+- Result: Divergence detection being skipped
+- Warning: "⚠️ Analysis timeout approaching, skipping divergence"
+
+ROOT CAUSE:
+-----------
+The 100ms timeout is too aggressive for comprehensive trend analysis that includes:
+1. Market structure analysis
+2. Aroon indicator calculation
+3. EMA momentum analysis
+4. Divergence detection (being skipped due to timeout)
+5. Trendline analysis
+6. Multi-timeframe confirmation
+
+SOLUTION APPLIED:
+-----------------
+✅ Increased max_analysis_time_ms from 100ms to 250ms in bot_config.json
+
+This allows sufficient time for complete analysis including:
+- All indicator calculations
+- Divergence detection
+- Pattern recognition
+- Multi-timeframe analysis
+
+CONFIGURATION CHANGE:
+---------------------
+Added to bot_config.json:
+```json
+"max_analysis_time_ms": 250
+```
+
+BENEFITS:
+---------
+✅ Divergence detection will no longer be skipped
+✅ Complete trend analysis for all symbols
+✅ More accurate signal generation
+✅ Better trend confidence scores
+✅ No more timeout warnings
+
+PERFORMANCE IMPACT:
+-------------------
+- Previous: 100ms target (too aggressive)
+- New: 250ms target (realistic for comprehensive analysis)
+- Actual times: 145ms, 139ms (now within limits)
+- Impact: Minimal - still fast enough for real-time trading
+
+NEXT STEPS:
+-----------
+1. Restart the bot to apply the new configuration
+2. Monitor logs to verify divergence detection is no longer skipped
+3. Check that analysis completes within 250ms
+4. Verify improved trend confidence scores
+
+HOW TO RESTART BOT:
+-------------------
+1. Stop current bot process (Ctrl+C)
+2. Run: python run_bot.py
+3. Monitor logs for "✅ Trend analysis complete" messages
+4. Verify no more "skipping divergence" warnings
+
+MONITORING:
+-----------
+Watch for these log messages:
+✅ "✅ Trend analysis complete for [symbol]: X signals, confidence=X.XX, time=XXXms"
+✅ Time should be < 250ms
+✅ No "skipping divergence" warnings
+✅ Confidence scores should be > 0.00
+
+ALTERNATIVE SOLUTIONS (if still timing out):
+---------------------------------------------
+If 250ms is still not enough, you can:
+1. Increase to 300ms or 500ms
+2. Disable some analysis components
+3. Reduce the number of symbols being analyzed
+4. Increase analysis_bars to reduce calculation frequency
+
+CONFIGURATION OPTIONS:
+----------------------
+max_analysis_time_ms: 10-1000ms (default: 100ms, now: 250ms)
+- Lower values: Faster but may skip analysis
+- Higher values: More complete but slower
+- Recommended: 200-300ms for comprehensive analysis
+
+================================================================================
+ISSUE RESOLVED - Restart bot to apply changes
+================================================================================
