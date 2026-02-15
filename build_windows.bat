@@ -90,6 +90,7 @@ pyinstaller ^
     --hidden-import=xgboost ^
     --hidden-import=xgboost.sklearn ^
     --hidden-import=xgboost.core ^
+    --hidden-import=xgboost.compat ^
     --hidden-import=sklearn ^
     --hidden-import=sklearn.ensemble ^
     --hidden-import=sklearn.tree ^
@@ -118,7 +119,6 @@ pyinstaller ^
     --collect-all=flask ^
     --collect-all=werkzeug ^
     --collect-all=jinja2 ^
-    --collect-all=xgboost ^
     web_dashboard.py
 
 if errorlevel 1 (
@@ -206,7 +206,7 @@ echo    - Check "Allow algorithmic trading"
 echo    - Keep MT5 running!
 echo.
 echo STEP 2: Run the Bot
-echo    - Double-click: GEM_Trading_Bot.exe
+echo    - Double-click GEM_Trading_Bot.exe
 echo    - Wait 30 seconds for dashboard to open
 echo    - Browser opens automatically to http://localhost:5000
 echo.
@@ -261,10 +261,10 @@ echo    - Confidence-based signal filtering
 echo    - Works alongside technical analysis
 echo    - Can be enabled/disabled in dashboard
 echo.
-echo    ML Settings in Dashboard:
-echo    - Enable ML: Turn ML predictions on/off
-echo    - ML Confidence: Minimum confidence threshold (60%% recommended^)
-echo    - Require Agreement: How many signals must agree
+echo    ML Settings in Dashboard
+echo    - Enable ML - Turn ML predictions on/off
+echo    - ML Confidence - Minimum confidence threshold (60%% recommended^)
+echo    - Require Agreement - How many signals must agree
 echo.
 echo ================================================================================
 echo    IMPORTANT NOTES
@@ -284,7 +284,7 @@ echo ===========================================================================
 echo.
 echo    Dashboard won't open?
 echo    - Wait 30 seconds on first run
-echo    - Try manually: http://localhost:5000
+echo    - Try manually - http://localhost:5000
 echo    - Check Windows Firewall (allow access^)
 echo.
 echo    Bot won't start?
@@ -311,9 +311,9 @@ echo ===========================================================================
 echo    VERSION INFORMATION
 echo ================================================================================
 echo.
-echo    Version: 2.1.0
-echo    Platform: Windows 64-bit
-echo    Python: Embedded (no installation needed^)
+echo    Version 2.1.0
+echo    Platform Windows 64-bit
+echo    Python Embedded (no installation needed^)
 echo.
 echo ================================================================================
 echo.
