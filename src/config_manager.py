@@ -117,6 +117,7 @@ class ConfigManager:
             'min_volume_ma': 0.7,
             'volume_ma_period': 20,
             'obv_period': 20,
+            'volume_spike_threshold': 1.5,
             'update_interval': 60,
             'analysis_bars': 200,
             # ML Features Configuration

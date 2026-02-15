@@ -61,6 +61,26 @@ jobs:
           exit 1
         fi
         
+        # Check for ML model files
+        if [ -d "models" ]; then
+          echo "✅ ML models directory found"
+          ls -la models/
+          if [ -f "models/ml_signal_model.pkl" ]; then
+            echo "✅ ML model file included"
+          else
+            echo "⚠️  WARNING: ML model file not found - bot will run without ML features"
+          fi
+        else
+          echo "⚠️  WARNING: Models directory not found - bot will run without ML features"
+        fi
+        
+        # Check for configuration
+        if [ -f "bot_config.json" ]; then
+          echo "✅ Configuration file included"
+        else
+          echo "⚠️  WARNING: Configuration file not found"
+        fi
+        
         echo "✅ Package verification complete"
     
     - name: Get version

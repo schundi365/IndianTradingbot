@@ -1092,56 +1092,7 @@
                                     <small style="color: #94a3b8;">Trail X*ATR behind price</small>
                                 </div>
                             </div>
-                            
-                            <!-- Pip-Based TP/SL Section -->
-                            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px;">
-                                <h4 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                                    <span>📏</span>
-                                    <span>Pip-Based TP/SL (Alternative to ATR)</span>
-                                </h4>
-                                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px; color: white; font-size: 13px;">
-                                    <strong>💡 What is this?</strong><br>
-                                    Instead of using ATR (dynamic), you can set fixed pip values for Stop Loss and Take Profit.<br>
-                                    <strong>Benefits:</strong> Consistent risk, easier backtesting, predictable targets<br>
-                                    <strong>Example:</strong> 50 pip SL + 100 pip TP = 1:2 Risk:Reward on all symbols
-                                </div>
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label style="color: white;">Enable Pip-Based Stop Loss</label>
-                                        <select id="use-pip-based-sl" onchange="togglePipBasedControls()">
-                                            <option value="false" selected>No (Use ATR)</option>
-                                            <option value="true">Yes (Use Fixed Pips)</option>
-                                        </select>
-                                        <small style="color: rgba(255,255,255,0.8);">Override ATR-based SL calculation</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label style="color: white;">Stop Loss (Pips)</label>
-                                        <input type="number" id="sl-pips" value="50" min="10" max="500" step="5" disabled>
-                                        <small style="color: rgba(255,255,255,0.8);">Fixed pip distance for stop loss</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label style="color: white;">Enable Pip-Based Take Profit</label>
-                                        <select id="use-pip-based-tp" onchange="togglePipBasedControls()">
-                                            <option value="false" selected>No (Use R:R Ratio)</option>
-                                            <option value="true">Yes (Use Fixed Pips)</option>
-                                        </select>
-                                        <small style="color: rgba(255,255,255,0.8);">Override ratio-based TP calculation</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label style="color: white;">Take Profit (Pips)</label>
-                                        <input type="number" id="tp-pips" value="100" min="10" max="1000" step="5" disabled>
-                                        <small style="color: rgba(255,255,255,0.8);">Fixed pip distance for take profit</small>
-                                    </div>
-                                </div>
-                                <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 6px; color: white; font-size: 12px;">
-                                    <strong>📊 Recommended Pip Values by Symbol Type:</strong><br>
-                                    • <strong>Forex Majors (EURUSD, GBPUSD):</strong> SL: 30-50 pips, TP: 60-100 pips<br>
-                                    • <strong>Forex Crosses (EURJPY, GBPJPY):</strong> SL: 50-80 pips, TP: 100-160 pips<br>
-                                    • <strong>Gold (XAUUSD):</strong> SL: 200-400 pips, TP: 400-800 pips<br>
-                                    • <strong>Crypto (BTCUSD):</strong> SL: 300-500 pips, TP: 600-1000 pips
-                                </div>
-                            </div>
-                            
+
                             <!-- TP Caps Section -->
                             <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 8px;">
                                 <h4 style="color: white; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
@@ -1251,8 +1202,8 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Min Volume Multiplier</label>
-                                    <input type="number" id="min-volume-ma" value="0.7" step="0.1" min="1.0" max="2.0">
-                                    <small style="color: #94a3b8;">Volume must be X times average (1.2 = 120%)</small>
+                                    <input type="number" id="min-volume-ma" value="0.7" step="0.1" min="0.3" max="2.0">
+                                    <small style="color: #94a3b8;">Volume must be X times average (0.7 = 70%, lower = more trades)</small>
                                 </div>
                                 <div class="form-group">
                                     <label>Volume MA Period</label>
@@ -1263,6 +1214,11 @@
                                     <label>OBV Period</label>
                                     <input type="number" id="obv-period" value="20" min="10" max="50">
                                     <small style="color: #94a3b8;">On-Balance Volume indicator period</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Volume Spike Threshold</label>
+                                    <input type="number" id="volume-spike-threshold" value="1.5" min="1.2" max="3.0" step="0.1">
+                                    <small style="color: #94a3b8;">Spike detection (X times average)</small>
                                 </div>
                             </div>
                             <div style="margin-top: 15px; padding: 12px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
@@ -1434,18 +1390,6 @@
                                         <label>MTF Contradiction Penalty</label>
                                         <input type="number" id="mtf-contradiction-penalty" value="0.4" min="0.1" max="0.8" step="0.1">
                                         <small style="color: #94a3b8;">Penalty for contradictory signals</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Volume Pattern Settings -->
-                            <div style="margin-top: 15px;">
-                                <h4 style="color: #60a5fa; margin-bottom: 10px;">📊 Volume Pattern Analysis</h4>
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>Volume Spike Threshold</label>
-                                        <input type="number" id="volume-spike-threshold" value="1.5" min="1.2" max="3.0" step="0.1">
-                                        <small style="color: #94a3b8;">Volume spike threshold (X times average)</small>
                                     </div>
                                 </div>
                             </div>
@@ -2351,42 +2295,8 @@
             }, 3000);
         }
         
-        // Toggle pip-based TP/SL controls (must be defined early)
-        function togglePipBasedControls() {
-            const usePipSL = document.getElementById('use-pip-based-sl');
-            const usePipTP = document.getElementById('use-pip-based-tp');
-            const slPips = document.getElementById('sl-pips');
-            const tpPips = document.getElementById('tp-pips');
-            
-            // Check if elements exist (they might not be loaded yet)
-            if (!usePipSL || !usePipTP || !slPips || !tpPips) {
-                return;
-            }
-            
-            const slEnabled = usePipSL.value === 'true';
-            const tpEnabled = usePipTP.value === 'true';
-            
-            slPips.disabled = !slEnabled;
-            tpPips.disabled = !tpEnabled;
-            
-            // Update visual feedback
-            if (slEnabled) {
-                slPips.style.background = '#1e293b';
-                slPips.style.color = '#e2e8f0';
-            } else {
-                slPips.style.background = '#334155';
-                slPips.style.color = '#64748b';
-            }
-            
-            if (tpEnabled) {
-                tpPips.style.background = '#1e293b';
-                tpPips.style.color = '#e2e8f0';
-            } else {
-                tpPips.style.background = '#334155';
-                tpPips.style.color = '#64748b';
-            }
-        }
         
+
         // Logging Level Control
         function updateLoggingLevel() {
             const level = document.getElementById('logging_level').value;
@@ -5164,7 +5074,7 @@
                 mtf_alignment_threshold: parseFloat(document.getElementById('mtf-alignment-threshold').value),
                 mtf_contradiction_penalty: parseFloat(document.getElementById('mtf-contradiction-penalty').value),
                 
-                // Volume Pattern Settings
+                // Volume Analysis (including spike threshold)
                 volume_spike_threshold: parseFloat(document.getElementById('volume-spike-threshold').value),
                 
                 // ML Features
@@ -5290,7 +5200,7 @@
                 if (config.mtf_alignment_threshold) document.getElementById('mtf-alignment-threshold').value = config.mtf_alignment_threshold;
                 if (config.mtf_contradiction_penalty) document.getElementById('mtf-contradiction-penalty').value = config.mtf_contradiction_penalty;
                 
-                // Volume Pattern Settings
+                // Volume Analysis (including spike threshold)
                 if (config.volume_spike_threshold) document.getElementById('volume-spike-threshold').value = config.volume_spike_threshold;
                 
                 // Pip-Based TP/SL
@@ -5300,7 +5210,7 @@
                 if (config.tp_pips) document.getElementById('tp-pips').value = config.tp_pips;
                 
                 // Update pip-based controls state
-                togglePipBasedControls();
+                updateTPSLMethodWarning();
                 
                 console.log('✅ Configuration loaded successfully');
                 console.log('RSI Overbought loaded as:', config.rsi_overbought);

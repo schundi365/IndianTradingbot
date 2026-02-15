@@ -91,6 +91,7 @@ class VolumeAnalyzer:
         self.normal_volume_ma = config.get('normal_volume_ma', 1.0)  # Normal threshold
         self.high_volume_ma = config.get('high_volume_ma', 1.5)  # High volume threshold
         self.very_high_volume_ma = config.get('very_high_volume_ma', 2.0)  # Exceptional volume
+        self.volume_spike_threshold = config.get('volume_spike_threshold', 1.5)  # Spike detection threshold
         
         self.volume_ma_period = config.get('volume_ma_period', 20)
         self.volume_ma_min_period = config.get('volume_ma_min_period', 10)  # Fallback for insufficient data
@@ -110,6 +111,7 @@ class VolumeAnalyzer:
         self.logger.info(f"  Normal Volume: {self.normal_volume_ma}x")
         self.logger.info(f"  High Volume: {self.high_volume_ma}x")
         self.logger.info(f"  Very High Volume: {self.very_high_volume_ma}x")
+        self.logger.info(f"  Volume Spike Threshold: {self.volume_spike_threshold}x")
         self.logger.info(f"  Volume MA Period: {self.volume_ma_period} (min: {self.volume_ma_min_period})")
         self.logger.info(f"  OBV Periods: Short={self.obv_period_short}, Long={self.obv_period_long}")
         self.logger.info(f"  Divergence: Lookback={self.divergence_lookback}, Threshold={self.divergence_threshold}")
@@ -204,22 +206,22 @@ class VolumeAnalyzer:
         Returns:
             dict: Volume classification with level, score, description, and passes flag
         """
-        # IMPROVEMENT #2: Tiered Volume Thresholds
-        if volume_ratio >= 2.0:
+        # IMPROVEMENT #2: Tiered Volume Thresholds (More lenient - accepts 0.5x and above)
+        if volume_ratio >= self.very_high_volume_ma:
             return {
                 'level': 'VERY_HIGH',
                 'score': 0.15,  # Big confidence boost
                 'description': 'Exceptional volume spike',
                 'passes': True
             }
-        elif volume_ratio >= 1.5:
+        elif volume_ratio >= self.high_volume_ma:
             return {
                 'level': 'HIGH',
                 'score': 0.10,
                 'description': 'Above average volume',
                 'passes': True
             }
-        elif volume_ratio >= 1.0:
+        elif volume_ratio >= self.normal_volume_ma:
             return {
                 'level': 'NORMAL',
                 'score': 0.05,  # Small boost
@@ -228,17 +230,24 @@ class VolumeAnalyzer:
             }
         elif volume_ratio >= 0.7:
             return {
+                'level': 'MODERATE',
+                'score': 0.02,  # Tiny boost
+                'description': 'Moderate volume - acceptable',
+                'passes': True  # Still allow
+            }
+        elif volume_ratio >= 0.5:
+            return {
                 'level': 'LOW',
                 'score': 0.00,  # No boost
-                'description': 'Below average volume',
-                'passes': True  # Still allow (just no boost)
+                'description': 'Low volume but acceptable',
+                'passes': True  # Accept down to 0.5x average
             }
-        else:  # < 0.7x
+        else:  # < 0.5x
             return {
                 'level': 'VERY_LOW',
                 'score': -0.05,  # Small penalty
                 'description': 'Very low volume - unreliable signals',
-                'passes': False  # Only reject if VERY low
+                'passes': False  # Only reject if extremely low (< 0.5x)
             }
     
     def get_volume_trend(self, df, periods=5):
@@ -413,15 +422,15 @@ class VolumeAnalyzer:
         if is_bullish and volume_ratio > 1.2:
             return {
                 'type': 'BUYING',
-                'strength': 'STRONG' if volume_ratio > 1.5 else 'MODERATE',
-                'boost': 0.10 if volume_ratio > 1.5 else 0.05,
+                'strength': 'STRONG' if volume_ratio > self.high_volume_ma else 'MODERATE',
+                'boost': 0.10 if volume_ratio > self.high_volume_ma else 0.05,
                 'description': f'Bullish candle with {volume_ratio:.1f}x volume'
             }
         elif not is_bullish and volume_ratio > 1.2:
             return {
                 'type': 'SELLING',
-                'strength': 'STRONG' if volume_ratio > 1.5 else 'MODERATE',
-                'boost': 0.10 if volume_ratio > 1.5 else 0.05,
+                'strength': 'STRONG' if volume_ratio > self.high_volume_ma else 'MODERATE',
+                'boost': 0.10 if volume_ratio > self.high_volume_ma else 0.05,
                 'description': f'Bearish candle with {volume_ratio:.1f}x volume'
             }
         elif is_bullish:
@@ -524,10 +533,10 @@ class VolumeAnalyzer:
         avg_volume = recent_df['tick_volume'].mean()
         volume_std = recent_df['tick_volume'].std()
         
-        # Use a more reasonable threshold - 1.5x average (simpler approach)
-        high_volume_threshold = avg_volume * 1.5
+        # Use configured spike threshold instead of hardcoded value
+        high_volume_threshold = avg_volume * self.volume_spike_threshold
         
-        self.logger.debug(f"Exhaustion analysis: avg_volume={avg_volume:.0f}, threshold={high_volume_threshold:.0f}")
+        self.logger.debug(f"Exhaustion analysis: avg_volume={avg_volume:.0f}, threshold={high_volume_threshold:.0f} ({self.volume_spike_threshold}x)")
         
         # Check for volume spikes
         volume_spikes = recent_df[recent_df['tick_volume'] > high_volume_threshold]

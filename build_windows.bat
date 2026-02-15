@@ -70,6 +70,8 @@ pyinstaller ^
     --icon=NONE ^
     --add-data="templates;templates" ^
     --add-data="src;src" ^
+    --add-data="models;models" ^
+    --add-data="bot_config.json;." ^
     --hidden-import=MetaTrader5 ^
     --hidden-import=pandas ^
     --hidden-import=numpy ^
@@ -84,6 +86,14 @@ pyinstaller ^
     --hidden-import=datetime ^
     --hidden-import=pathlib ^
     --hidden-import=json ^
+    --hidden-import=pickle ^
+    --hidden-import=xgboost ^
+    --hidden-import=xgboost.sklearn ^
+    --hidden-import=xgboost.core ^
+    --hidden-import=sklearn ^
+    --hidden-import=sklearn.ensemble ^
+    --hidden-import=sklearn.tree ^
+    --hidden-import=joblib ^
     --hidden-import=src.mt5_trading_bot ^
     --hidden-import=src.config_manager ^
     --hidden-import=src.adaptive_risk_manager ^
@@ -94,17 +104,19 @@ pyinstaller ^
     --hidden-import=src.split_order_calculator ^
     --hidden-import=src.trailing_strategies ^
     --hidden-import=src.enhanced_indicators ^
+    --hidden-import=src.ml_signal_generator ^
+    --hidden-import=src.ml_integration ^
     --exclude-module=tensorboard ^
     --exclude-module=tensorflow ^
     --exclude-module=torch ^
     --exclude-module=matplotlib ^
     --exclude-module=scipy ^
-    --exclude-module=sklearn ^
     --exclude-module=IPython ^
     --exclude-module=jupyter ^
     --collect-all=flask ^
     --collect-all=werkzeug ^
     --collect-all=jinja2 ^
+    --collect-all=xgboost ^
     web_dashboard.py
 
 if errorlevel 1 (
@@ -125,6 +137,23 @@ if not exist "dist\GEM_Trading_Bot_Windows\docs" mkdir "dist\GEM_Trading_Bot_Win
 REM Copy executable
 copy "dist\GEM_Trading_Bot.exe" "dist\GEM_Trading_Bot_Windows\" >nul
 
+REM Copy ML model files if they exist
+echo Checking for ML model files...
+if exist "models\ml_signal_model.pkl" (
+    echo Found ML model file, copying...
+    if not exist "dist\GEM_Trading_Bot_Windows\models" mkdir "dist\GEM_Trading_Bot_Windows\models"
+    copy "models\ml_signal_model.pkl" "dist\GEM_Trading_Bot_Windows\models\" >nul
+    echo ML model included in package
+) else (
+    echo WARNING: ML model file not found - bot will run without ML features
+)
+
+REM Copy bot configuration
+if exist "bot_config.json" (
+    copy "bot_config.json" "dist\GEM_Trading_Bot_Windows\" >nul
+    echo Configuration file included
+)
+
 REM Copy essential documentation
 copy "USER_GUIDE.md" "dist\GEM_Trading_Bot_Windows\" >nul
 copy "QUICK_START.md" "dist\GEM_Trading_Bot_Windows\" >nul
@@ -142,6 +171,14 @@ copy "docs\PROFITABLE_STRATEGY_GUIDE.md" "dist\GEM_Trading_Bot_Windows\docs\" >n
 copy "docs\WEB_DASHBOARD_GUIDE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
 copy "docs\CONFIGURATION_QUICK_REFERENCE.md" "dist\GEM_Trading_Bot_Windows\docs\" >nul
 
+REM Copy ML training documentation if it exists
+if exist "ml_training\README.md" (
+    if not exist "dist\GEM_Trading_Bot_Windows\ml_training" mkdir "dist\GEM_Trading_Bot_Windows\ml_training"
+    copy "ml_training\README.md" "dist\GEM_Trading_Bot_Windows\ml_training\" >nul
+    copy "ml_training\DATA_EXTRACTION_GUIDE.md" "dist\GEM_Trading_Bot_Windows\ml_training\" >nul 2>nul
+    echo ML training documentation included
+)
+
 REM Create START_HERE.txt for distribution
 echo Creating START_HERE.txt...
 (
@@ -150,6 +187,10 @@ echo    GEM TRADING BOT - WINDOWS EDITION
 echo ================================================================================
 echo.
 echo Thank you for downloading GEM Trading Bot!
+echo.
+echo This version includes ML (Machine Learning) signal prediction for enhanced
+echo trading decisions. The ML model analyzes patterns and provides additional
+echo confirmation for trade signals.
 echo.
 echo ================================================================================
 echo    QUICK START - 3 STEPS
@@ -202,6 +243,26 @@ echo    - DASHBOARD_CONFIGURATION_GUIDE.md - All settings explained
 echo    - PROFITABLE_STRATEGY_GUIDE.md - Trading strategy details
 echo    - WEB_DASHBOARD_GUIDE.md - Dashboard features
 echo    - CONFIGURATION_QUICK_REFERENCE.md - Quick settings guide
+echo.
+echo    ml_training\ folder (if included):
+echo    - README.md - ML model training guide
+echo    - DATA_EXTRACTION_GUIDE.md - How to extract training data
+echo.
+echo ================================================================================
+echo    ML FEATURES
+echo ================================================================================
+echo.
+echo    This bot includes Machine Learning capabilities:
+echo    - ML model analyzes 8 technical features
+echo    - Provides BUY/SELL/NEUTRAL predictions
+echo    - Confidence-based signal filtering
+echo    - Works alongside technical analysis
+echo    - Can be enabled/disabled in dashboard
+echo.
+echo    ML Settings in Dashboard:
+echo    - Enable ML: Turn ML predictions on/off
+echo    - ML Confidence: Minimum confidence threshold (60%% recommended^)
+echo    - Require Agreement: How many signals must agree
 echo.
 echo ================================================================================
 echo    IMPORTANT NOTES

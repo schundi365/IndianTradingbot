@@ -84,6 +84,7 @@ python ml_training/0_extract_from_mt5.py
 ```
 Enter symbols (comma-separated) or press Enter for defaults:
 > XAUUSD, EURUSD, GBPUSD, USDJPY
+XAUUSD,XAGUSD,EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,USDCAD,NZDUSD,EURJPY,GBPJPY,EURGBP,EURAUD,EURCAD,GBPAUD,GBPCAD
 
 Processing symbols: XAUUSD, EURUSD, GBPUSD, USDJPY
 This may take a few minutes...
