@@ -310,7 +310,6 @@ echo    VERSION INFORMATION
 echo ================================================================================
 echo.
 echo    Version: 2.1.0
-echo    Build Date: %date%
 echo    Platform: Windows 64-bit
 echo    Python: Embedded (no installation needed^)
 echo.
