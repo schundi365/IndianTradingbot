@@ -198,19 +198,19 @@ echo ===========================================================================
 echo    QUICK START - 3 STEPS
 echo ================================================================================
 echo.
-echo STEP 1: Install MetaTrader 5
+echo STEP 1 - Install MetaTrader 5
 echo    - Download MT5 from your broker's website
 echo    - Install and login to your account
-echo    - Enable Algo Trading: Tools ^> Options ^> Expert Advisors
+echo    - Enable Algo Trading in Tools ^> Options ^> Expert Advisors
 echo    - Check "Allow algorithmic trading"
 echo    - Keep MT5 running!
 echo.
-echo STEP 2: Run the Bot
+echo STEP 2 - Run the Bot
 echo    - Double-click GEM_Trading_Bot.exe
 echo    - Wait 30 seconds for dashboard to open
-echo    - Browser opens automatically to http://localhost:5000
+echo    - Browser opens automatically to http localhost 5000
 echo.
-echo STEP 3: Configure and Start
+echo STEP 3 - Configure and Start
 echo    - Click "Configuration" tab
 echo    - Select symbols (XAUUSD, GBPUSD recommended^)
 echo    - Choose timeframe (M5 recommended^)
@@ -239,14 +239,14 @@ echo    QUICK_START.md - 5-minute getting started
 echo    TROUBLESHOOTING.md - Common issues and solutions
 echo    CHANGELOG.md - Version history
 echo.
-echo    docs\ folder:
+echo    docs folder
 echo    - INSTALLATION_GUIDE_FOR_USERS.md - Detailed setup
 echo    - DASHBOARD_CONFIGURATION_GUIDE.md - All settings explained
 echo    - PROFITABLE_STRATEGY_GUIDE.md - Trading strategy details
 echo    - WEB_DASHBOARD_GUIDE.md - Dashboard features
 echo    - CONFIGURATION_QUICK_REFERENCE.md - Quick settings guide
 echo.
-echo    ml_training\ folder (if included):
+echo    ml_training folder (if included)
 echo    - README.md - ML model training guide
 echo    - DATA_EXTRACTION_GUIDE.md - How to extract training data
 echo.
@@ -254,7 +254,7 @@ echo ===========================================================================
 echo    ML FEATURES
 echo ================================================================================
 echo.
-echo    This bot includes Machine Learning capabilities:
+echo    This bot includes Machine Learning capabilities
 echo    - ML model analyzes 8 technical features
 echo    - Provides BUY/SELL/NEUTRAL predictions
 echo    - Confidence-based signal filtering
@@ -270,7 +270,7 @@ echo ===========================================================================
 echo    IMPORTANT NOTES
 echo ================================================================================
 echo.
-echo    WARNING: Trading involves risk. Use at your own risk.
+echo    WARNING - Trading involves risk. Use at your own risk.
 echo.
 echo    - Test on DEMO account first (at least 1 week^)
 echo    - Start with low risk (0.3%% per trade^)
@@ -282,17 +282,17 @@ echo ===========================================================================
 echo    TROUBLESHOOTING
 echo ================================================================================
 echo.
-echo    Dashboard won't open?
+echo    Dashboard won't open
 echo    - Wait 30 seconds on first run
-echo    - Try manually - http://localhost:5000
+echo    - Try manually - http localhost 5000
 echo    - Check Windows Firewall (allow access^)
 echo.
-echo    Bot won't start?
+echo    Bot won't start
 echo    - Make sure MT5 is running
 echo    - Verify MT5 is logged in
 echo    - Check algo trading is enabled
 echo.
-echo    No trades executing?
+echo    No trades executing
 echo    - Lower confidence level to 40%%
 echo    - Check symbols are selected
 echo    - Verify account has sufficient balance
