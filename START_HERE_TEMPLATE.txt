@@ -1,0 +1,138 @@
+================================================================================
+   GEM TRADING BOT - WINDOWS EDITION
+================================================================================
+
+Thank you for downloading GEM Trading Bot!
+
+This version includes ML (Machine Learning) signal prediction for enhanced
+trading decisions. The ML model analyzes patterns and provides additional
+confirmation for trade signals.
+
+================================================================================
+   QUICK START - 3 STEPS
+================================================================================
+
+STEP 1 - Install MetaTrader 5
+   - Download MT5 from your broker's website
+   - Install and login to your account
+   - Enable Algo Trading in Tools > Options > Expert Advisors
+   - Check "Allow algorithmic trading"
+   - Keep MT5 running!
+
+STEP 2 - Run the Bot
+   - Double-click GEM_Trading_Bot.exe
+   - Wait 30 seconds for dashboard to open
+   - Browser opens automatically to http://localhost:5000
+
+STEP 3 - Configure and Start
+   - Click "Configuration" tab
+   - Select symbols (XAUUSD, GBPUSD recommended)
+   - Choose timeframe (M5 recommended)
+   - Enable "Auto" for all settings
+   - Click "Save Configuration"
+   - Click "Start Bot"
+   - Monitor your trades!
+
+================================================================================
+   SYSTEM REQUIREMENTS
+================================================================================
+
+   - Windows 10 or 11 (64-bit)
+   - MetaTrader 5 installed
+   - 4GB RAM minimum
+   - Internet connection
+   - 500MB free disk space
+
+================================================================================
+   DOCUMENTATION
+================================================================================
+
+   README.md - Project overview
+   USER_GUIDE.md - Complete user manual (READ THIS FIRST!)
+   QUICK_START.md - 5-minute getting started
+   TROUBLESHOOTING.md - Common issues and solutions
+   CHANGELOG.md - Version history
+
+   docs folder
+   - INSTALLATION_GUIDE_FOR_USERS.md - Detailed setup
+   - DASHBOARD_CONFIGURATION_GUIDE.md - All settings explained
+   - PROFITABLE_STRATEGY_GUIDE.md - Trading strategy details
+   - WEB_DASHBOARD_GUIDE.md - Dashboard features
+   - CONFIGURATION_QUICK_REFERENCE.md - Quick settings guide
+
+   ml_training folder (if included)
+   - README.md - ML model training guide
+   - DATA_EXTRACTION_GUIDE.md - How to extract training data
+
+================================================================================
+   ML FEATURES
+================================================================================
+
+   This bot includes Machine Learning capabilities
+   - ML model analyzes 8 technical features
+   - Provides BUY/SELL/NEUTRAL predictions
+   - Confidence-based signal filtering
+   - Works alongside technical analysis
+   - Can be enabled/disabled in dashboard
+
+   ML Settings in Dashboard
+   - Enable ML - Turn ML predictions on/off
+   - ML Confidence - Minimum confidence threshold (60% recommended)
+   - Require Agreement - How many signals must agree
+
+================================================================================
+   IMPORTANT NOTES
+================================================================================
+
+   WARNING - Trading involves risk. Use at your own risk.
+
+   - Test on DEMO account first (at least 1 week)
+   - Start with low risk (0.3% per trade)
+   - Monitor regularly
+   - Keep MT5 running while bot is active
+   - Read USER_GUIDE.md before trading
+
+================================================================================
+   TROUBLESHOOTING
+================================================================================
+
+   Dashboard won't open
+   - Wait 30 seconds on first run
+   - Try manually - http://localhost:5000
+   - Check Windows Firewall (allow access)
+
+   Bot won't start
+   - Make sure MT5 is running
+   - Verify MT5 is logged in
+   - Check algo trading is enabled
+
+   No trades executing
+   - Lower confidence level to 40%
+   - Check symbols are selected
+   - Verify account has sufficient balance
+
+   For more help, see TROUBLESHOOTING.md
+
+================================================================================
+   SUPPORT
+================================================================================
+
+   - Read USER_GUIDE.md for detailed instructions
+   - Check TROUBLESHOOTING.md for common issues
+   - Review documentation in docs folder
+
+================================================================================
+   VERSION INFORMATION
+================================================================================
+
+   Version 2.1.0
+   Platform Windows 64-bit
+   Python Embedded (no installation needed)
+
+================================================================================
+
+Ready to start? Double-click GEM_Trading_Bot.exe!
+
+Happy Trading!
+
+================================================================================
