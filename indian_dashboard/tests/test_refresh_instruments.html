@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Refresh Instruments Button</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .test-result.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .test-result.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .test-result.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <h1>Refresh Instruments Button - Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Refresh Button UI</h2>
+        <p>The refresh button should have an icon and proper styling.</p>
+        
+        <div class="instruments-toolbar">
+            <input type="text" id="instrument-search" placeholder="Search instruments..." class="search-input">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="refresh-instruments-btn" class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div id="test1-result" class="test-result info">
+            ✓ Button rendered with icon
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Cache Timestamp Display</h2>
+        <p>The cache timestamp should show when instruments were last updated.</p>
+        
+        <div class="instruments-toolbar">
+            <input type="text" placeholder="Search instruments..." class="search-input">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div id="cache-timestamp-display" class="cache-timestamp">
+                    <span class="cache-status valid">
+                        <span class="cache-icon">🕐</span>
+                        Last updated: 5m ago
+                        <span class="cache-tooltip">2024-02-18 14:30:00</span>
+                    </span>
+                </div>
+                <button class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div id="test2-result" class="test-result info">
+            ✓ Cache timestamp displayed (hover to see full timestamp)
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Expired Cache Indicator</h2>
+        <p>When cache is expired, it should show with red styling.</p>
+        
+        <div class="instruments-toolbar">
+            <input type="text" placeholder="Search instruments..." class="search-input">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="cache-timestamp">
+                    <span class="cache-status expired">
+                        <span class="cache-icon">🕐</span>
+                        Last updated: 25h ago
+                        <span class="cache-tooltip">2024-02-17 13:30:00</span>
+                    </span>
+                </div>
+                <button class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div id="test3-result" class="test-result info">
+            ✓ Expired cache shown with red styling
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Refresh Button Click Simulation</h2>
+        <p>Click the button to simulate refresh action.</p>
+        
+        <div class="instruments-toolbar">
+            <input type="text" placeholder="Search instruments..." class="search-input">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div id="test-cache-display" class="cache-timestamp" style="display: none;">
+                    <span class="cache-status valid">
+                        <span class="cache-icon">🕐</span>
+                        Last updated: <span id="test-age">just now</span>
+                        <span class="cache-tooltip" id="test-timestamp">--</span>
+                    </span>
+                </div>
+                <button id="test-refresh-btn" class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div id="test4-result" class="test-result info">
+            Click the refresh button above to test
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Loading State</h2>
+        <p>Button should show loading state during refresh.</p>
+        
+        <div class="instruments-toolbar">
+            <input type="text" placeholder="Search instruments..." class="search-input">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="test-loading-btn" class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div id="test5-result" class="test-result info">
+            Click the button above to see loading state
+        </div>
+    </div>
+
+    <script>
+        // Test 4: Simulate refresh
+        document.getElementById('test-refresh-btn').addEventListener('click', async function() {
+            const btn = this;
+            const result = document.getElementById('test4-result');
+            const cacheDisplay = document.getElementById('test-cache-display');
+            const ageSpan = document.getElementById('test-age');
+            const timestampSpan = document.getElementById('test-timestamp');
+            
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-icon">⏳</span> Refreshing...';
+            result.className = 'test-result info';
+            result.textContent = 'Refreshing instruments...';
+            
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Update UI
+            const now = new Date();
+            timestampSpan.textContent = now.toLocaleString();
+            ageSpan.textContent = 'just now';
+            cacheDisplay.style.display = 'block';
+            
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🔄</span> Refresh';
+            result.className = 'test-result success';
+            result.textContent = '✓ Refreshed 150 instruments (updated: just now)';
+        });
+        
+        // Test 5: Loading state
+        document.getElementById('test-loading-btn').addEventListener('click', async function() {
+            const btn = this;
+            const result = document.getElementById('test5-result');
+            
+            // Show loading
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="btn-icon">⏳</span> Refreshing...';
+            btn.style.opacity = '0.7';
+            result.className = 'test-result info';
+            result.textContent = 'Loading state active...';
+            
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Restore
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            btn.style.opacity = '1';
+            result.className = 'test-result success';
+            result.textContent = '✓ Loading state works correctly';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "description": "NIFTY intraday strategy with 5min timeframe",
+  "broker": "kite",
+  "strategy": "trend_following",
+  "instruments": []
+}

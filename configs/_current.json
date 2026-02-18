@@ -1,0 +1,84 @@
+{
+  "atr_period": 14,
+  "avoid_first_last_candle": true,
+  "base_position_size": 20000,
+  "bollinger_std": 2.0,
+  "broker": "kite",
+  "data_refresh_interval": 30,
+  "description": "Mean reversion strategy for liquid NSE/BSE stocks with 5-minute timeframe. Optimized for high-volume equities with tight spreads. Suitable for capturing intraday price reversions in liquid stocks like RELIANCE, TCS, INFY, HDFC Bank, etc. Conservative risk management with multiple positions for diversification.",
+  "enable_notifications": true,
+  "indicator_period": 20,
+  "instruments": [
+    {
+      "exchange": "NSE",
+      "instrument_type": "EQ",
+      "lot_size": 1,
+      "name": "Reliance Industries Ltd",
+      "symbol": "RELIANCE",
+      "tick_size": 0.05
+    },
+    {
+      "exchange": "NSE",
+      "instrument_type": "EQ",
+      "lot_size": 1,
+      "name": "Tata Consultancy Services Ltd",
+      "symbol": "TCS",
+      "tick_size": 0.05
+    },
+    {
+      "exchange": "NSE",
+      "instrument_type": "EQ",
+      "lot_size": 1,
+      "name": "Infosys Ltd",
+      "symbol": "INFY",
+      "tick_size": 0.05
+    },
+    {
+      "exchange": "NSE",
+      "instrument_type": "EQ",
+      "lot_size": 1,
+      "name": "HDFC Bank Ltd",
+      "symbol": "HDFCBANK",
+      "tick_size": 0.05
+    },
+    {
+      "exchange": "NSE",
+      "instrument_type": "EQ",
+      "lot_size": 1,
+      "name": "ICICI Bank Ltd",
+      "symbol": "ICICIBANK",
+      "tick_size": 0.05
+    }
+  ],
+  "log_level": "INFO",
+  "max_daily_loss": 2.0,
+  "max_holding_time": 180,
+  "max_positions": 5,
+  "max_price": 5000,
+  "max_spread_percent": 0.2,
+  "min_price": 100,
+  "min_reversion_distance": 1.5,
+  "min_volume": 500000,
+  "name": "Equity Intraday",
+  "paper_trading": true,
+  "position_sizing": "percentage",
+  "risk_per_trade": 0.5,
+  "rsi_overbought": 70,
+  "rsi_oversold": 30,
+  "rsi_period": 14,
+  "scale_in": false,
+  "scale_out": true,
+  "scale_out_levels": [
+    0.75,
+    1.5
+  ],
+  "stop_loss": 0.75,
+  "strategy": "mean_reversion",
+  "take_profit": 1.5,
+  "timeframe": "5min",
+  "trading_hours": {
+    "end": "15:00",
+    "start": "09:30"
+  },
+  "trailing_stop": false
+}

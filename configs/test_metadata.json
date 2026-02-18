@@ -1,0 +1,15 @@
+{
+  "description": "Test description",
+  "broker": "kite",
+  "strategy": "momentum",
+  "instruments": [
+    {
+      "symbol": "NIFTY",
+      "exchange": "NSE"
+    },
+    {
+      "symbol": "BANKNIFTY",
+      "exchange": "NSE"
+    }
+  ]
+}

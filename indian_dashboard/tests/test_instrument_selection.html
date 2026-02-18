@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrument Selection Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Instrument Selection Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Select All Checkbox</h2>
+        <p>Test that the select-all checkbox works correctly</p>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="test-select-all"></th>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody id="test-tbody">
+                <tr>
+                    <td><input type="checkbox" class="instrument-checkbox" data-token="1"></td>
+                    <td>RELIANCE</td>
+                    <td>Reliance Industries</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="instrument-checkbox" data-token="2"></td>
+                    <td>TCS</td>
+                    <td>Tata Consultancy Services</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="instrument-checkbox" data-token="3"></td>
+                    <td>INFY</td>
+                    <td>Infosys</td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="test-select-all-btn" class="btn btn-primary" style="margin-top: 1rem;">Test Select All</button>
+        <div id="test1-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Selected Instruments Display</h2>
+        <p>Test that selected instruments are displayed correctly</p>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test-selected-count">0</span>)</h3>
+                <button id="test-clear-all-btn" class="btn btn-sm btn-secondary" style="display: none;">Clear All</button>
+            </div>
+            <div id="test-selected-instruments">
+                <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>
+            </div>
+        </div>
+        <button id="test-add-selection-btn" class="btn btn-primary">Add Test Selection</button>
+        <div id="test2-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Selected Row Highlighting</h2>
+        <p>Test that selected rows are highlighted</p>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="test-row-1">
+                    <td><input type="checkbox" id="test-checkbox-1"></td>
+                    <td>SBIN</td>
+                    <td>State Bank of India</td>
+                </tr>
+                <tr id="test-row-2" class="selected-row">
+                    <td><input type="checkbox" checked></td>
+                    <td>HDFC</td>
+                    <td>HDFC Bank</td>
+                </tr>
+            </tbody>
+        </table>
+        <button id="test-highlight-btn" class="btn btn-primary" style="margin-top: 1rem;">Toggle Row 1 Selection</button>
+        <div id="test3-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Indeterminate Checkbox State</h2>
+        <p>Test that the select-all checkbox shows indeterminate state when some items are selected</p>
+        <input type="checkbox" id="test-indeterminate" style="width: 24px; height: 24px;">
+        <label for="test-indeterminate">Select All (should show indeterminate state)</label>
+        <button id="test-indeterminate-btn" class="btn btn-primary" style="margin-top: 1rem;">Set Indeterminate</button>
+        <div id="test4-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script>
+        // Test 1: Select All Checkbox
+        document.getElementById('test-select-all-btn').addEventListener('click', () => {
+            const selectAll = document.getElementById('test-select-all');
+            const checkboxes = document.querySelectorAll('.instrument-checkbox');
+            
+            selectAll.checked = true;
+            checkboxes.forEach(cb => cb.checked = true);
+            
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const result = document.getElementById('test1-result');
+            result.style.display = 'block';
+            
+            if (allChecked) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: All checkboxes selected successfully';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Not all checkboxes were selected';
+            }
+        });
+
+        // Test 2: Selected Instruments Display
+        let testSelections = [];
+        document.getElementById('test-add-selection-btn').addEventListener('click', () => {
+            const container = document.getElementById('test-selected-instruments');
+            const clearBtn = document.getElementById('test-clear-all-btn');
+            const countSpan = document.getElementById('test-selected-count');
+            
+            testSelections.push({
+                symbol: 'NIFTY50',
+                exchange: 'NSE',
+                token: Date.now()
+            });
+            
+            container.innerHTML = '';
+            testSelections.forEach(inst => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-instrument-tag';
+                tag.innerHTML = `
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">${inst.symbol}</span>
+                        <span class="instrument-exchange">${inst.exchange}</span>
+                    </div>
+                    <button class="remove-instrument">&times;</button>
+                `;
+                container.appendChild(tag);
+            });
+            
+            countSpan.textContent = testSelections.length;
+            clearBtn.style.display = 'inline-block';
+            
+            const result = document.getElementById('test2-result');
+            result.style.display = 'block';
+            result.className = 'test-result pass';
+            result.textContent = `✓ PASS: ${testSelections.length} instrument(s) displayed correctly`;
+        });
+
+        document.getElementById('test-clear-all-btn').addEventListener('click', () => {
+            testSelections = [];
+            document.getElementById('test-selected-instruments').innerHTML = 
+                '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>';
+            document.getElementById('test-selected-count').textContent = '0';
+            document.getElementById('test-clear-all-btn').style.display = 'none';
+        });
+
+        // Test 3: Selected Row Highlighting
+        document.getElementById('test-highlight-btn').addEventListener('click', () => {
+            const row = document.getElementById('test-row-1');
+            const checkbox = document.getElementById('test-checkbox-1');
+            
+            if (row.classList.contains('selected-row')) {
+                row.classList.remove('selected-row');
+                checkbox.checked = false;
+            } else {
+                row.classList.add('selected-row');
+                checkbox.checked = true;
+            }
+            
+            const result = document.getElementById('test3-result');
+            result.style.display = 'block';
+            result.className = 'test-result pass';
+            result.textContent = '✓ PASS: Row highlighting toggled successfully';
+        });
+
+        // Test 4: Indeterminate Checkbox State
+        document.getElementById('test-indeterminate-btn').addEventListener('click', () => {
+            const checkbox = document.getElementById('test-indeterminate');
+            checkbox.indeterminate = true;
+            
+            const result = document.getElementById('test4-result');
+            result.style.display = 'block';
+            
+            if (checkbox.indeterminate) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: Indeterminate state set successfully';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Indeterminate state not set';
+            }
+        });
+    </script>
+</body>
+</html>

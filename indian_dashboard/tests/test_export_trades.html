@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Trade Export Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+        .test-section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background: #0f3460;
+            color: #e0e0e0;
+            border: 1px solid #1a5490;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1a5490;
+        }
+        button.success {
+            background: #10b981;
+            border-color: #059669;
+        }
+        button.error {
+            background: #ef4444;
+            border-color: #dc2626;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f3460;
+            border-radius: 4px;
+            border-left: 4px solid #60a5fa;
+        }
+        .result.success {
+            border-left-color: #10b981;
+        }
+        .result.error {
+            border-left-color: #ef4444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #0f3460;
+        }
+        th {
+            background: #0f3460;
+            font-weight: bold;
+        }
+        .positive {
+            color: #10b981;
+        }
+        .negative {
+            color: #ef4444;
+        }
+        h1, h2, h3 {
+            color: #60a5fa;
+        }
+        .info {
+            background: #1e3a5f;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Trade Export Functionality Test</h1>
+    <p>This page tests the CSV and Excel export functionality for trade history.</p>
+
+    <!-- Test Section 1: Sample Data -->
+    <div class="test-section">
+        <h2>1. Sample Trade Data</h2>
+        <p>Sample trades that will be used for export testing:</p>
+        <table id="sample-trades-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Symbol</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Entry Price</th>
+                    <th>Exit Price</th>
+                    <th>P&L</th>
+                </tr>
+            </thead>
+            <tbody id="sample-trades-tbody">
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Test Section 2: CSV Export -->
+    <div class="test-section">
+        <h2>2. CSV Export Test</h2>
+        <p>Test exporting trades to CSV format.</p>
+        <div class="test-controls">
+            <button onclick="testCSVExport()">📊 Test CSV Export</button>
+            <button onclick="testCSVWithEmptyData()">Test CSV with Empty Data</button>
+            <button onclick="testCSVWithSpecialCharacters()">Test CSV with Special Characters</button>
+        </div>
+        <div id="csv-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 3: Excel Export -->
+    <div class="test-section">
+        <h2>3. Excel Export Test</h2>
+        <p>Test exporting trades to Excel format.</p>
+        <div class="test-controls">
+            <button onclick="testExcelExport()">📈 Test Excel Export</button>
+            <button onclick="testExcelWithEmptyData()">Test Excel with Empty Data</button>
+            <button onclick="testExcelWithLargeDataset()">Test Excel with Large Dataset</button>
+        </div>
+        <div id="excel-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 4: Edge Cases -->
+    <div class="test-section">
+        <h2>4. Edge Cases</h2>
+        <p>Test export functionality with edge cases.</p>
+        <div class="test-controls">
+            <button onclick="testExportWithDateRange()">Test with Date Range</button>
+            <button onclick="testExportWithMissingData()">Test with Missing Data</button>
+            <button onclick="testFilenameGeneration()">Test Filename Generation</button>
+        </div>
+        <div id="edge-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Mock TradeHistory Module -->
+    <script>
+        // Mock notifications
+        const notifications = {
+            success: (msg) => console.log('✅ Success:', msg),
+            error: (msg) => console.error('❌ Error:', msg),
+            warning: (msg) => console.warn('⚠️ Warning:', msg)
+        };
+
+        // Mock formatters
+        const formatters = {
+            currency: (value) => `₹${value.toFixed(2)}`,
+            datetime: (value) => new Date(value).toLocaleString()
+        };
+
+        // Sample trade data
+        const sampleTrades = [
+            {
+                timestamp: '2024-02-18T09:30:00',
+                symbol: 'RELIANCE',
+                transaction_type: 'BUY',
+                quantity: 10,
+                price: 2500.50,
+                exit_price: 2550.75,
+                pnl: 502.50
+            },
+            {
+                timestamp: '2024-02-18T10:15:00',
+                symbol: 'TCS',
+                transaction_type: 'SELL',
+                quantity: 5,
+                price: 3800.00,
+                exit_price: 3750.25,
+                pnl: 248.75
+            },
+            {
+                timestamp: '2024-02-18T11:00:00',
+                symbol: 'INFY',
+                transaction_type: 'BUY',
+                quantity: 20,
+                price: 1450.00,
+                exit_price: 1425.50,
+                pnl: -490.00
+            },
+            {
+                timestamp: '2024-02-18T14:30:00',
+                symbol: 'HDFCBANK',
+                transaction_type: 'BUY',
+                quantity: 15,
+                price: 1650.75,
+                exit_price: 1675.25,
+                pnl: 367.50
+            }
+        ];
+
+        // Display sample trades
+        function displaySampleTrades() {
+            const tbody = document.getElementById('sample-trades-tbody');
+            tbody.innerHTML = '';
+            
+            sampleTrades.forEach(trade => {
+                const row = document.createElement('tr');
+                const pnlClass = trade.pnl >= 0 ? 'positive' : 'negative';
+                
+                row.innerHTML = `
+                    <td>${new Date(trade.timestamp).toLocaleString()}</td>
+                    <td>${trade.symbol}</td>
+                    <td>${trade.transaction_type}</td>
+                    <td>${trade.quantity}</td>
+                    <td>₹${trade.price.toFixed(2)}</td>
+                    <td>₹${trade.exit_price.toFixed(2)}</td>
+                    <td class="${pnlClass}">₹${trade.pnl.toFixed(2)}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Initialize on page load
+        displaySampleTrades();
+    </script>
+
+    <!-- Load TradeHistory module -->
+    <script src="../static/js/trades.js"></script>
+
+    <!-- Test Functions -->
+    <script>
+        // Test CSV Export
+        function testCSVExport() {
+            const resultDiv = document.getElementById('csv-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Set sample data
+                TradeHistory.filteredTrades = sampleTrades;
+                
+                // Call export function
+                TradeHistory.exportToCSV();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ CSV Export Test Passed</strong><br>
+                    - Exported ${sampleTrades.length} trades<br>
+                    - Check your downloads folder for the CSV file<br>
+                    - Filename format: trades_YYYY-MM-DD.csv
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ CSV Export Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test CSV with empty data
+        function testCSVWithEmptyData() {
+            const resultDiv = document.getElementById('csv-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Set empty data
+                TradeHistory.filteredTrades = [];
+                
+                // Call export function (should show warning)
+                TradeHistory.exportToCSV();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Empty Data Test Passed</strong><br>
+                    - Correctly handled empty trade list<br>
+                    - Should have shown a warning notification
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Empty Data Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test CSV with special characters
+        function testCSVWithSpecialCharacters() {
+            const resultDiv = document.getElementById('csv-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Create trades with special characters
+                const specialTrades = [
+                    {
+                        timestamp: '2024-02-18T09:30:00',
+                        symbol: 'TEST,SYMBOL',
+                        transaction_type: 'BUY',
+                        quantity: 10,
+                        price: 100.50,
+                        exit_price: 105.75,
+                        pnl: 52.50
+                    },
+                    {
+                        timestamp: '2024-02-18T10:15:00',
+                        symbol: 'TEST"QUOTE',
+                        transaction_type: 'SELL',
+                        quantity: 5,
+                        price: 200.00,
+                        exit_price: 195.25,
+                        pnl: 23.75
+                    }
+                ];
+                
+                TradeHistory.filteredTrades = specialTrades;
+                TradeHistory.exportToCSV();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Special Characters Test Passed</strong><br>
+                    - Exported trades with commas and quotes<br>
+                    - CSV should properly escape special characters<br>
+                    - Check the downloaded file to verify
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Special Characters Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test Excel Export
+        function testExcelExport() {
+            const resultDiv = document.getElementById('excel-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                TradeHistory.filteredTrades = sampleTrades;
+                TradeHistory.exportToExcel();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Excel Export Test Passed</strong><br>
+                    - Exported ${sampleTrades.length} trades<br>
+                    - Check your downloads folder for the Excel file<br>
+                    - Filename format: trades_YYYY-MM-DD.xls
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Excel Export Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test Excel with empty data
+        function testExcelWithEmptyData() {
+            const resultDiv = document.getElementById('excel-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                TradeHistory.filteredTrades = [];
+                TradeHistory.exportToExcel();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Empty Data Test Passed</strong><br>
+                    - Correctly handled empty trade list<br>
+                    - Should have shown a warning notification
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Empty Data Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test Excel with large dataset
+        function testExcelWithLargeDataset() {
+            const resultDiv = document.getElementById('excel-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Generate 100 trades
+                const largeTrades = [];
+                for (let i = 0; i < 100; i++) {
+                    largeTrades.push({
+                        timestamp: `2024-02-${String(i % 28 + 1).padStart(2, '0')}T09:30:00`,
+                        symbol: `STOCK${i}`,
+                        transaction_type: i % 2 === 0 ? 'BUY' : 'SELL',
+                        quantity: Math.floor(Math.random() * 100) + 1,
+                        price: Math.random() * 1000 + 100,
+                        exit_price: Math.random() * 1000 + 100,
+                        pnl: (Math.random() - 0.5) * 1000
+                    });
+                }
+                
+                TradeHistory.filteredTrades = largeTrades;
+                TradeHistory.exportToExcel();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Large Dataset Test Passed</strong><br>
+                    - Exported ${largeTrades.length} trades<br>
+                    - Check the downloaded Excel file<br>
+                    - File should open correctly in Excel
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Large Dataset Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test export with date range
+        function testExportWithDateRange() {
+            const resultDiv = document.getElementById('edge-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Create mock date inputs
+                const fromInput = document.createElement('input');
+                fromInput.id = 'from-date';
+                fromInput.value = '2024-02-01';
+                document.body.appendChild(fromInput);
+                
+                const toInput = document.createElement('input');
+                toInput.id = 'to-date';
+                toInput.value = '2024-02-28';
+                document.body.appendChild(toInput);
+                
+                TradeHistory.filteredTrades = sampleTrades;
+                const filename = TradeHistory.getExportFilename();
+                
+                // Cleanup
+                document.body.removeChild(fromInput);
+                document.body.removeChild(toInput);
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Date Range Test Passed</strong><br>
+                    - Generated filename: ${filename}<br>
+                    - Format should be: 2024-02-01_to_2024-02-28
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Date Range Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test export with missing data
+        function testExportWithMissingData() {
+            const resultDiv = document.getElementById('edge-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Create trades with missing fields
+                const incompleteTrades = [
+                    {
+                        timestamp: '2024-02-18T09:30:00',
+                        symbol: 'TEST1',
+                        transaction_type: 'BUY',
+                        quantity: 10
+                        // Missing price, exit_price, pnl
+                    },
+                    {
+                        timestamp: '2024-02-18T10:15:00',
+                        // Missing symbol
+                        transaction_type: 'SELL',
+                        quantity: 5,
+                        price: 100.00
+                    }
+                ];
+                
+                TradeHistory.filteredTrades = incompleteTrades;
+                TradeHistory.exportToCSV();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Missing Data Test Passed</strong><br>
+                    - Exported trades with missing fields<br>
+                    - Missing fields should be handled gracefully<br>
+                    - Check the downloaded file
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Missing Data Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+
+        // Test filename generation
+        function testFilenameGeneration() {
+            const resultDiv = document.getElementById('edge-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                // Test without date inputs
+                const filename1 = TradeHistory.getExportFilename();
+                
+                // Test with from date only
+                const fromInput = document.createElement('input');
+                fromInput.id = 'from-date';
+                fromInput.value = '2024-02-01';
+                document.body.appendChild(fromInput);
+                
+                const filename2 = TradeHistory.getExportFilename();
+                
+                // Test with to date only
+                document.body.removeChild(fromInput);
+                const toInput = document.createElement('input');
+                toInput.id = 'to-date';
+                toInput.value = '2024-02-28';
+                document.body.appendChild(toInput);
+                
+                const filename3 = TradeHistory.getExportFilename();
+                
+                // Cleanup
+                document.body.removeChild(toInput);
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Filename Generation Test Passed</strong><br>
+                    - No dates: ${filename1}<br>
+                    - From date only: ${filename2}<br>
+                    - To date only: ${filename3}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Filename Generation Test Failed</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

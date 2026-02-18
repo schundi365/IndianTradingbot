@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 
+
 # Virtual Environment
 venv/
 env/
@@ -36,6 +37,11 @@ ENV/
 # Logs
 *.log
 trading_bot.log
+indian_trading_bot.log
+test_trading_decisions.log
+
+# Hypothesis testing data
+.hypothesis/
 
 # Trading Data
 *.csv
@@ -48,6 +54,24 @@ config_local.py
 *.key
 *.pem
 
+# Kite Connect Credentials (DO NOT COMMIT)
+kite_token.json
+config_*_live.json
+*_credentials.json
+
+# Configuration files with API keys (keep templates only)
+config_nifty_futures.json
+config_banknifty_futures.json
+config_equity_intraday.json
+config_options_trading.json
+config_test_paper_trading.json
+config_paper_trading.json
+config_indian_migrated.json
+bot_config.json
+
+# Keep only template configs
+!config_*.json.template
+
 # OS
 .DS_Store
 Thumbs.db
@@ -55,3 +79,4 @@ Thumbs.db
 # MT5
 *.ex5
 *.mq5
+*backup*.*

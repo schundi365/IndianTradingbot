@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Test - Indian Market Dashboard</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-time Validation Test Suite</h1>
+    <p>This page tests the real-time validation functionality for the configuration form.</p>
+
+    <!-- Test Section 1: Basic Field Validation -->
+    <div class="test-section">
+        <h2>Test 1: Basic Field Validation</h2>
+        <p>Test that fields validate correctly on change and blur events.</p>
+        
+        <form id="test-form-1">
+            <div class="form-group">
+                <label for="test-risk">Risk Per Trade (%) - Should be between 0.1 and 10</label>
+                <input type="number" id="test-risk" name="risk_per_trade" class="form-control" 
+                       min="0.1" max="10" step="0.1" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="test-positions">Max Positions - Should be between 1 and 20</label>
+                <input type="number" id="test-positions" name="max_positions" class="form-control" 
+                       min="1" max="20" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="test-timeframe">Timeframe - Required</label>
+                <select id="test-timeframe" name="timeframe" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="5minute">5 Minutes</option>
+                    <option value="15minute">15 Minutes</option>
+                </select>
+            </div>
+        </form>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="testBasicValidation()">Run Test</button>
+            <button class="btn btn-secondary" onclick="resetTest1()">Reset</button>
+        </div>
+        <div id="test-result-1" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 2: Cross-Field Validation -->
+    <div class="test-section">
+        <h2>Test 2: Cross-Field Validation</h2>
+        <p>Test that trading times validate correctly (end must be after start).</p>
+        
+        <form id="test-form-2">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="test-start">Trading Start Time</label>
+                    <input type="time" id="test-start" name="trading_start" class="form-control" value="09:15">
+                </div>
+                <div class="form-group">
+                    <label for="test-end">Trading End Time</label>
+                    <input type="time" id="test-end" name="trading_end" class="form-control" value="15:30">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="test-tp">Take Profit (%)</label>
+                    <input type="number" id="test-tp" name="take_profit" class="form-control" 
+                           min="0.5" max="20" step="0.5" value="2.0">
+                </div>
+                <div class="form-group">
+                    <label for="test-sl">Stop Loss (%) - Should be less than Take Profit</label>
+                    <input type="number" id="test-sl" name="stop_loss" class="form-control" 
+                           min="0.5" max="10" step="0.5" value="1.0">
+                </div>
+            </div>
+        </form>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="testCrossFieldValidation()">Run Test</button>
+            <button class="btn btn-secondary" onclick="resetTest2()">Reset</button>
+        </div>
+        <div id="test-result-2" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 3: Warning Messages -->
+    <div class="test-section">
+        <h2>Test 3: Warning Messages</h2>
+        <p>Test that warnings appear for high-risk values (but don't prevent saving).</p>
+        
+        <form id="test-form-3">
+            <div class="form-group">
+                <label for="test-high-risk">Risk Per Trade (%) - Try values > 5%</label>
+                <input type="number" id="test-high-risk" name="risk_per_trade" class="form-control" 
+                       min="0.1" max="10" step="0.1" value="1.0">
+            </div>
+
+            <div class="form-group">
+                <label for="test-many-positions">Max Positions - Try values > 10</label>
+                <input type="number" id="test-many-positions" name="max_positions" class="form-control" 
+                       min="1" max="20" value="3">
+            </div>
+        </form>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="testWarnings()">Run Test</button>
+            <button class="btn btn-secondary" onclick="resetTest3()">Reset</button>
+        </div>
+        <div id="test-result-3" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 4: Validation Summary -->
+    <div class="test-section">
+        <h2>Test 4: Validation Summary</h2>
+        <p>Test that validation summary displays all errors and warnings.</p>
+        
+        <div id="validation-summary" class="validation-summary" style="display: none;"></div>
+        
+        <form id="config-form">
+            <div class="form-group">
+                <label for="config-risk-per-trade">Risk Per Trade (%)</label>
+                <input type="number" id="config-risk-per-trade" name="risk_per_trade" class="form-control" 
+                       min="0.1" max="10" step="0.1" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="config-max-positions">Max Positions</label>
+                <input type="number" id="config-max-positions" name="max_positions" class="form-control" 
+                       min="1" max="20" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="config-timeframe">Timeframe</label>
+                <select id="config-timeframe" name="timeframe" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="5minute">5 Minutes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="config-trading-start">Trading Start</label>
+                <input type="time" id="config-trading-start" name="trading_start" class="form-control" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="config-trading-end">Trading End</label>
+                <input type="time" id="config-trading-end" name="trading_end" class="form-control" value="">
+            </div>
+        </form>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="testValidationSummary()">Trigger Validation</button>
+            <button class="btn btn-secondary" onclick="resetTest4()">Reset</button>
+        </div>
+        <div id="test-result-4" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 5: Save Button State -->
+    <div class="test-section">
+        <h2>Test 5: Save Button State</h2>
+        <p>Test that save button is disabled when there are validation errors.</p>
+        
+        <form id="test-form-5">
+            <div class="form-group">
+                <label for="test-save-risk">Risk Per Trade (%) - Leave empty or enter invalid value</label>
+                <input type="number" id="test-save-risk" name="risk_per_trade" class="form-control" 
+                       min="0.1" max="10" step="0.1" value="">
+            </div>
+        </form>
+
+        <button id="save-config-btn" class="btn btn-primary">Save Configuration</button>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="testSaveButtonState()">Run Test</button>
+            <button class="btn btn-secondary" onclick="resetTest5()">Reset</button>
+        </div>
+        <div id="test-result-5" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Mock AppState -->
+    <script>
+        const AppState = {
+            instruments: {
+                selected: []
+            },
+            config: {
+                current: {},
+                isDirty: false
+            }
+        };
+
+        function showNotification(message, type) {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        const api = {
+            saveConfig: async (data) => {
+                return { success: true };
+            }
+        };
+    </script>
+
+    <!-- Load validation module -->
+    <script src="../static/js/validation.js"></script>
+
+    <!-- Test Scripts -->
+    <script>
+        function showResult(testId, passed, message) {
+            const resultDiv = document.getElementById(`test-result-${testId}`);
+            resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            resultDiv.textContent = `${passed ? '✓ PASS' : '✗ FAIL'}: ${message}`;
+            resultDiv.style.display = 'block';
+        }
+
+        function testBasicValidation() {
+            // Test 1: Empty required field
+            const timeframe = document.getElementById('test-timeframe');
+            timeframe.value = '';
+            timeframe.dispatchEvent(new Event('change'));
+            
+            setTimeout(() => {
+                const hasError = timeframe.classList.contains('invalid');
+                const errorMsg = timeframe.parentNode.querySelector('.form-error');
+                
+                if (hasError && errorMsg) {
+                    showResult(1, true, 'Required field validation works correctly');
+                } else {
+                    showResult(1, false, 'Required field validation failed');
+                }
+            }, 100);
+        }
+
+        function testCrossFieldValidation() {
+            // Test 2: End time before start time
+            const start = document.getElementById('test-start');
+            const end = document.getElementById('test-end');
+            
+            start.value = '14:00';
+            end.value = '10:00';
+            end.dispatchEvent(new Event('change'));
+            
+            setTimeout(() => {
+                const hasError = end.classList.contains('invalid');
+                const errorMsg = end.parentNode.querySelector('.form-error');
+                
+                if (hasError && errorMsg && errorMsg.textContent.includes('after')) {
+                    showResult(2, true, 'Cross-field validation works correctly');
+                } else {
+                    showResult(2, false, 'Cross-field validation failed');
+                }
+            }, 100);
+        }
+
+        function testWarnings() {
+            // Test 3: High risk value
+            const risk = document.getElementById('test-high-risk');
+            risk.value = '7';
+            risk.dispatchEvent(new Event('change'));
+            
+            setTimeout(() => {
+                const warningMsg = risk.parentNode.querySelector('.form-warning');
+                
+                if (warningMsg && warningMsg.textContent.includes('high')) {
+                    showResult(3, true, 'Warning messages display correctly');
+                } else {
+                    showResult(3, false, 'Warning messages not displayed');
+                }
+            }, 100);
+        }
+
+        function testValidationSummary() {
+            // Trigger validation on all fields
+            if (typeof Validation !== 'undefined') {
+                Validation.validateAll();
+                
+                setTimeout(() => {
+                    const summary = document.getElementById('validation-summary');
+                    const isVisible = summary.style.display !== 'none';
+                    const hasErrors = summary.querySelector('.validation-summary-errors');
+                    
+                    if (isVisible && hasErrors) {
+                        showResult(4, true, 'Validation summary displays correctly');
+                    } else {
+                        showResult(4, false, 'Validation summary not displayed');
+                    }
+                }, 100);
+            } else {
+                showResult(4, false, 'Validation module not loaded');
+            }
+        }
+
+        function testSaveButtonState() {
+            const saveBtn = document.getElementById('save-config-btn');
+            const risk = document.getElementById('test-save-risk');
+            
+            // Leave field empty to trigger error
+            risk.value = '';
+            risk.dispatchEvent(new Event('change'));
+            
+            setTimeout(() => {
+                if (typeof Validation !== 'undefined') {
+                    Validation.updateSaveButtonState();
+                    
+                    setTimeout(() => {
+                        const isDisabled = saveBtn.disabled;
+                        
+                        if (isDisabled) {
+                            showResult(5, true, 'Save button disabled when errors present');
+                        } else {
+                            showResult(5, false, 'Save button not disabled');
+                        }
+                    }, 100);
+                } else {
+                    showResult(5, false, 'Validation module not loaded');
+                }
+            }, 100);
+        }
+
+        function resetTest1() {
+            document.getElementById('test-form-1').reset();
+            document.getElementById('test-result-1').style.display = 'none';
+            document.querySelectorAll('#test-form-1 .form-control').forEach(field => {
+                field.classList.remove('valid', 'invalid');
+                const error = field.parentNode.querySelector('.form-error');
+                if (error) error.remove();
+            });
+        }
+
+        function resetTest2() {
+            document.getElementById('test-form-2').reset();
+            document.getElementById('test-result-2').style.display = 'none';
+            document.querySelectorAll('#test-form-2 .form-control').forEach(field => {
+                field.classList.remove('valid', 'invalid');
+                const error = field.parentNode.querySelector('.form-error');
+                if (error) error.remove();
+            });
+        }
+
+        function resetTest3() {
+            document.getElementById('test-form-3').reset();
+            document.getElementById('test-result-3').style.display = 'none';
+            document.querySelectorAll('#test-form-3 .form-control').forEach(field => {
+                field.classList.remove('valid', 'invalid');
+                const warning = field.parentNode.querySelector('.form-warning');
+                if (warning) warning.remove();
+            });
+        }
+
+        function resetTest4() {
+            document.getElementById('config-form').reset();
+            document.getElementById('test-result-4').style.display = 'none';
+            document.getElementById('validation-summary').style.display = 'none';
+            document.querySelectorAll('#config-form .form-control').forEach(field => {
+                field.classList.remove('valid', 'invalid');
+                const error = field.parentNode.querySelector('.form-error');
+                if (error) error.remove();
+            });
+        }
+
+        function resetTest5() {
+            document.getElementById('test-form-5').reset();
+            document.getElementById('test-result-5').style.display = 'none';
+            document.getElementById('save-config-btn').disabled = false;
+            document.getElementById('save-config-btn').classList.remove('disabled');
+            const risk = document.getElementById('test-save-risk');
+            risk.classList.remove('valid', 'invalid');
+            const error = risk.parentNode.querySelector('.form-error');
+            if (error) error.remove();
+        }
+    </script>
+</body>
+</html>

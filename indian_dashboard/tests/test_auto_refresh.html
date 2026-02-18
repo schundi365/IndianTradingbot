@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Refresh Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background: #f5f5f5;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .status-indicator.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-indicator.paused {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-indicator.stopped {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .log-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #6c757d;
+            margin-right: 0.5rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .info-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .test-result {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Auto-Refresh Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Auto-Refresh Status</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value" id="refresh-status">Stopped</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Interval</div>
+                <div class="info-value" id="refresh-interval">5s</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Last Updated</div>
+                <div class="info-value" id="last-updated">Never</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Refresh Count</div>
+                <div class="info-value" id="refresh-count">0</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <button class="btn btn-success" onclick="testStart()">▶️ Start</button>
+            <button class="btn btn-warning" onclick="testPause()">⏸️ Pause</button>
+            <button class="btn btn-success" onclick="testResume()">▶️ Resume</button>
+            <button class="btn btn-danger" onclick="testStop()">⏹️ Stop</button>
+            <button class="btn btn-primary" onclick="testManualRefresh()">🔄 Manual Refresh</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Tab Visibility Test</h2>
+        <p>Minimize this tab or switch to another tab to test pause on tab inactive.</p>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Tab Visible</div>
+                <div class="info-value" id="tab-visible">Yes</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Auto-Pause Active</div>
+                <div class="info-value" id="auto-pause-status">No</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+        <button class="btn btn-primary" onclick="runAllTests()">▶️ Run All Tests</button>
+        <button class="btn btn-secondary" onclick="clearResults()">🗑️ Clear Results</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Activity Log</h2>
+        <div class="log-container" id="log-container">
+            <div class="log-entry">
+                <span class="log-time">--:--:--</span>
+                <span>Waiting for activity...</span>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="clearLog()">🗑️ Clear Log</button>
+    </div>
+    
+    <script>
+        // Mock AutoRefresh object for testing
+        const AutoRefresh = {
+            intervalId: null,
+            refreshInterval: 5000,
+            isPaused: false,
+            lastUpdated: null,
+            refreshCount: 0,
+            
+            start() {
+                if (this.intervalId) {
+                    log('⚠️ Auto-refresh already running');
+                    return;
+                }
+                
+                this.isPaused = false;
+                this.updateUI();
+                log('✅ Auto-refresh started');
+                
+                this.intervalId = setInterval(() => {
+                    if (!this.isPaused && !document.hidden) {
+                        this.refresh();
+                    }
+                }, this.refreshInterval);
+            },
+            
+            stop() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                    log('⏹️ Auto-refresh stopped');
+                } else {
+                    log('⚠️ Auto-refresh not running');
+                }
+                this.updateUI();
+            },
+            
+            pause() {
+                this.isPaused = true;
+                this.updateUI();
+                log('⏸️ Auto-refresh paused');
+            },
+            
+            resume() {
+                this.isPaused = false;
+                this.updateUI();
+                log('▶️ Auto-refresh resumed');
+            },
+            
+            refresh() {
+                this.lastUpdated = new Date();
+                this.refreshCount++;
+                this.updateUI();
+                log(`🔄 Refresh #${this.refreshCount} - Data updated`);
+            },
+            
+            updateUI() {
+                // Update status
+                const statusEl = document.getElementById('refresh-status');
+                if (this.isPaused) {
+                    statusEl.textContent = 'Paused';
+                    statusEl.style.color = '#856404';
+                } else if (this.intervalId) {
+                    statusEl.textContent = 'Active';
+                    statusEl.style.color = '#155724';
+                } else {
+                    statusEl.textContent = 'Stopped';
+                    statusEl.style.color = '#721c24';
+                }
+                
+                // Update interval
+                document.getElementById('refresh-interval').textContent = 
+                    `${this.refreshInterval / 1000}s`;
+                
+                // Update last updated
+                if (this.lastUpdated) {
+                    const timeAgo = this.getTimeAgo(this.lastUpdated);
+                    document.getElementById('last-updated').textContent = timeAgo;
+                } else {
+                    document.getElementById('last-updated').textContent = 'Never';
+                }
+                
+                // Update count
+                document.getElementById('refresh-count').textContent = this.refreshCount;
+            },
+            
+            getTimeAgo(date) {
+                const seconds = Math.floor((new Date() - date) / 1000);
+                
+                if (seconds < 10) return 'just now';
+                if (seconds < 60) return `${seconds}s ago`;
+                
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes}m ago`;
+                
+                const hours = Math.floor(minutes / 60);
+                return `${hours}h ago`;
+            }
+        };
+        
+        // Update UI every second
+        setInterval(() => {
+            AutoRefresh.updateUI();
+        }, 1000);
+        
+        // Monitor tab visibility
+        document.addEventListener('visibilitychange', () => {
+            const tabVisible = !document.hidden;
+            document.getElementById('tab-visible').textContent = tabVisible ? 'Yes' : 'No';
+            document.getElementById('tab-visible').style.color = tabVisible ? '#155724' : '#721c24';
+            
+            if (document.hidden) {
+                AutoRefresh.pause();
+                document.getElementById('auto-pause-status').textContent = 'Yes';
+                document.getElementById('auto-pause-status').style.color = '#856404';
+                log('👁️ Tab hidden - Auto-refresh paused');
+            } else {
+                if (AutoRefresh.intervalId) {
+                    AutoRefresh.resume();
+                }
+                document.getElementById('auto-pause-status').textContent = 'No';
+                document.getElementById('auto-pause-status').style.color = '#155724';
+                log('👁️ Tab visible - Auto-refresh resumed');
+            }
+        });
+        
+        // Test functions
+        function testStart() {
+            AutoRefresh.start();
+        }
+        
+        function testPause() {
+            AutoRefresh.pause();
+        }
+        
+        function testResume() {
+            AutoRefresh.resume();
+        }
+        
+        function testStop() {
+            AutoRefresh.stop();
+        }
+        
+        function testManualRefresh() {
+            AutoRefresh.refresh();
+        }
+        
+        // Logging
+        function log(message) {
+            const container = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span>${message}</span>
+            `;
+            
+            container.insertBefore(entry, container.firstChild);
+            
+            // Keep only last 50 entries
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+        
+        function clearLog() {
+            const container = document.getElementById('log-container');
+            container.innerHTML = `
+                <div class="log-entry">
+                    <span class="log-time">--:--:--</span>
+                    <span>Log cleared</span>
+                </div>
+            `;
+        }
+        
+        // Test suite
+        function runAllTests() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<h3>Running tests...</h3>';
+            
+            const tests = [
+                testAutoRefreshStart,
+                testAutoRefreshPause,
+                testAutoRefreshResume,
+                testAutoRefreshStop,
+                testManualRefreshButton,
+                testLastUpdatedDisplay,
+                testRefreshInterval
+            ];
+            
+            let passed = 0;
+            let failed = 0;
+            
+            tests.forEach(test => {
+                try {
+                    const result = test();
+                    if (result.pass) {
+                        passed++;
+                        addTestResult(result.name, true, result.message);
+                    } else {
+                        failed++;
+                        addTestResult(result.name, false, result.message);
+                    }
+                } catch (error) {
+                    failed++;
+                    addTestResult(test.name, false, error.message);
+                }
+            });
+            
+            const summary = document.createElement('div');
+            summary.className = `test-result ${failed === 0 ? 'pass' : 'fail'}`;
+            summary.innerHTML = `
+                <strong>Test Summary:</strong> ${passed} passed, ${failed} failed
+            `;
+            results.insertBefore(summary, results.firstChild);
+        }
+        
+        function addTestResult(name, pass, message) {
+            const results = document.getElementById('test-results');
+            const result = document.createElement('div');
+            result.className = `test-result ${pass ? 'pass' : 'fail'}`;
+            result.innerHTML = `
+                <strong>${pass ? '✅' : '❌'} ${name}</strong><br>
+                ${message}
+            `;
+            results.appendChild(result);
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        // Individual tests
+        function testAutoRefreshStart() {
+            AutoRefresh.stop();
+            AutoRefresh.start();
+            const pass = AutoRefresh.intervalId !== null && !AutoRefresh.isPaused;
+            return {
+                name: 'Auto-refresh Start',
+                pass: pass,
+                message: pass ? 'Auto-refresh started successfully' : 'Failed to start auto-refresh'
+            };
+        }
+        
+        function testAutoRefreshPause() {
+            AutoRefresh.start();
+            AutoRefresh.pause();
+            const pass = AutoRefresh.isPaused === true;
+            return {
+                name: 'Auto-refresh Pause',
+                pass: pass,
+                message: pass ? 'Auto-refresh paused successfully' : 'Failed to pause auto-refresh'
+            };
+        }
+        
+        function testAutoRefreshResume() {
+            AutoRefresh.start();
+            AutoRefresh.pause();
+            AutoRefresh.resume();
+            const pass = AutoRefresh.isPaused === false;
+            return {
+                name: 'Auto-refresh Resume',
+                pass: pass,
+                message: pass ? 'Auto-refresh resumed successfully' : 'Failed to resume auto-refresh'
+            };
+        }
+        
+        function testAutoRefreshStop() {
+            AutoRefresh.start();
+            AutoRefresh.stop();
+            const pass = AutoRefresh.intervalId === null;
+            return {
+                name: 'Auto-refresh Stop',
+                pass: pass,
+                message: pass ? 'Auto-refresh stopped successfully' : 'Failed to stop auto-refresh'
+            };
+        }
+        
+        function testManualRefreshButton() {
+            const initialCount = AutoRefresh.refreshCount;
+            AutoRefresh.refresh();
+            const pass = AutoRefresh.refreshCount === initialCount + 1;
+            return {
+                name: 'Manual Refresh',
+                pass: pass,
+                message: pass ? 'Manual refresh works correctly' : 'Manual refresh failed'
+            };
+        }
+        
+        function testLastUpdatedDisplay() {
+            AutoRefresh.refresh();
+            const pass = AutoRefresh.lastUpdated !== null;
+            return {
+                name: 'Last Updated Display',
+                pass: pass,
+                message: pass ? 'Last updated timestamp is tracked' : 'Last updated timestamp not tracked'
+            };
+        }
+        
+        function testRefreshInterval() {
+            const pass = AutoRefresh.refreshInterval === 5000;
+            return {
+                name: 'Refresh Interval',
+                pass: pass,
+                message: pass ? 'Refresh interval is 5 seconds' : `Refresh interval is ${AutoRefresh.refreshInterval}ms`
+            };
+        }
+        
+        // Initialize
+        log('🚀 Auto-refresh test page loaded');
+        log('ℹ️ Click "Run All Tests" to verify functionality');
+    </script>
+</body>
+</html>

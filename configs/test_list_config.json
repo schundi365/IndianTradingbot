@@ -1,0 +1,5 @@
+{
+  "broker": "kite",
+  "strategy": "trend_following",
+  "instruments": []
+}

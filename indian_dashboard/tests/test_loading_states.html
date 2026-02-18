@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading States Test Suite</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <link rel="stylesheet" href="../static/css/loading-states.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #007bff;
+            color: white;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        .test-btn-secondary {
+            background: #6c757d;
+        }
+        .test-btn-secondary:hover {
+            background: #545b62;
+        }
+        .test-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            min-height: 150px;
+            background: #fafafa;
+        }
+        .demo-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .demo-table th,
+        .demo-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .demo-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Loading States Test Suite</h1>
+    <p>Comprehensive testing for loading indicators, spinners, and skeleton screens</p>
+
+    <!-- Test Section 1: Global Loading -->
+    <div class="test-section">
+        <h2>1. Global Loading Overlay</h2>
+        <p>Test the full-screen loading overlay</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testGlobalLoading()">Show Global Loading</button>
+            <button class="test-btn test-btn-secondary" onclick="loadingStates.hideGlobalLoading()">Hide Global Loading</button>
+        </div>
+        <div class="test-result" id="global-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 2: Button Loading States -->
+    <div class="test-section">
+        <h2>2. Button Loading States</h2>
+        <p>Test loading states for buttons</p>
+        <div class="test-buttons">
+            <button class="test-btn" id="test-button-1" onclick="testButtonLoading('test-button-1')">Test Button 1</button>
+            <button class="test-btn" id="test-button-2" onclick="testButtonLoading('test-button-2')">Test Button 2</button>
+            <button class="test-btn" id="test-button-3" onclick="testButtonLoadingWithText('test-button-3')">Test with Text</button>
+            <button class="test-btn test-btn-secondary" onclick="resetButtons()">Reset All Buttons</button>
+        </div>
+        <div class="test-result" id="button-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 3: Inline Loading -->
+    <div class="test-section">
+        <h2>3. Inline Loading Spinners</h2>
+        <p>Test inline loading indicators</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testInlineLoading()">Show Inline Loading</button>
+            <button class="test-btn test-btn-secondary" onclick="hideInlineLoading()">Hide Inline Loading</button>
+        </div>
+        <div class="test-container" id="inline-container">
+            <p>Original content will be replaced with loading spinner</p>
+        </div>
+    </div>
+
+    <!-- Test Section 4: Skeleton Screens -->
+    <div class="test-section">
+        <h2>4. Skeleton Screens</h2>
+        <p>Test different skeleton screen types</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testSkeleton('default')">Default Skeleton</button>
+            <button class="test-btn" onclick="testSkeleton('card')">Card Skeleton</button>
+            <button class="test-btn" onclick="testSkeleton('list-item', 3)">List Items (3)</button>
+            <button class="test-btn" onclick="testSkeleton('broker-card', 4)">Broker Cards (4)</button>
+            <button class="test-btn test-btn-secondary" onclick="hideSkeleton()">Hide Skeleton</button>
+        </div>
+        <div class="test-container" id="skeleton-container">
+            <p>Original content will be replaced with skeleton screen</p>
+        </div>
+    </div>
+
+    <!-- Test Section 5: Table Loading -->
+    <div class="test-section">
+        <h2>5. Table Loading States</h2>
+        <p>Test loading states for tables</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testTableLoading()">Show Table Loading</button>
+            <button class="test-btn" onclick="testTableSkeleton()">Show Table Skeleton</button>
+            <button class="test-btn test-btn-secondary" onclick="resetTable()">Reset Table</button>
+        </div>
+        <table class="demo-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Exchange</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody id="demo-table-body">
+                <tr>
+                    <td>RELIANCE</td>
+                    <td>Reliance Industries</td>
+                    <td>NSE</td>
+                    <td>EQ</td>
+                    <td>₹2,450.00</td>
+                </tr>
+                <tr>
+                    <td>TCS</td>
+                    <td>Tata Consultancy Services</td>
+                    <td>NSE</td>
+                    <td>EQ</td>
+                    <td>₹3,650.00</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Test Section 6: Progress Bar -->
+    <div class="test-section">
+        <h2>6. Progress Bar</h2>
+        <p>Test progress bar with animation</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testProgressBar()">Animate Progress</button>
+            <button class="test-btn test-btn-secondary" onclick="resetProgress()">Reset Progress</button>
+        </div>
+        <div class="test-container" id="progress-container">
+            <p>Progress bar will appear here</p>
+        </div>
+    </div>
+
+    <!-- Test Section 7: Loading Dots -->
+    <div class="test-section">
+        <h2>7. Loading Dots Animation</h2>
+        <p>Test animated loading dots</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testLoadingDots()">Show Loading Dots</button>
+            <button class="test-btn test-btn-secondary" onclick="hideLoadingDots()">Hide Loading Dots</button>
+        </div>
+        <div class="test-container" id="dots-container">
+            <p>Loading dots will appear here</p>
+        </div>
+    </div>
+
+    <!-- Test Section 8: Disable Elements -->
+    <div class="test-section">
+        <h2>8. Disable Elements During Operations</h2>
+        <p>Test disabling elements during operations</p>
+        <div class="test-buttons">
+            <button class="test-btn" id="disable-test-btn" onclick="testDisableElement()">Disable This Button (3s)</button>
+            <button class="test-btn" onclick="testDisableMultiple()">Disable Multiple (3s)</button>
+        </div>
+        <div class="test-container" id="disable-container">
+            <button class="test-btn" id="disable-btn-1">Button 1</button>
+            <button class="test-btn" id="disable-btn-2">Button 2</button>
+            <button class="test-btn" id="disable-btn-3">Button 3</button>
+        </div>
+    </div>
+
+    <!-- Test Section 9: Combined Loading States -->
+    <div class="test-section">
+        <h2>9. Combined Loading States</h2>
+        <p>Test multiple loading states together</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testCombinedLoading()">Simulate API Call</button>
+        </div>
+        <div class="test-result" id="combined-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 10: Performance Test -->
+    <div class="test-section">
+        <h2>10. Performance & Cleanup</h2>
+        <p>Test performance and cleanup</p>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testPerformance()">Performance Test</button>
+            <button class="test-btn" onclick="testCleanup()">Test Cleanup</button>
+            <button class="test-btn test-btn-secondary" onclick="clearAll()">Clear All Loaders</button>
+        </div>
+        <div class="test-result" id="performance-result" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/loading-states.js"></script>
+
+    <script>
+        // Test Functions
+
+        function testGlobalLoading() {
+            loadingStates.showGlobalLoading('Processing your request...');
+            showResult('global-result', 'Global loading overlay shown');
+            setTimeout(() => {
+                loadingStates.hideGlobalLoading();
+                showResult('global-result', 'Global loading overlay hidden after 3 seconds');
+            }, 3000);
+        }
+
+        function testButtonLoading(buttonId) {
+            loadingStates.showButtonLoading(buttonId);
+            showResult('button-result', `Button ${buttonId} loading state shown`);
+            setTimeout(() => {
+                loadingStates.hideButtonLoading(buttonId);
+                showResult('button-result', `Button ${buttonId} loading state hidden after 2 seconds`);
+            }, 2000);
+        }
+
+        function testButtonLoadingWithText(buttonId) {
+            loadingStates.showButtonLoading(buttonId, 'Processing...');
+            showResult('button-result', 'Button with loading text shown');
+            setTimeout(() => {
+                loadingStates.hideButtonLoading(buttonId);
+                showResult('button-result', 'Button loading state hidden after 2 seconds');
+            }, 2000);
+        }
+
+        function resetButtons() {
+            ['test-button-1', 'test-button-2', 'test-button-3'].forEach(id => {
+                loadingStates.hideButtonLoading(id);
+            });
+            showResult('button-result', 'All buttons reset');
+        }
+
+        function testInlineLoading() {
+            loadingStates.showInlineLoading('inline-container', 'Loading data...');
+        }
+
+        function hideInlineLoading() {
+            loadingStates.hideInlineLoading('inline-container', '<p>Content loaded successfully!</p>');
+        }
+
+        function testSkeleton(type, count = 1) {
+            loadingStates.showSkeleton('skeleton-container', type, count);
+        }
+
+        function hideSkeleton() {
+            loadingStates.hideSkeleton('skeleton-container', '<p>Content loaded successfully!</p>');
+        }
+
+        function testTableLoading() {
+            loadingStates.showTableLoading('demo-table-body', 5, 'Loading instruments...');
+        }
+
+        function testTableSkeleton() {
+            loadingStates.showSkeleton('demo-table-body', 'instrument-row', 5);
+        }
+
+        function resetTable() {
+            const tbody = document.getElementById('demo-table-body');
+            tbody.innerHTML = `
+                <tr>
+                    <td>RELIANCE</td>
+                    <td>Reliance Industries</td>
+                    <td>NSE</td>
+                    <td>EQ</td>
+                    <td>₹2,450.00</td>
+                </tr>
+                <tr>
+                    <td>TCS</td>
+                    <td>Tata Consultancy Services</td>
+                    <td>NSE</td>
+                    <td>EQ</td>
+                    <td>₹3,650.00</td>
+                </tr>
+            `;
+        }
+
+        function testProgressBar() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                loadingStates.showProgress('progress-container', progress, `Loading... ${progress}%`);
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        loadingStates.hideProgress('progress-container');
+                        document.getElementById('progress-container').innerHTML = '<p style="color: green;">✓ Loading complete!</p>';
+                    }, 500);
+                }
+            }, 300);
+        }
+
+        function resetProgress() {
+            document.getElementById('progress-container').innerHTML = '<p>Progress bar will appear here</p>';
+        }
+
+        function testLoadingDots() {
+            loadingStates.showLoadingDots('dots-container', 'Loading');
+        }
+
+        function hideLoadingDots() {
+            loadingStates.hideInlineLoading('dots-container', '<p>Loading complete!</p>');
+        }
+
+        function testDisableElement() {
+            loadingStates.disableElement('disable-test-btn');
+            setTimeout(() => {
+                loadingStates.enableElement('disable-test-btn');
+            }, 3000);
+        }
+
+        function testDisableMultiple() {
+            ['disable-btn-1', 'disable-btn-2', 'disable-btn-3'].forEach(id => {
+                loadingStates.disableElement(id);
+            });
+            setTimeout(() => {
+                ['disable-btn-1', 'disable-btn-2', 'disable-btn-3'].forEach(id => {
+                    loadingStates.enableElement(id);
+                });
+            }, 3000);
+        }
+
+        function testCombinedLoading() {
+            showResult('combined-result', 'Simulating API call with multiple loading states...');
+            
+            // Show global loading
+            loadingStates.showGlobalLoading('Fetching data from server...');
+            
+            setTimeout(() => {
+                loadingStates.hideGlobalLoading();
+                showResult('combined-result', 'API call complete! All loading states cleared.');
+            }, 3000);
+        }
+
+        function testPerformance() {
+            const start = performance.now();
+            
+            // Create 100 loading states
+            for (let i = 0; i < 100; i++) {
+                const div = document.createElement('div');
+                div.id = `perf-test-${i}`;
+                loadingStates.showInlineLoading(div);
+            }
+            
+            const end = performance.now();
+            const time = (end - start).toFixed(2);
+            
+            showResult('performance-result', `Created 100 loading states in ${time}ms`);
+            
+            // Cleanup
+            setTimeout(() => {
+                showResult('performance-result', `Performance test complete. Active loaders: ${loadingStates.getActiveLoadersCount()}`);
+            }, 1000);
+        }
+
+        function testCleanup() {
+            // Create some loaders
+            loadingStates.showButtonLoading('test-button-1');
+            loadingStates.showInlineLoading('inline-container');
+            
+            const before = loadingStates.getActiveLoadersCount();
+            showResult('performance-result', `Active loaders before cleanup: ${before}`);
+            
+            setTimeout(() => {
+                loadingStates.clearAllLoaders();
+                const after = loadingStates.getActiveLoadersCount();
+                showResult('performance-result', `Active loaders after cleanup: ${after}`);
+            }, 1000);
+        }
+
+        function clearAll() {
+            loadingStates.clearAllLoaders();
+            showResult('performance-result', 'All loaders cleared');
+        }
+
+        function showResult(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = `✓ ${message}`;
+            element.style.display = 'block';
+        }
+
+        // Initialize
+        console.log('Loading States Test Suite Loaded');
+        console.log('LoadingStates Instance:', loadingStates);
+    </script>
+</body>
+</html>

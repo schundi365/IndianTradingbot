@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEM Trading Bot - ₹</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/error-handler.css">
+    <link rel="stylesheet" href="/static/css/loading-states.css">
+    <link rel="stylesheet" href="/static/css/ui-enhancements.css">
+    <link rel="stylesheet" href="/static/css/helpful-features.css">
+    <link rel="stylesheet" href="/static/css/gem-theme.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="container">
+            <h1 class="logo">
+                <span class="gem-icon">💎</span>
+                GEM Trading Bot
+                <span class="rupee-symbol">₹</span>
+            </h1>
+            <div class="header-status">
+                <span id="broker-status" class="status-badge">Not Connected</span>
+                <span id="bot-status" class="status-badge">Stopped</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+        <div class="container">
+            <button class="tab-button active" data-tab="broker">Broker</button>
+            <button class="tab-button" data-tab="instruments">Instruments</button>
+            <button class="tab-button" data-tab="configuration">Configuration</button>
+            <button class="tab-button" data-tab="monitor">Monitor</button>
+            <button class="tab-button" data-tab="trades">Trades</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="container">
+            <!-- Broker Tab -->
+            <div id="broker-tab" class="tab-content active">
+                <h2>Broker Connection</h2>
+                
+                <div class="card">
+                    <h3>Select Broker</h3>
+                    <div id="broker-list" class="broker-grid">
+                        <!-- Broker cards will be loaded here -->
+                    </div>
+                    
+                    <div id="change-broker-section" class="change-broker-section" style="display: none;">
+                        <button type="button" id="change-broker-btn" class="btn btn-change-broker">Change Broker</button>
+                    </div>
+                </div>
+
+                <div id="credentials-section" class="card" style="display: none;">
+                    <h3>Enter Credentials</h3>
+                    <form id="credentials-form">
+                        <!-- Dynamic form fields will be loaded here -->
+                    </form>
+                    <div class="form-actions">
+                        <button type="button" id="connect-btn" class="btn btn-primary">Connect</button>
+                    </div>
+                </div>
+
+                <div id="connection-status" class="card" style="display: none;">
+                    <h3>Connection Status</h3>
+                    <div id="connection-info" class="broker-status-display">
+                        <!-- Connection info will be displayed here -->
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="test-connection-btn" class="btn btn-secondary">Test Connection</button>
+                        <button type="button" id="disconnect-btn" class="btn btn-danger">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instruments Tab -->
+            <div id="instruments-tab" class="tab-content">
+                <h2>Select Instruments</h2>
+                
+                <div class="card">
+                    <div class="instruments-toolbar">
+                        <input type="text" id="instrument-search" placeholder="Search instruments..." class="search-input">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button id="refresh-instruments-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔄</span> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="filters">
+                        <label>Exchange:</label>
+                        <label><input type="checkbox" name="exchange" value="NSE"> NSE</label>
+                        <label><input type="checkbox" name="exchange" value="BSE"> BSE</label>
+                        <label><input type="checkbox" name="exchange" value="NFO"> NFO</label>
+                        
+                        <label>Type:</label>
+                        <label><input type="checkbox" name="type" value="EQ"> Equity</label>
+                        <label><input type="checkbox" name="type" value="FUT"> Futures</label>
+                        <label><input type="checkbox" name="type" value="CE"> Call</label>
+                        <label><input type="checkbox" name="type" value="PE"> Put</label>
+                        
+                        <button id="clear-filters-btn" class="btn btn-sm btn-secondary">Clear Filters</button>
+                    </div>
+                    
+                    <div id="active-filters" class="active-filters" style="display: none;">
+                        <!-- Active filters will be displayed here -->
+                    </div>
+
+                    <div id="instruments-table-container">
+                        <div id="instruments-loading" class="loading-indicator" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Loading instruments...</p>
+                        </div>
+                        <table id="instruments-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="select-all"></th>
+                                    <th class="sortable" data-sort="symbol">Symbol <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="name">Name <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="exchange">Exchange <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="instrument_type">Type <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="last_price">Price <span class="sort-icon"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="instruments-tbody">
+                                <!-- Instruments will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button id="prev-page" class="btn btn-sm">Previous</button>
+                        <span id="page-info">Page 1</span>
+                        <button id="next-page" class="btn btn-sm">Next</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Selected Instruments (<span id="selected-count">0</span>)</h3>
+                        <button id="clear-all-selections-btn" class="btn btn-sm btn-secondary" style="display: none;">Clear All</button>
+                    </div>
+                    <div id="selected-instruments">
+                        <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>
+                    </div>
+                    <button id="continue-to-config-btn" class="btn btn-primary" disabled>Continue to Configuration</button>
+                </div>
+            </div>
+
+            <!-- Configuration Tab -->
+            <div id="configuration-tab" class="tab-content">
+                <h2>Bot Configuration</h2>
+                
+                <!-- Configuration Actions Bar -->
+                <div class="card config-actions-bar">
+                    <div class="config-actions-left">
+                        <select id="preset-selector" class="form-control" style="max-width: 300px;">
+                            <option value="">-- Select Preset --</option>
+                        </select>
+                    </div>
+                    <div class="config-actions-right">
+                        <button id="save-config-btn" class="btn btn-primary">
+                            <span class="btn-icon">💾</span> Save
+                        </button>
+                        <button id="load-config-btn" class="btn btn-secondary">
+                            <span class="btn-icon">📂</span> Load
+                        </button>
+                        <button id="export-config-btn" class="btn btn-secondary">
+                            <span class="btn-icon">📤</span> Export
+                        </button>
+                        <button id="import-config-btn" class="btn btn-secondary">
+                            <span class="btn-icon">📥</span> Import
+                        </button>
+                        <button id="copy-config-btn" class="btn btn-secondary">
+                            <span class="btn-icon">📋</span> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Configuration Form Container -->
+                <div class="card config-form-container">
+                    <!-- Configuration Sub-Tabs -->
+                    <div class="config-tabs">
+                        <button class="config-tab-button active" data-config-tab="basic">
+                            <span class="tab-icon">⚙️</span> Basic
+                        </button>
+                        <button class="config-tab-button" data-config-tab="strategy">
+                            <span class="tab-icon">📊</span> Strategy
+                        </button>
+                        <button class="config-tab-button" data-config-tab="risk">
+                            <span class="tab-icon">🛡️</span> Risk
+                        </button>
+                        <button class="config-tab-button" data-config-tab="advanced">
+                            <span class="tab-icon">🔧</span> Advanced
+                        </button>
+                    </div>
+
+                    <!-- Configuration Form -->
+                    <form id="config-form">
+                        <!-- Basic Settings Section -->
+                        <div class="config-section active" data-config-section="basic">
+                            <h3 class="section-title">Basic Settings</h3>
+                            
+                            <div class="form-group">
+                                <label>Selected Instruments</label>
+                                <div id="config-selected-instruments" class="selected-instruments-display">
+                                    <p class="text-muted">No instruments selected. Go to Instruments tab to select.</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-timeframe">Timeframe</label>
+                                <select id="config-timeframe" name="timeframe" class="form-control">
+                                    <option value="1minute">1 Minute</option>
+                                    <option value="5minute" selected>5 Minutes</option>
+                                    <option value="15minute">15 Minutes</option>
+                                    <option value="30minute">30 Minutes</option>
+                                    <option value="1hour">1 Hour</option>
+                                    <option value="1day">1 Day</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-strategy">Strategy</label>
+                                <select id="config-strategy" name="strategy" class="form-control">
+                                    <option value="trend_following" selected>Trend Following</option>
+                                    <option value="momentum">Momentum</option>
+                                    <option value="mean_reversion">Mean Reversion</option>
+                                    <option value="breakout">Breakout</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-trading-start">Trading Start Time</label>
+                                    <input type="time" id="config-trading-start" name="trading_start" class="form-control" value="09:15">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-trading-end">Trading End Time</label>
+                                    <input type="time" id="config-trading-end" name="trading_end" class="form-control" value="15:30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Strategy Parameters Section -->
+                        <div class="config-section" data-config-section="strategy">
+                            <h3 class="section-title">Strategy Parameters</h3>
+                            
+                            <div class="form-group">
+                                <label for="config-indicator-period">Indicator Period</label>
+                                <input type="number" id="config-indicator-period" name="indicator_period" class="form-control" min="5" max="200" value="20">
+                                <small class="form-help">Number of periods for indicator calculation</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-position-sizing">Position Sizing Method</label>
+                                <select id="config-position-sizing" name="position_sizing" class="form-control">
+                                    <option value="fixed" selected>Fixed Amount</option>
+                                    <option value="percentage">Percentage of Capital</option>
+                                    <option value="risk_based">Risk-Based</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-base-position-size">Base Position Size (₹)</label>
+                                <input type="number" id="config-base-position-size" name="base_position_size" class="form-control" min="1000" step="1000" value="10000">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-take-profit">Take Profit (%)</label>
+                                    <input type="number" id="config-take-profit" name="take_profit" class="form-control" min="0.5" max="20" step="0.5" value="2.0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-stop-loss">Stop Loss (%)</label>
+                                    <input type="number" id="config-stop-loss" name="stop_loss" class="form-control" min="0.5" max="10" step="0.5" value="1.0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Risk Management Section -->
+                        <div class="config-section" data-config-section="risk">
+                            <h3 class="section-title">Risk Management</h3>
+                            
+                            <div class="form-group">
+                                <label for="config-risk-per-trade">Risk Per Trade (%)</label>
+                                <div class="slider-input-group">
+                                    <input type="range" id="config-risk-per-trade-slider" class="form-slider" min="0.1" max="10" step="0.1" value="1.0">
+                                    <input type="number" id="config-risk-per-trade" name="risk_per_trade" class="form-control slider-number-input" min="0.1" max="10" step="0.1" value="1.0">
+                                </div>
+                                <small class="form-help">Maximum risk per trade as percentage of capital</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-max-positions">Max Concurrent Positions</label>
+                                <input type="number" id="config-max-positions" name="max_positions" class="form-control" min="1" max="20" value="3">
+                                <small class="form-help">Maximum number of positions open at the same time</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-max-daily-loss">Max Daily Loss (%)</label>
+                                <div class="slider-input-group">
+                                    <input type="range" id="config-max-daily-loss-slider" class="form-slider" min="0.5" max="20" step="0.5" value="3.0">
+                                    <input type="number" id="config-max-daily-loss" name="max_daily_loss" class="form-control slider-number-input" min="0.5" max="20" step="0.5" value="3.0">
+                                </div>
+                                <small class="form-help">Bot will stop trading if daily loss exceeds this limit</small>
+                            </div>
+
+                            <!-- Risk Metrics Panel -->
+                            <div class="risk-metrics-panel">
+                                <h4 class="metrics-title">Risk Metrics</h4>
+                                <div class="metrics-grid">
+                                    <div class="metric-item">
+                                        <span class="metric-label">Risk Per Trade (₹)</span>
+                                        <span class="metric-value" id="risk-amount-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Max Position Size (₹)</span>
+                                        <span class="metric-value" id="max-position-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Total Risk Exposure (₹)</span>
+                                        <span class="metric-value" id="total-risk-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Max Daily Loss (₹)</span>
+                                        <span class="metric-value" id="max-daily-loss-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Capital Required</span>
+                                        <span class="metric-value" id="capital-required-value">--</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Risk/Reward Ratio</span>
+                                        <span class="metric-value" id="risk-reward-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Settings Section -->
+                        <div class="config-section" data-config-section="advanced">
+                            <h3 class="section-title">Advanced Settings</h3>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="config-paper-trading" name="paper_trading">
+                                    Enable Paper Trading
+                                </label>
+                                <small class="form-help">Test strategies without real money</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-log-level">Log Level</label>
+                                <select id="config-log-level" name="log_level" class="form-control">
+                                    <option value="DEBUG">Debug</option>
+                                    <option value="INFO" selected>Info</option>
+                                    <option value="WARNING">Warning</option>
+                                    <option value="ERROR">Error</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-data-refresh-interval">Data Refresh Interval (seconds)</label>
+                                <input type="number" id="config-data-refresh-interval" name="data_refresh_interval" class="form-control" min="1" max="300" value="60">
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="config-enable-notifications" name="enable_notifications">
+                                    Enable Notifications
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Monitor Tab -->
+            <div id="monitor-tab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;">Bot Monitor</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span id="last-updated-display" class="last-updated-text" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                        <button id="manual-refresh-btn" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Bot Status Card -->
+                <div class="card bot-status-card">
+                    <div class="bot-status-header">
+                        <h3>Bot Status</h3>
+                        <div class="bot-status-indicator" id="bot-status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Stopped</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bot-status-grid">
+                        <div class="bot-status-item">
+                            <div class="status-item-icon">🤖</div>
+                            <div class="status-item-content">
+                                <div class="status-item-label">Bot Status</div>
+                                <div class="status-item-value" id="bot-running-status">Stopped</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bot-status-item">
+                            <div class="status-item-icon">⏱️</div>
+                            <div class="status-item-content">
+                                <div class="status-item-label">Uptime</div>
+                                <div class="status-item-value" id="bot-uptime">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bot-status-item">
+                            <div class="status-item-icon">🔗</div>
+                            <div class="status-item-content">
+                                <div class="status-item-label">Broker Connection</div>
+                                <div class="status-item-value" id="bot-broker-status">Not Connected</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bot-status-item">
+                            <div class="status-item-icon">📊</div>
+                            <div class="status-item-content">
+                                <div class="status-item-label">Open Positions</div>
+                                <div class="status-item-value" id="bot-positions-count">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bot-control-actions">
+                        <button id="start-bot-btn" class="btn btn-success">
+                            <span class="btn-icon">▶️</span> Start Bot
+                        </button>
+                        <button id="stop-bot-btn" class="btn btn-danger" style="display: none;">
+                            <span class="btn-icon">⏹️</span> Stop Bot
+                        </button>
+                        <button id="restart-bot-btn" class="btn btn-warning" style="display: none;">
+                            <span class="btn-icon">🔄</span> Restart Bot
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Account Information Card -->
+                <div class="card account-info-card">
+                    <div class="account-info-header">
+                        <h3>Account Information</h3>
+                        <div class="account-refresh-indicator" id="account-refresh-indicator">
+                            <span class="refresh-icon">🔄</span>
+                            <span class="refresh-text">Auto-refresh: 5s</span>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-grid">
+                        <div class="account-info-item">
+                            <div class="account-item-icon">💰</div>
+                            <div class="account-item-content">
+                                <div class="account-item-label">Balance</div>
+                                <div class="account-item-value" id="account-balance">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-info-item">
+                            <div class="account-item-icon">📊</div>
+                            <div class="account-item-content">
+                                <div class="account-item-label">Equity</div>
+                                <div class="account-item-value" id="account-equity">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-info-item">
+                            <div class="account-item-icon">✅</div>
+                            <div class="account-item-content">
+                                <div class="account-item-label">Available Margin</div>
+                                <div class="account-item-value" id="account-margin-available">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-info-item">
+                            <div class="account-item-icon">⚠️</div>
+                            <div class="account-item-content">
+                                <div class="account-item-label">Used Margin</div>
+                                <div class="account-item-value" id="account-margin-used">--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-info-item account-pnl-item">
+                            <div class="account-item-icon">📈</div>
+                            <div class="account-item-content">
+                                <div class="account-item-label">Today's P&L</div>
+                                <div class="account-item-value" id="account-pnl-today">--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-footer">
+                        <div class="account-status-message" id="account-status-message">
+                            <span class="status-icon">ℹ️</span>
+                            <span class="status-text">Connect to broker to view account information</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Open Positions</h3>
+                    <table id="positions-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Quantity</th>
+                                <th>Entry Price</th>
+                                <th>Current Price</th>
+                                <th>P&L</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="positions-tbody">
+                            <!-- Positions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Trades Tab -->
+            <div id="trades-tab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Trade History</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="TradeHistory.exportToCSV()" title="Export to CSV">📊 Export CSV</button>
+                        <button class="btn btn-secondary" onclick="TradeHistory.exportToExcel()" title="Export to Excel">📈 Export Excel</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="filters">
+                        <label>From:</label>
+                        <input type="date" id="from-date" class="form-control">
+                        <label>To:</label>
+                        <input type="date" id="to-date" class="form-control">
+                        <button id="filter-trades-btn" class="btn btn-secondary">Filter</button>
+                    </div>
+                    <div class="quick-filters">
+                        <label>Quick Filters:</label>
+                        <button id="filter-today-btn" class="btn btn-sm btn-quick-filter">Today</button>
+                        <button id="filter-week-btn" class="btn btn-sm btn-quick-filter">This Week</button>
+                        <button id="filter-month-btn" class="btn btn-sm btn-quick-filter">This Month</button>
+                        <button id="filter-clear-btn" class="btn btn-sm btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Trade Statistics Card -->
+                <div class="card" id="trade-statistics-card">
+                    <h3>Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Trades</div>
+                            <div class="stat-value" id="stat-total-trades">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Win Rate</div>
+                            <div class="stat-value" id="stat-win-rate">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total P&L</div>
+                            <div class="stat-value" id="stat-total-pnl">₹0.00</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Avg P&L per Trade</div>
+                            <div class="stat-value" id="stat-avg-pnl">₹0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <table id="trades-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="timestamp">Date <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="symbol">Symbol <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="transaction_type">Type <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="quantity">Qty <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="price">Entry <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="exit_price">Exit <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="pnl">P&L <span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-tbody">
+                            <!-- Trades will be loaded here -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination">
+                        <button id="trades-prev-page" class="btn btn-sm">Previous</button>
+                        <span id="trades-page-info">Page 1</span>
+                        <button id="trades-next-page" class="btn btn-sm">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="container">
+            <p>&copy; 2024 Indian Market Trading Dashboard</p>
+        </div>
+    </footer>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/loading-states.js"></script>
+    <script src="/static/js/error-handler.js"></script>
+    <script src="/static/js/session-manager.js"></script>
+    <!-- Performance Optimization Scripts -->
+    <script src="/static/js/cache-manager.js"></script>
+    <script src="/static/js/performance-utils.js"></script>
+    <script src="/static/js/table-optimizer.js"></script>
+    <!-- API Client (must load after cache-manager) -->
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/api-client-cached.js"></script>
+    <script src="/static/js/state.js"></script>
+    <script src="/static/js/credentials-form.js"></script>
+    <script src="/static/js/validation.js"></script>
+    <script src="/static/js/presets.js"></script>
+    <script src="/static/js/config-form.js"></script>
+    <script src="/static/js/config-manager.js"></script>
+    <script src="/static/js/export-import.js"></script>
+    <script src="/static/js/strategy-parameters.js"></script>
+    <script src="/static/js/risk-management.js"></script>
+    <script src="/static/js/trades.js"></script>
+    <script src="/static/js/app.js"></script>
+    <!-- UI/UX Enhancements -->
+    <script src="/static/js/ui-enhancements.js"></script>
+    <!-- Helpful Features -->
+    <script src="/static/js/helpful-features.js"></script>
+</body>
+</html>

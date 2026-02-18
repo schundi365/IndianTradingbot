@@ -1,0 +1,6 @@
+{
+  "broker": "kite",
+  "strategy": "momentum",
+  "timeframe": "15minute",
+  "instruments": []
+}

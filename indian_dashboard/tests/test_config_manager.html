@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Manager Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-section h2 {
+            margin-bottom: 1rem;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration Manager Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Save Configuration Dialog</h2>
+        <div class="test-buttons">
+            <button id="test-save-btn" class="btn btn-primary">Open Save Dialog</button>
+        </div>
+        <div class="test-result" id="save-result">Click button to test save dialog</div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Load Configuration Dialog</h2>
+        <div class="test-buttons">
+            <button id="test-load-btn" class="btn btn-secondary">Open Load Dialog</button>
+        </div>
+        <div class="test-result" id="load-result">Click button to test load dialog</div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. API Integration Test</h2>
+        <div class="test-buttons">
+            <button id="test-list-configs" class="btn btn-secondary">List Configurations</button>
+            <button id="test-save-config" class="btn btn-primary">Save Test Config</button>
+            <button id="test-load-config" class="btn btn-secondary">Load Test Config</button>
+            <button id="test-delete-config" class="btn btn-danger">Delete Test Config</button>
+        </div>
+        <div class="test-result" id="api-result">Click buttons to test API integration</div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Validation Test</h2>
+        <div class="test-buttons">
+            <button id="test-empty-name" class="btn btn-secondary">Test Empty Name</button>
+            <button id="test-invalid-name" class="btn btn-secondary">Test Invalid Name</button>
+            <button id="test-valid-name" class="btn btn-success">Test Valid Name</button>
+        </div>
+        <div class="test-result" id="validation-result">Click buttons to test validation</div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Mock Configuration Form -->
+    <form id="config-form" style="display: none;">
+        <input type="text" name="broker" value="kite">
+        <input type="text" name="strategy" value="trend_following">
+        <input type="text" name="timeframe" value="5minute">
+        <input type="number" name="risk_per_trade" value="1.0">
+        <input type="number" name="max_positions" value="3">
+    </form>
+
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/state.js"></script>
+    
+    <!-- Mock ConfigForm for testing -->
+    <script>
+        const ConfigForm = {
+            getFormData() {
+                return {
+                    broker: 'kite',
+                    strategy: 'trend_following',
+                    timeframe: '5minute',
+                    risk_per_trade: 1.0,
+                    max_positions: 3,
+                    instruments: [
+                        { symbol: 'NIFTY', exchange: 'NSE' },
+                        { symbol: 'BANKNIFTY', exchange: 'NSE' }
+                    ]
+                };
+            },
+            setFormData(data) {
+                console.log('Setting form data:', data);
+                document.getElementById('api-result').textContent = 
+                    'Form data set:\n' + JSON.stringify(data, null, 2);
+            }
+        };
+
+        // Mock Validation
+        const Validation = {
+            validateBeforeSave() {
+                return true;
+            }
+        };
+    </script>
+    
+    <script src="../static/js/config-manager.js"></script>
+
+    <!-- Test Scripts -->
+    <script>
+        // Test 1: Save Dialog
+        document.getElementById('test-save-btn').addEventListener('click', () => {
+            ConfigManager.showSaveDialog();
+            document.getElementById('save-result').textContent = 
+                'Save dialog opened. Check if:\n' +
+                '- Dialog is visible\n' +
+                '- Name input is focused\n' +
+                '- Cancel and Save buttons work\n' +
+                '- Validation works for empty/invalid names';
+        });
+
+        // Test 2: Load Dialog
+        document.getElementById('test-load-btn').addEventListener('click', () => {
+            ConfigManager.showLoadDialog();
+            document.getElementById('load-result').textContent = 
+                'Load dialog opened. Check if:\n' +
+                '- Dialog is visible\n' +
+                '- Loading indicator shows\n' +
+                '- Configurations list loads\n' +
+                '- Load and Delete buttons work';
+        });
+
+        // Test 3: List Configurations
+        document.getElementById('test-list-configs').addEventListener('click', async () => {
+            try {
+                const response = await api.listConfigs();
+                document.getElementById('api-result').textContent = 
+                    'List Configs Response:\n' + JSON.stringify(response, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = 
+                    'Error: ' + error.message;
+            }
+        });
+
+        // Test 4: Save Configuration
+        document.getElementById('test-save-config').addEventListener('click', async () => {
+            try {
+                const testConfig = {
+                    name: 'Test Configuration',
+                    description: 'This is a test configuration',
+                    broker: 'kite',
+                    strategy: 'trend_following',
+                    timeframe: '5minute',
+                    risk_per_trade: 1.0,
+                    max_positions: 3,
+                    instruments: [
+                        { symbol: 'NIFTY', exchange: 'NSE' }
+                    ]
+                };
+                const response = await api.saveConfig(testConfig, 'test_config');
+                document.getElementById('api-result').textContent = 
+                    'Save Config Response:\n' + JSON.stringify(response, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = 
+                    'Error: ' + error.message;
+            }
+        });
+
+        // Test 5: Load Configuration
+        document.getElementById('test-load-config').addEventListener('click', async () => {
+            try {
+                const response = await api.getConfig('test_config');
+                document.getElementById('api-result').textContent = 
+                    'Load Config Response:\n' + JSON.stringify(response, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = 
+                    'Error: ' + error.message;
+            }
+        });
+
+        // Test 6: Delete Configuration
+        document.getElementById('test-delete-config').addEventListener('click', async () => {
+            if (confirm('Delete test_config?')) {
+                try {
+                    const response = await api.deleteConfig('test_config');
+                    document.getElementById('api-result').textContent = 
+                        'Delete Config Response:\n' + JSON.stringify(response, null, 2);
+                } catch (error) {
+                    document.getElementById('api-result').textContent = 
+                        'Error: ' + error.message;
+                }
+            }
+        });
+
+        // Test 7: Empty Name Validation
+        document.getElementById('test-empty-name').addEventListener('click', () => {
+            ConfigManager.showSaveDialog();
+            // Simulate clicking save with empty name
+            setTimeout(() => {
+                document.getElementById('config-name-input').value = '';
+                ConfigManager.saveConfiguration();
+            }, 100);
+            document.getElementById('validation-result').textContent = 
+                'Testing empty name validation. Should show error message.';
+        });
+
+        // Test 8: Invalid Name Validation
+        document.getElementById('test-invalid-name').addEventListener('click', () => {
+            ConfigManager.showSaveDialog();
+            // Simulate clicking save with invalid name
+            setTimeout(() => {
+                document.getElementById('config-name-input').value = 'test@config!';
+                ConfigManager.saveConfiguration();
+            }, 100);
+            document.getElementById('validation-result').textContent = 
+                'Testing invalid name validation. Should show error for special characters.';
+        });
+
+        // Test 9: Valid Name
+        document.getElementById('test-valid-name').addEventListener('click', () => {
+            ConfigManager.showSaveDialog();
+            setTimeout(() => {
+                document.getElementById('config-name-input').value = 'Valid Config Name 123';
+                document.getElementById('config-description-input').value = 'Test description';
+            }, 100);
+            document.getElementById('validation-result').textContent = 
+                'Testing valid name. Dialog should accept this name.';
+        });
+    </script>
+</body>
+</html>

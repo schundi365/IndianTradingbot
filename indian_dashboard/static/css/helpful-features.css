@@ -1,0 +1,609 @@
+/**
+ * Helpful Features Styles
+ * Styles for tooltips, contextual help, quick start guide, and help panels
+ */
+
+/* Enhanced Tooltips */
+.tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-left: 0.375rem;
+    vertical-align: middle;
+}
+
+.tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.tooltip-icon:hover {
+    background-color: #1d4ed8;
+    transform: scale(1.1);
+}
+
+.tooltip-content {
+    visibility: hidden;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--text-color);
+    color: white;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    white-space: normal;
+    max-width: 280px;
+    min-width: 200px;
+    opacity: 0;
+    transition: opacity 0.2s, visibility 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    text-align: left;
+}
+
+.tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--text-color);
+}
+
+.tooltip-wrapper:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Quick Start Guide */
+.quick-start-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.quick-start-modal {
+    background-color: white;
+    border-radius: 0.75rem;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.quick-start-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--border-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.quick-start-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.quick-start-header .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    line-height: 1;
+}
+
+.quick-start-header .close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.quick-start-content {
+    padding: 2rem;
+}
+
+.quick-start-intro {
+    font-size: 1.125rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.quick-start-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.quick-start-step {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background-color: var(--bg-color);
+    border-radius: 0.5rem;
+    border: 2px solid var(--border-color);
+    transition: all 0.2s;
+    position: relative;
+}
+
+.quick-start-step:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+    transform: translateX(4px);
+}
+
+.step-number {
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.step-icon {
+    font-size: 3rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+    font-size: 1.25rem;
+}
+
+.step-content p {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.quick-start-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.quick-start-footer label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.quick-start-footer input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Contextual Help Panels */
+.contextual-help-panel {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s;
+}
+
+.contextual-help-panel.collapsed .help-panel-content {
+    display: none;
+}
+
+.contextual-help-panel.collapsed .toggle-icon::before {
+    content: '+';
+}
+
+.help-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.help-panel-header h4 {
+    flex: 1;
+    margin: 0;
+    color: #92400e;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.help-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.help-toggle-btn {
+    background: none;
+    border: none;
+    color: #92400e;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    line-height: 1;
+    font-weight: bold;
+}
+
+.help-toggle-btn:hover {
+    background-color: rgba(146, 64, 14, 0.1);
+}
+
+.toggle-icon::before {
+    content: '−';
+}
+
+.help-panel-content {
+    color: #78350f;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.help-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.help-list li {
+    margin-bottom: 0.5rem;
+}
+
+.help-list li:last-child {
+    margin-bottom: 0;
+}
+
+.help-list strong {
+    color: #92400e;
+}
+
+/* Tab Help Panels */
+.tab-help-panel {
+    margin-bottom: 1.5rem;
+}
+
+.help-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid #60a5fa;
+    border-radius: 0.5rem;
+    position: relative;
+}
+
+.help-banner .help-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.help-banner .help-text {
+    flex: 1;
+    color: #1e40af;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.help-banner .help-text strong {
+    color: #1e3a8a;
+    font-weight: 600;
+}
+
+.help-close-btn {
+    background: none;
+    border: none;
+    color: #1e40af;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.help-close-btn:hover {
+    background-color: rgba(30, 64, 175, 0.1);
+}
+
+/* Parameter Help Modal */
+.parameter-help-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.parameter-help-modal {
+    background-color: white;
+    border-radius: 0.75rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.2s ease-out;
+}
+
+.parameter-help-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    background-color: var(--bg-color);
+}
+
+.parameter-help-modal .modal-header h3 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.5rem;
+}
+
+.parameter-help-modal .modal-header .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 2rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.parameter-help-modal .modal-header .close-btn:hover {
+    background-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.parameter-help-modal .modal-content {
+    padding: 1.5rem;
+}
+
+.parameter-help-modal .help-section {
+    margin-bottom: 1.5rem;
+}
+
+.parameter-help-modal .help-section:last-child {
+    margin-bottom: 0;
+}
+
+.parameter-help-modal .help-section h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--primary-color);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.parameter-help-modal .help-section p {
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.parameter-help-modal .help-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-color);
+}
+
+.parameter-help-modal .help-section li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.parameter-help-modal .help-section li:last-child {
+    margin-bottom: 0;
+}
+
+/* Quick Start Button in Header */
+#quick-start-btn {
+    margin-left: 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    transition: all 0.2s;
+}
+
+#quick-start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced Form Help Text */
+.form-help {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.form-help strong {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .quick-start-modal {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .quick-start-content {
+        padding: 1.5rem;
+    }
+    
+    .quick-start-step {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+    
+    .step-icon {
+        font-size: 2.5rem;
+        text-align: center;
+    }
+    
+    .quick-start-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .quick-start-footer .btn {
+        width: 100%;
+    }
+    
+    .tooltip-content {
+        max-width: 220px;
+        font-size: 0.8125rem;
+    }
+    
+    .help-banner {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .contextual-help-panel {
+        padding: 0.875rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .quick-start-overlay,
+    .parameter-help-modal-overlay,
+    .contextual-help-panel,
+    .tab-help-panel,
+    .tooltip-wrapper,
+    #quick-start-btn {
+        display: none !important;
+    }
+}
+
+/* Accessibility Improvements */
+.tooltip-icon:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.help-toggle-btn:focus,
+.help-close-btn:focus,
+.quick-start-header .close-btn:focus,
+.parameter-help-modal .close-btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Animation for help panels appearing */
+.contextual-help-panel,
+.tab-help-panel {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

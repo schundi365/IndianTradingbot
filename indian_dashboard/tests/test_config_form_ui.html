@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Form UI Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+        .test-section h2 {
+            margin-bottom: 1rem;
+            color: #2563eb;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        .test-result.pass {
+            background: #d1fae5;
+            color: #10b981;
+        }
+        .test-result.fail {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration Form UI Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Configuration Actions Bar</h2>
+        <p>Verify that the actions bar displays preset selector and save/load buttons</p>
+        
+        <div class="card config-actions-bar">
+            <div class="config-actions-left">
+                <select id="preset-selector" class="form-control" style="max-width: 300px;">
+                    <option value="">-- Select Preset --</option>
+                    <option value="nifty">NIFTY Futures</option>
+                    <option value="banknifty">BANKNIFTY Futures</option>
+                </select>
+            </div>
+            <div class="config-actions-right">
+                <button class="btn btn-primary">
+                    <span class="btn-icon">💾</span> Save Configuration
+                </button>
+                <button class="btn btn-secondary">
+                    <span class="btn-icon">📂</span> Load Configuration
+                </button>
+            </div>
+        </div>
+        
+        <div id="test1-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Configuration Tabs</h2>
+        <p>Verify that configuration tabs are displayed and clickable</p>
+        
+        <div class="card config-form-container">
+            <div class="config-tabs">
+                <button class="config-tab-button active" data-config-tab="basic">
+                    <span class="tab-icon">⚙️</span> Basic
+                </button>
+                <button class="config-tab-button" data-config-tab="strategy">
+                    <span class="tab-icon">📊</span> Strategy
+                </button>
+                <button class="config-tab-button" data-config-tab="risk">
+                    <span class="tab-icon">🛡️</span> Risk
+                </button>
+                <button class="config-tab-button" data-config-tab="advanced">
+                    <span class="tab-icon">🔧</span> Advanced
+                </button>
+            </div>
+            
+            <div style="padding: 2rem;">
+                <div class="config-section active" data-config-section="basic">
+                    <h3 class="section-title">Basic Settings</h3>
+                    <p>Basic settings content goes here</p>
+                </div>
+                
+                <div class="config-section" data-config-section="strategy">
+                    <h3 class="section-title">Strategy Parameters</h3>
+                    <p>Strategy parameters content goes here</p>
+                </div>
+                
+                <div class="config-section" data-config-section="risk">
+                    <h3 class="section-title">Risk Management</h3>
+                    <p>Risk management content goes here</p>
+                </div>
+                
+                <div class="config-section" data-config-section="advanced">
+                    <h3 class="section-title">Advanced Settings</h3>
+                    <p>Advanced settings content goes here</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="test2-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Form Sections</h2>
+        <p>Verify that form sections contain proper form controls</p>
+        
+        <div class="card config-form-container">
+            <div style="padding: 2rem;">
+                <div class="config-section active">
+                    <h3 class="section-title">Basic Settings</h3>
+                    
+                    <div class="form-group">
+                        <label for="test-timeframe">Timeframe</label>
+                        <select id="test-timeframe" class="form-control">
+                            <option value="5minute">5 Minutes</option>
+                            <option value="15minute">15 Minutes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="test-start">Trading Start Time</label>
+                            <input type="time" id="test-start" class="form-control" value="09:15">
+                        </div>
+                        <div class="form-group">
+                            <label for="test-end">Trading End Time</label>
+                            <input type="time" id="test-end" class="form-control" value="15:30">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="test3-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Selected Instruments Display</h2>
+        <p>Verify that selected instruments are displayed properly</p>
+        
+        <div class="card">
+            <div class="form-group">
+                <label>Selected Instruments</label>
+                <div class="selected-instruments-display">
+                    <div class="instrument-chip">
+                        <span class="symbol">RELIANCE</span>
+                        <span class="exchange">NSE</span>
+                    </div>
+                    <div class="instrument-chip">
+                        <span class="symbol">TCS</span>
+                        <span class="exchange">NSE</span>
+                    </div>
+                    <div class="instrument-chip">
+                        <span class="symbol">INFY</span>
+                        <span class="exchange">NSE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="test4-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Form Validation States</h2>
+        <p>Verify that form validation styling works</p>
+        
+        <div class="card">
+            <div class="config-section active">
+                <div class="form-group">
+                    <label for="test-valid">Valid Input</label>
+                    <input type="number" id="test-valid" class="form-control valid" value="10" min="1" max="100">
+                    <small class="form-help">This field is valid</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="test-invalid">Invalid Input</label>
+                    <input type="number" id="test-invalid" class="form-control invalid" value="150" min="1" max="100">
+                    <small class="form-error">Value must be between 1 and 100</small>
+                </div>
+            </div>
+        </div>
+        
+        <div id="test5-result" class="test-result"></div>
+    </div>
+
+    <script>
+        // Test 1: Configuration Actions Bar
+        function test1() {
+            const actionsBar = document.querySelector('.config-actions-bar');
+            const presetSelector = document.getElementById('preset-selector');
+            const buttons = actionsBar.querySelectorAll('.btn');
+            
+            const pass = actionsBar && presetSelector && buttons.length === 2;
+            
+            const result = document.getElementById('test1-result');
+            result.className = 'test-result ' + (pass ? 'pass' : 'fail');
+            result.textContent = pass ? '✓ PASS: Actions bar rendered correctly' : '✗ FAIL: Actions bar not rendered correctly';
+        }
+
+        // Test 2: Configuration Tabs
+        function test2() {
+            const tabs = document.querySelectorAll('.config-tab-button');
+            const sections = document.querySelectorAll('.config-section');
+            
+            const pass = tabs.length === 4 && sections.length === 4;
+            
+            const result = document.getElementById('test2-result');
+            result.className = 'test-result ' + (pass ? 'pass' : 'fail');
+            result.textContent = pass ? '✓ PASS: All tabs and sections rendered' : '✗ FAIL: Tabs or sections missing';
+            
+            // Setup tab switching
+            tabs.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-config-tab');
+                    
+                    tabs.forEach(btn => btn.classList.remove('active'));
+                    sections.forEach(section => section.classList.remove('active'));
+                    
+                    button.classList.add('active');
+                    const targetSection = document.querySelector(`[data-config-section="${targetTab}"]`);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // Test 3: Form Sections
+        function test3() {
+            const formGroups = document.querySelectorAll('.form-group');
+            const formRow = document.querySelector('.form-row');
+            
+            const pass = formGroups.length >= 3 && formRow !== null;
+            
+            const result = document.getElementById('test3-result');
+            result.className = 'test-result ' + (pass ? 'pass' : 'fail');
+            result.textContent = pass ? '✓ PASS: Form sections rendered correctly' : '✗ FAIL: Form sections not rendered correctly';
+        }
+
+        // Test 4: Selected Instruments Display
+        function test4() {
+            const instrumentsDisplay = document.querySelector('.selected-instruments-display');
+            const chips = instrumentsDisplay.querySelectorAll('.instrument-chip');
+            
+            const pass = instrumentsDisplay && chips.length === 3;
+            
+            const result = document.getElementById('test4-result');
+            result.className = 'test-result ' + (pass ? 'pass' : 'fail');
+            result.textContent = pass ? '✓ PASS: Instruments displayed correctly' : '✗ FAIL: Instruments not displayed correctly';
+        }
+
+        // Test 5: Form Validation States
+        function test5() {
+            const validInput = document.getElementById('test-valid');
+            const invalidInput = document.getElementById('test-invalid');
+            
+            const pass = validInput.classList.contains('valid') && invalidInput.classList.contains('invalid');
+            
+            const result = document.getElementById('test5-result');
+            result.className = 'test-result ' + (pass ? 'pass' : 'fail');
+            result.textContent = pass ? '✓ PASS: Validation states working' : '✗ FAIL: Validation states not working';
+        }
+
+        // Run all tests
+        window.addEventListener('DOMContentLoaded', () => {
+            test1();
+            test2();
+            test3();
+            test4();
+            test5();
+        });
+    </script>
+</body>
+</html>

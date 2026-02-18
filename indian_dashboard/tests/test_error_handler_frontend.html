@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Handler Frontend Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <link rel="stylesheet" href="../static/css/error-handler.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .test-btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .test-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .test-btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .test-btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .test-btn:hover {
+            opacity: 0.8;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .test-result-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-left: 3px solid #007bff;
+        }
+        .test-result-item.success {
+            border-left-color: #28a745;
+        }
+        .test-result-item.error {
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Error Handler Frontend Test Suite</h1>
+    <p>Test the error handling and display functionality</p>
+
+    <!-- Test Section 1: Error Display -->
+    <div class="test-section">
+        <h2>1. Error Display Tests</h2>
+        <p>Test different error types and their display</p>
+        <div class="test-buttons">
+            <button class="test-btn test-btn-danger" onclick="testValidationError()">Validation Error</button>
+            <button class="test-btn test-btn-danger" onclick="testAuthenticationError()">Authentication Error</button>
+            <button class="test-btn test-btn-danger" onclick="testBrokerError()">Broker Error</button>
+            <button class="test-btn test-btn-warning" onclick="testRateLimitError()">Rate Limit Error</button>
+            <button class="test-btn test-btn-warning" onclick="testTimeoutError()">Timeout Error</button>
+            <button class="test-btn test-btn-danger" onclick="testNetworkError()">Network Error</button>
+            <button class="test-btn test-btn-danger" onclick="testServerError()">Server Error</button>
+        </div>
+    </div>
+
+    <!-- Test Section 2: API Error Handling -->
+    <div class="test-section">
+        <h2>2. API Error Handling Tests</h2>
+        <p>Test API error responses and handling</p>
+        <div class="test-buttons">
+            <button class="test-btn test-btn-primary" onclick="testAPI400Error()">400 Bad Request</button>
+            <button class="test-btn test-btn-primary" onclick="testAPI401Error()">401 Unauthorized</button>
+            <button class="test-btn test-btn-primary" onclick="testAPI404Error()">404 Not Found</button>
+            <button class="test-btn test-btn-primary" onclick="testAPI429Error()">429 Rate Limit</button>
+            <button class="test-btn test-btn-primary" onclick="testAPI500Error()">500 Server Error</button>
+            <button class="test-btn test-btn-primary" onclick="testAPI502Error()">502 Bad Gateway</button>
+        </div>
+    </div>
+
+    <!-- Test Section 3: Modal Dialogs -->
+    <div class="test-section">
+        <h2>3. Modal Dialog Tests</h2>
+        <p>Test modal dialogs for error handling</p>
+        <div class="test-buttons">
+            <button class="test-btn test-btn-info" onclick="testReconnectPrompt()">Reconnect Prompt</button>
+            <button class="test-btn test-btn-info" onclick="testBrokerReconnectPrompt()">Broker Reconnect</button>
+            <button class="test-btn test-btn-info" onclick="testRetryPrompt()">Retry Prompt</button>
+        </div>
+    </div>
+
+    <!-- Test Section 4: Graceful Degradation -->
+    <div class="test-section">
+        <h2>4. Graceful Degradation Tests</h2>
+        <p>Test graceful degradation features</p>
+        <div class="test-buttons">
+            <button class="test-btn test-btn-warning" onclick="testOfflineMode()">Offline Mode</button>
+            <button class="test-btn test-btn-warning" onclick="testDisableActions()">Disable Actions (5s)</button>
+            <button class="test-btn test-btn-info" onclick="testInlineValidation()">Inline Validation</button>
+        </div>
+    </div>
+
+    <!-- Test Section 5: Error Logging -->
+    <div class="test-section">
+        <h2>5. Error Logging Tests</h2>
+        <p>Test error logging functionality</p>
+        <div class="test-buttons">
+            <button class="test-btn test-btn-primary" onclick="viewErrorLog()">View Error Log</button>
+            <button class="test-btn test-btn-primary" onclick="exportErrorLog()">Export Error Log</button>
+            <button class="test-btn test-btn-danger" onclick="clearErrorLog()">Clear Error Log</button>
+        </div>
+        <div id="error-log-display" class="test-results" style="display: none;"></div>
+    </div>
+
+    <!-- Test Results -->
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results" class="test-results">
+            <p>No tests run yet. Click buttons above to test error handling.</p>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/error-handler.js"></script>
+    <script src="../static/js/api-client.js"></script>
+
+    <script>
+        // Test helper functions
+        function logTestResult(testName, success, message) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultItem = document.createElement('div');
+            resultItem.className = `test-result-item ${success ? 'success' : 'error'}`;
+            resultItem.innerHTML = `
+                <strong>${testName}</strong><br>
+                Status: ${success ? '✅ PASS' : '❌ FAIL'}<br>
+                ${message}<br>
+                <small>${new Date().toLocaleTimeString()}</small>
+            `;
+            resultsDiv.insertBefore(resultItem, resultsDiv.firstChild);
+        }
+
+        // Test 1: Error Display Tests
+        function testValidationError() {
+            errorHandler.handleAPIError({
+                error: 'Invalid input provided',
+                error_type: 'validation_error',
+                details: { field: 'username' }
+            });
+            logTestResult('Validation Error', true, 'Validation error displayed');
+        }
+
+        function testAuthenticationError() {
+            errorHandler.handleAPIError({
+                error: 'Authentication required',
+                error_type: 'authentication_error'
+            });
+            logTestResult('Authentication Error', true, 'Authentication error displayed');
+        }
+
+        function testBrokerError() {
+            errorHandler.handleAPIError({
+                error: 'Broker connection failed',
+                error_type: 'broker_error',
+                details: { broker: 'kite' }
+            });
+            logTestResult('Broker Error', true, 'Broker error displayed');
+        }
+
+        function testRateLimitError() {
+            errorHandler.handleAPIError({
+                error: 'Rate limit exceeded',
+                error_type: 'rate_limit_error',
+                details: { retry_after: 60 }
+            });
+            logTestResult('Rate Limit Error', true, 'Rate limit error displayed');
+        }
+
+        function testTimeoutError() {
+            errorHandler.handleAPIError({
+                error: 'Request timeout',
+                error_type: 'timeout_error'
+            }, { retryable: true, retryFunction: () => console.log('Retry') });
+            logTestResult('Timeout Error', true, 'Timeout error displayed with retry option');
+        }
+
+        function testNetworkError() {
+            errorHandler.handleAPIError({
+                error: 'Network error',
+                error_type: 'network_error'
+            });
+            logTestResult('Network Error', true, 'Network error displayed');
+        }
+
+        function testServerError() {
+            errorHandler.handleAPIError({
+                error: 'Internal server error',
+                error_type: 'server_error'
+            });
+            logTestResult('Server Error', true, 'Server error displayed');
+        }
+
+        // Test 2: API Error Handling Tests
+        function testAPI400Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 400,
+                    statusText: 'Bad Request',
+                    data: {
+                        error: 'Invalid request parameters',
+                        error_type: 'validation_error'
+                    }
+                }
+            });
+            logTestResult('API 400 Error', true, '400 error handled correctly');
+        }
+
+        function testAPI401Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 401,
+                    statusText: 'Unauthorized',
+                    data: {
+                        error: 'Authentication required',
+                        error_type: 'authentication_error'
+                    }
+                }
+            });
+            logTestResult('API 401 Error', true, '401 error handled correctly');
+        }
+
+        function testAPI404Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 404,
+                    statusText: 'Not Found',
+                    data: {
+                        error: 'Resource not found',
+                        error_type: 'not_found'
+                    }
+                }
+            });
+            logTestResult('API 404 Error', true, '404 error handled correctly');
+        }
+
+        function testAPI429Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 429,
+                    statusText: 'Too Many Requests',
+                    data: {
+                        error: 'Rate limit exceeded',
+                        error_type: 'rate_limit_error',
+                        details: { retry_after: 60 }
+                    }
+                }
+            });
+            logTestResult('API 429 Error', true, '429 error handled correctly');
+        }
+
+        function testAPI500Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 500,
+                    statusText: 'Internal Server Error',
+                    data: {
+                        error: 'Server error',
+                        error_type: 'server_error'
+                    }
+                }
+            });
+            logTestResult('API 500 Error', true, '500 error handled correctly');
+        }
+
+        function testAPI502Error() {
+            errorHandler.handleAPIError({
+                response: {
+                    status: 502,
+                    statusText: 'Bad Gateway',
+                    data: {
+                        error: 'Broker service unavailable',
+                        error_type: 'broker_error'
+                    }
+                }
+            });
+            logTestResult('API 502 Error', true, '502 error handled correctly');
+        }
+
+        // Test 3: Modal Dialog Tests
+        function testReconnectPrompt() {
+            errorHandler.showReconnectPrompt();
+            logTestResult('Reconnect Prompt', true, 'Reconnect modal displayed');
+        }
+
+        function testBrokerReconnectPrompt() {
+            errorHandler.showBrokerReconnectPrompt();
+            logTestResult('Broker Reconnect Prompt', true, 'Broker reconnect modal displayed');
+        }
+
+        function testRetryPrompt() {
+            errorHandler.offerRetry({
+                retryFunction: () => console.log('Retrying...'),
+                retryKey: 'test-retry'
+            });
+            logTestResult('Retry Prompt', true, 'Retry modal displayed');
+        }
+
+        // Test 4: Graceful Degradation Tests
+        function testOfflineMode() {
+            errorHandler.showOfflineMessage();
+            logTestResult('Offline Mode', true, 'Offline message displayed');
+        }
+
+        function testDisableActions() {
+            errorHandler.disableActionsTemporarily(5000);
+            logTestResult('Disable Actions', true, 'Actions disabled for 5 seconds');
+        }
+
+        function testInlineValidation() {
+            // Create a test form
+            const form = document.createElement('form');
+            form.id = 'test-validation-form';
+            form.innerHTML = `
+                <div>
+                    <input type="text" name="username" placeholder="Username">
+                </div>
+                <div>
+                    <input type="email" name="email" placeholder="Email">
+                </div>
+            `;
+            document.body.appendChild(form);
+
+            errorHandler.displayInlineValidationErrors('test-validation-form', {
+                username: 'Username is required',
+                email: 'Invalid email format'
+            });
+
+            logTestResult('Inline Validation', true, 'Inline validation errors displayed');
+
+            // Clean up
+            setTimeout(() => form.remove(), 5000);
+        }
+
+        // Test 5: Error Logging Tests
+        function viewErrorLog() {
+            const log = errorHandler.getErrorLog();
+            const display = document.getElementById('error-log-display');
+            display.style.display = 'block';
+            display.innerHTML = `
+                <h4>Error Log (${log.length} entries)</h4>
+                <pre>${JSON.stringify(log, null, 2)}</pre>
+            `;
+            logTestResult('View Error Log', true, `Displayed ${log.length} error log entries`);
+        }
+
+        function exportErrorLog() {
+            errorHandler.exportErrorLog();
+            logTestResult('Export Error Log', true, 'Error log exported to JSON file');
+        }
+
+        function clearErrorLog() {
+            errorHandler.clearErrorLog();
+            logTestResult('Clear Error Log', true, 'Error log cleared');
+        }
+
+        // Initialize
+        console.log('Error Handler Test Suite Loaded');
+        console.log('Error Handler Instance:', errorHandler);
+    </script>
+</body>
+</html>

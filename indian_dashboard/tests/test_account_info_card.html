@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Info Card Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+        }
+        .test-controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls h3 {
+            margin-top: 0;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Account Info Card Test</h1>
+        
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="loadSampleData()">Load Sample Data</button>
+                <button class="btn btn-primary" onclick="loadProfitableData()">Load Profitable Day</button>
+                <button class="btn btn-danger" onclick="loadLossData()">Load Loss Day</button>
+                <button class="btn btn-secondary" onclick="resetData()">Reset to Empty</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Account Information Card</h2>
+            
+            <!-- Account Information Card -->
+            <div class="card account-info-card">
+                <div class="account-info-header">
+                    <h3>Account Information</h3>
+                    <div class="account-refresh-indicator" id="account-refresh-indicator">
+                        <span class="refresh-icon">🔄</span>
+                        <span class="refresh-text">Auto-refresh: 5s</span>
+                    </div>
+                </div>
+                
+                <div class="account-info-grid">
+                    <div class="account-info-item">
+                        <div class="account-item-icon">💰</div>
+                        <div class="account-item-content">
+                            <div class="account-item-label">Balance</div>
+                            <div class="account-item-value" id="account-balance">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-item">
+                        <div class="account-item-icon">📊</div>
+                        <div class="account-item-content">
+                            <div class="account-item-label">Equity</div>
+                            <div class="account-item-value" id="account-equity">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-item">
+                        <div class="account-item-icon">✅</div>
+                        <div class="account-item-content">
+                            <div class="account-item-label">Available Margin</div>
+                            <div class="account-item-value" id="account-margin-available">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-item">
+                        <div class="account-item-icon">⚠️</div>
+                        <div class="account-item-content">
+                            <div class="account-item-label">Used Margin</div>
+                            <div class="account-item-value" id="account-margin-used">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-info-item account-pnl-item">
+                        <div class="account-item-icon">📈</div>
+                        <div class="account-item-content">
+                            <div class="account-item-label">Today's P&L</div>
+                            <div class="account-item-value" id="account-pnl-today">--</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="account-info-footer">
+                    <div class="account-status-message" id="account-status-message">
+                        <span class="status-icon">ℹ️</span>
+                        <span class="status-text">Connect to broker to view account information</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility function to format currency
+        function formatCurrency(value) {
+            return '₹' + value.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            updateAccountDisplay({
+                balance: 250000.00,
+                equity: 265000.00,
+                margin_available: 180000.00,
+                margin_used: 70000.00,
+                pnl_today: 5250.50
+            });
+            
+            updateStatusMessage('success', '✅', 'Account data updated successfully');
+        }
+
+        // Load profitable day data
+        function loadProfitableData() {
+            updateAccountDisplay({
+                balance: 300000.00,
+                equity: 325000.00,
+                margin_available: 220000.00,
+                margin_used: 80000.00,
+                pnl_today: 25000.00
+            });
+            
+            updateStatusMessage('success', '✅', 'Great trading day! Account data updated');
+        }
+
+        // Load loss day data
+        function loadLossData() {
+            updateAccountDisplay({
+                balance: 200000.00,
+                equity: 185000.00,
+                margin_available: 120000.00,
+                margin_used: 65000.00,
+                pnl_today: -15000.00
+            });
+            
+            updateStatusMessage('warning', '⚠️', 'Account data updated - Monitor your positions');
+        }
+
+        // Reset to empty state
+        function resetData() {
+            document.getElementById('account-balance').textContent = '--';
+            document.getElementById('account-equity').textContent = '--';
+            document.getElementById('account-margin-available').textContent = '--';
+            document.getElementById('account-margin-used').textContent = '--';
+            
+            const pnlEl = document.getElementById('account-pnl-today');
+            pnlEl.textContent = '--';
+            pnlEl.classList.remove('positive', 'negative');
+            
+            updateStatusMessage('', 'ℹ️', 'Connect to broker to view account information');
+        }
+
+        // Update account display
+        function updateAccountDisplay(account) {
+            document.getElementById('account-balance').textContent = formatCurrency(account.balance);
+            document.getElementById('account-equity').textContent = formatCurrency(account.equity);
+            document.getElementById('account-margin-available').textContent = formatCurrency(account.margin_available);
+            document.getElementById('account-margin-used').textContent = formatCurrency(account.margin_used);
+            
+            const pnlEl = document.getElementById('account-pnl-today');
+            pnlEl.textContent = formatCurrency(account.pnl_today);
+            
+            // Update P&L color
+            pnlEl.classList.remove('positive', 'negative');
+            if (account.pnl_today > 0) {
+                pnlEl.classList.add('positive');
+            } else if (account.pnl_today < 0) {
+                pnlEl.classList.add('negative');
+            }
+        }
+
+        // Update status message
+        function updateStatusMessage(type, icon, text) {
+            const statusMessage = document.getElementById('account-status-message');
+            statusMessage.className = 'account-status-message' + (type ? ' ' + type : '');
+            statusMessage.innerHTML = `
+                <span class="status-icon">${icon}</span>
+                <span class="status-text">${text}</span>
+            `;
+        }
+    </script>
+</body>
+</html>

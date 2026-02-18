@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Broker Connection UI</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .test-result {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .test-result.success {
+            background-color: #d1fae5;
+            border: 1px solid #6ee7b7;
+        }
+        .test-result.error {
+            background-color: #fee2e2;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Broker Connection UI Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Connection Progress Indicator</h2>
+        <button id="test-progress-btn" class="btn btn-primary">Show Connection Progress</button>
+        <div id="progress-result" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: User Info Display</h2>
+        <button id="test-userinfo-btn" class="btn btn-primary">Show User Info</button>
+        <div id="userinfo-container"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Connection Error Display</h2>
+        <button id="test-error-btn" class="btn btn-primary">Show Connection Error</button>
+        <div id="error-result" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Test Connection Button</h2>
+        <button id="test-connection-btn" class="btn btn-secondary">Test Connection</button>
+        <div id="test-result" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Loading State</h2>
+        <button id="test-loading-btn" class="btn btn-primary">Test Loading State</button>
+        <p>Click the button to see the loading animation</p>
+    </div>
+
+    <script src="/static/js/utils.js"></script>
+    <script>
+        // Test 1: Connection Progress
+        document.getElementById('test-progress-btn').addEventListener('click', () => {
+            const result = document.getElementById('progress-result');
+            result.style.display = 'block';
+            result.className = 'test-result';
+            result.innerHTML = `
+                <div class="connection-progress">
+                    <div class="spinner"></div>
+                    <div class="message">Connecting to broker...</div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                result.className = 'test-result success';
+                result.innerHTML = `
+                    <div class="connection-success">
+                        <span class="success-icon">✅</span>
+                        Connection successful!
+                    </div>
+                `;
+            }, 2000);
+        });
+        
+        // Test 2: User Info Display
+        document.getElementById('test-userinfo-btn').addEventListener('click', () => {
+            const container = document.getElementById('userinfo-container');
+            const userInfo = {
+                user_id: 'TEST123',
+                user_name: 'Test User',
+                email: 'test@example.com',
+                broker: 'kite'
+            };
+            
+            let html = '<div class="user-info-display">';
+            html += `<p><strong>User ID:</strong> ${userInfo.user_id}</p>`;
+            html += `<p><strong>Name:</strong> ${userInfo.user_name}</p>`;
+            html += `<p><strong>Email:</strong> ${userInfo.email}</p>`;
+            html += `<p><strong>Broker:</strong> ${userInfo.broker}</p>`;
+            html += '</div>';
+            
+            container.innerHTML = html;
+        });
+        
+        // Test 3: Connection Error
+        document.getElementById('test-error-btn').addEventListener('click', () => {
+            const result = document.getElementById('error-result');
+            result.style.display = 'block';
+            result.className = 'test-result error';
+            result.innerHTML = `
+                <div class="connection-error">
+                    <div class="error-title">Connection Failed</div>
+                    <div class="error-message">Invalid credentials. Please check your API key and secret.</div>
+                </div>
+            `;
+        });
+        
+        // Test 4: Test Connection
+        document.getElementById('test-connection-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('test-connection-btn');
+            const result = document.getElementById('test-result');
+            
+            loading.show(btn);
+            result.style.display = 'block';
+            result.className = 'test-result';
+            result.textContent = 'Testing connection...';
+            
+            setTimeout(() => {
+                loading.hide(btn);
+                result.className = 'test-result success';
+                result.textContent = 'Connection test successful: Balance: ₹100,000.00';
+            }, 2000);
+        });
+        
+        // Test 5: Loading State
+        document.getElementById('test-loading-btn').addEventListener('click', () => {
+            const btn = document.getElementById('test-loading-btn');
+            loading.show(btn);
+            
+            setTimeout(() => {
+                loading.hide(btn);
+                notifications.success('Loading state test completed!');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

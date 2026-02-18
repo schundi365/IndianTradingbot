@@ -1,0 +1,406 @@
+/* GEM Trading Bot - Vibrant Color Theme */
+
+:root {
+    /* Primary Colors - Vibrant and Modern */
+    --gem-primary: #FF6B35;        /* Vibrant Orange */
+    --gem-secondary: #004E89;      /* Deep Blue */
+    --gem-accent: #F7B801;         /* Golden Yellow */
+    --gem-success: #06D6A0;        /* Turquoise Green */
+    --gem-danger: #EF476F;         /* Vibrant Pink/Red */
+    --gem-warning: #FFD23F;        /* Bright Yellow */
+    --gem-info: #118AB2;           /* Ocean Blue */
+    
+    /* Gradient Backgrounds */
+    --gem-gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7B801 100%);
+    --gem-gradient-secondary: linear-gradient(135deg, #004E89 0%, #118AB2 100%);
+    --gem-gradient-success: linear-gradient(135deg, #06D6A0 0%, #1B9AAA 100%);
+    --gem-gradient-header: linear-gradient(135deg, #FF6B35 0%, #F7B801 50%, #06D6A0 100%);
+    
+    /* Background Colors */
+    --gem-bg-primary: #FFFFFF;
+    --gem-bg-secondary: #F8F9FA;
+    --gem-bg-dark: #1A1A2E;
+    --gem-bg-card: #FFFFFF;
+    
+    /* Text Colors */
+    --gem-text-primary: #2D3142;
+    --gem-text-secondary: #6C757D;
+    --gem-text-light: #FFFFFF;
+    --gem-text-muted: #9CA3AF;
+    
+    /* Border and Shadow */
+    --gem-border: #E5E7EB;
+    --gem-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --gem-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --gem-shadow-colored: 0 10px 25px -5px rgba(255, 107, 53, 0.3);
+}
+
+/* Header Styling */
+.dashboard-header {
+    background: var(--gem-gradient-header) !important;
+    box-shadow: var(--gem-shadow-lg);
+    padding: 1.5rem 0;
+}
+
+.logo {
+    color: var(--gem-text-light) !important;
+    font-weight: 700;
+    font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gem-icon {
+    font-size: 2rem;
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+.rupee-symbol {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--gem-accent);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes sparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    background: var(--gem-bg-secondary);
+    border-bottom: 3px solid var(--gem-primary);
+    box-shadow: var(--gem-shadow);
+}
+
+.tab-button {
+    color: var(--gem-text-secondary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button:hover {
+    color: var(--gem-primary);
+    transform: translateY(-2px);
+}
+
+.tab-button.active {
+    color: var(--gem-primary);
+    background: var(--gem-bg-primary);
+    border-bottom: 3px solid var(--gem-primary);
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gem-gradient-primary);
+}
+
+/* Cards */
+.card {
+    background: var(--gem-bg-card);
+    border: 2px solid var(--gem-border);
+    border-radius: 12px;
+    box-shadow: var(--gem-shadow);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--gem-shadow-lg);
+    transform: translateY(-2px);
+    border-color: var(--gem-primary);
+}
+
+.card h3 {
+    color: var(--gem-secondary);
+    border-bottom: 2px solid var(--gem-accent);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: var(--gem-shadow);
+}
+
+.btn-primary {
+    background: var(--gem-gradient-primary) !important;
+    border: none;
+    color: var(--gem-text-light);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gem-shadow-colored);
+}
+
+.btn-success {
+    background: var(--gem-gradient-success) !important;
+    border: none;
+    color: var(--gem-text-light);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(6, 214, 160, 0.3);
+}
+
+.btn-danger {
+    background: var(--gem-danger) !important;
+    border: none;
+    color: var(--gem-text-light);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(239, 71, 111, 0.3);
+}
+
+.btn-secondary {
+    background: var(--gem-gradient-secondary) !important;
+    border: none;
+    color: var(--gem-text-light);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: var(--gem-shadow);
+    transition: all 0.3s ease;
+}
+
+.status-badge.connected {
+    background: var(--gem-gradient-success);
+    color: var(--gem-text-light);
+}
+
+.status-badge.running {
+    background: var(--gem-gradient-primary);
+    color: var(--gem-text-light);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.status-badge.stopped {
+    background: #6C757D;
+    color: var(--gem-text-light);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Broker Cards */
+.broker-card {
+    border: 2px solid var(--gem-border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.broker-card:hover {
+    border-color: var(--gem-primary);
+    box-shadow: var(--gem-shadow-colored);
+    transform: translateY(-4px);
+}
+
+.broker-card.selected {
+    border-color: var(--gem-primary);
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 184, 1, 0.1) 100%);
+    box-shadow: var(--gem-shadow-colored);
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+    border: 2px solid var(--gem-border);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--gem-primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    outline: none;
+}
+
+/* Tables */
+table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--gem-shadow);
+}
+
+thead {
+    background: var(--gem-gradient-secondary);
+    color: var(--gem-text-light);
+}
+
+tbody tr:hover {
+    background: rgba(255, 107, 53, 0.05);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--gem-bg-secondary);
+}
+
+/* Alerts */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
+    box-shadow: var(--gem-shadow);
+}
+
+.alert-success {
+    background: rgba(6, 214, 160, 0.1);
+    border-left-color: var(--gem-success);
+    color: #047857;
+}
+
+.alert-danger {
+    background: rgba(239, 71, 111, 0.1);
+    border-left-color: var(--gem-danger);
+    color: #B91C1C;
+}
+
+.alert-warning {
+    background: rgba(255, 210, 63, 0.1);
+    border-left-color: var(--gem-warning);
+    color: #92400E;
+}
+
+.alert-info {
+    background: rgba(17, 138, 178, 0.1);
+    border-left-color: var(--gem-info);
+    color: #075985;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 4px solid rgba(255, 107, 53, 0.1);
+    border-top-color: var(--gem-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Progress Bars */
+.progress-bar {
+    background: var(--gem-gradient-primary);
+    border-radius: 8px;
+    transition: width 0.3s ease;
+}
+
+/* Tooltips */
+.tooltip {
+    background: var(--gem-secondary);
+    color: var(--gem-text-light);
+    border-radius: 6px;
+    box-shadow: var(--gem-shadow-lg);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gem-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gem-gradient-primary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gem-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .logo {
+        font-size: 1.25rem;
+    }
+    
+    .gem-icon {
+        font-size: 1.5rem;
+    }
+    
+    .rupee-symbol {
+        font-size: 1.25rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Metric Cards */
+.metric-card {
+    background: var(--gem-bg-card);
+    border-left: 4px solid var(--gem-primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--gem-shadow);
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gem-shadow-lg);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gem-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Position Cards */
+.position-profit {
+    color: var(--gem-success);
+    font-weight: 600;
+}
+
+.position-loss {
+    color: var(--gem-danger);
+    font-weight: 600;
+}

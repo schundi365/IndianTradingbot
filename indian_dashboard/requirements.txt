@@ -1,0 +1,29 @@
+# Indian Market Web Dashboard Dependencies
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Limiter==3.5.0
+
+# Security
+cryptography==41.0.7
+
+# Broker APIs
+kiteconnect==4.2.0
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.2
+
+# Utilities
+python-dotenv==1.0.0
+pytz==2023.3
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+hypothesis==6.92.1
+
+# Development
+black==23.12.1
+flake8==6.1.0

@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    container_name: indian-dashboard
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist data, configs, and logs
+      - ./data:/app/data
+      - ./configs:/app/configs
+      - ./logs:/app/logs
+    environment:
+      # Override these in .env file or here
+      - DASHBOARD_HOST=0.0.0.0
+      - DASHBOARD_PORT=8080
+      - DASHBOARD_DEBUG=False
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-3600}
+      - AUTO_REFRESH_INTERVAL=${AUTO_REFRESH_INTERVAL:-5}
+      - INSTRUMENT_CACHE_TTL=${INSTRUMENT_CACHE_TTL:-86400}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-True}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+networks:
+  dashboard-network:
+    driver: bridge

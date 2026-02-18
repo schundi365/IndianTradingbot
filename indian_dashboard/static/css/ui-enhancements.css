@@ -1,0 +1,980 @@
+/**
+ * UI/UX Enhancements for Indian Market Trading Dashboard
+ * Task 14.2: Animations, Transitions, Mobile Responsiveness, Keyboard Shortcuts, Accessibility
+ */
+
+/* ============================================
+   ANIMATIONS AND TRANSITIONS
+   ============================================ */
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition-property: background-color, border-color, color, opacity, transform, box-shadow;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
+}
+
+/* Fade in animation for tab content */
+.tab-content {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Slide in animation for cards */
+.card {
+    animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Button hover effects with scale */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth broker card transitions */
+.broker-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.broker-card:hover:not(.disabled) {
+    transform: translateY(-4px) scale(1.02);
+}
+
+/* Table row hover animation */
+.data-table tbody tr {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.data-table tbody tr:hover {
+    transform: translateX(2px);
+}
+
+/* Notification slide in animation */
+.notification {
+    animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Notification slide out animation */
+.notification.removing {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutRight {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner,
+.loading {
+    animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for status indicators */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
+.broker-status-indicator.connected,
+.status-dot.active {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.form-control.invalid {
+    animation: shake 0.5s;
+}
+
+/* Bounce animation for success */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+.notification.success {
+    animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), bounce 0.6s 0.4s;
+}
+
+/* Smooth tab switching */
+.tab-button {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.tab-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.tab-button.active::after {
+    width: 100%;
+}
+
+/* Smooth config tab switching */
+.config-tab-button {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.config-tab-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.config-tab-button.active::after {
+    width: 100%;
+}
+
+/* Smooth form section transitions */
+.config-section {
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Filter tag animations */
+.filter-tag {
+    animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.filter-tag-remove:hover {
+    transform: rotate(90deg);
+}
+
+/* Selected instrument tag animations */
+.selected-instrument-tag {
+    animation: scaleIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.remove-instrument:hover {
+    transform: rotate(90deg) scale(1.2);
+}
+
+/* Progress bar animation */
+@keyframes progress {
+    from {
+        width: 0%;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+.progress-bar {
+    animation: progress 2s ease-out;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ============================================
+   MOBILE RESPONSIVENESS
+   ============================================ */
+
+/* Mobile-first approach - enhance for larger screens */
+
+/* Small devices (phones, less than 640px) */
+@media (max-width: 640px) {
+    /* Header adjustments */
+    .dashboard-header .container {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .logo {
+        font-size: 1.25rem;
+    }
+    
+    .header-status {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .status-badge {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Tab navigation */
+    .tab-navigation .container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    
+    .tab-navigation .container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+    
+    /* Content padding */
+    .dashboard-content {
+        padding: 1rem 0;
+    }
+    
+    .container {
+        padding: 0 0.75rem;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .card h3 {
+        font-size: 1rem;
+    }
+    
+    /* Broker grid */
+    .broker-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .broker-card {
+        padding: 1rem;
+    }
+    
+    .broker-logo {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .broker-name {
+        font-size: 0.875rem;
+    }
+    
+    /* Forms */
+    .form-group {
+        margin-bottom: 0.875rem;
+    }
+    
+    .form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Tables */
+    .data-table {
+        font-size: 0.875rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3) {
+        display: none; /* Hide name column */
+    }
+    
+    /* Filters */
+    .filters {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .filters label {
+        font-size: 0.875rem;
+    }
+    
+    /* Config actions */
+    .config-actions-bar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .config-actions-left,
+    .config-actions-right {
+        width: 100%;
+    }
+    
+    .config-actions-right {
+        flex-wrap: wrap;
+    }
+    
+    .config-actions-right .btn {
+        flex: 1;
+        min-width: calc(50% - 0.375rem);
+    }
+    
+    /* Config tabs */
+    .config-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .config-tab-button {
+        min-width: 100px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .config-tab-button .tab-icon {
+        font-size: 1rem;
+    }
+    
+    /* Form rows */
+    .form-row {
+        flex-direction: column;
+    }
+    
+    /* Risk metrics */
+    .risk-metrics-panel {
+        padding: 0.75rem;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    /* Bot status */
+    .bot-status-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .bot-control-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .bot-control-actions .btn {
+        width: 100%;
+    }
+    
+    /* Account info */
+    .account-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    /* Pagination */
+    .pagination {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    /* Notifications */
+    #notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .notification {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    /* Selected instruments */
+    .selected-instrument-tag {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    /* Toolbar */
+    .instruments-toolbar {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .instruments-toolbar > div {
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+}
+
+/* Medium devices (tablets, 641px to 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .broker-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .bot-status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .account-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .config-actions-right .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.875rem;
+    }
+}
+
+/* Large devices (desktops, 1025px and up) */
+@media (min-width: 1025px) {
+    .broker-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .bot-status-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .account-info-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.25rem;
+    }
+    
+    .tab-button {
+        min-height: 48px;
+    }
+    
+    .broker-card {
+        min-height: 120px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .btn:hover {
+        transform: none;
+    }
+    
+    .broker-card:hover {
+        transform: none;
+    }
+    
+    /* Use active state instead */
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .broker-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .dashboard-header {
+        padding: 0.5rem 0;
+    }
+    
+    .dashboard-content {
+        padding: 1rem 0;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================ */
+
+/* Focus indicators */
+*:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    z-index: 10000;
+}
+
+.skip-to-main:focus {
+    top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0000ff;
+        --success-color: #008000;
+        --danger-color: #ff0000;
+        --border-color: #000000;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    .card {
+        border: 2px solid var(--border-color);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .spinner,
+    .loading {
+        animation: none;
+        border-top-color: var(--primary-color);
+    }
+    
+    .broker-status-indicator.connected,
+    .status-dot.active {
+        animation: none;
+    }
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Improved form labels */
+.form-group label {
+    cursor: pointer;
+}
+
+.form-group label .required::after {
+    content: ' (required)';
+    font-size: 0.875rem;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+/* Better error messages */
+.form-error {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.form-error::before {
+    content: '⚠️';
+    font-size: 1rem;
+}
+
+/* Improved button states */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn[aria-busy="true"] {
+    position: relative;
+    color: transparent;
+}
+
+.btn[aria-busy="true"]::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+/* Improved table accessibility */
+.data-table caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.data-table th {
+    text-align: left;
+}
+
+.data-table th[aria-sort] {
+    cursor: pointer;
+}
+
+.data-table th[aria-sort="ascending"]::after {
+    content: ' ↑';
+}
+
+.data-table th[aria-sort="descending"]::after {
+    content: ' ↓';
+}
+
+/* Improved notification accessibility */
+.notification[role="alert"] {
+    position: relative;
+}
+
+.notification[role="alert"]::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.notification.success[role="alert"]::before {
+    background-color: var(--success-color);
+}
+
+.notification.error[role="alert"]::before {
+    background-color: var(--danger-color);
+}
+
+.notification.info[role="alert"]::before {
+    background-color: var(--primary-color);
+}
+
+/* Keyboard navigation indicators */
+.tab-button:focus-visible,
+.config-tab-button:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+    z-index: 1;
+}
+
+/* Improved tooltip accessibility */
+.tooltip-wrapper [role="tooltip"] {
+    position: absolute;
+    z-index: 1000;
+}
+
+.tooltip-wrapper:focus-within [role="tooltip"] {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Better color contrast for text */
+.text-muted {
+    color: #6b7280;
+}
+
+/* Ensure sufficient contrast for links */
+a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #1d4ed8;
+}
+
+a:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   KEYBOARD SHORTCUT VISUAL INDICATORS
+   ============================================ */
+
+.keyboard-shortcut-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    padding: 0.125rem 0.375rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: var(--text-muted);
+}
+
+.keyboard-shortcut-hint kbd {
+    padding: 0.125rem 0.25rem;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Keyboard shortcut modal */
+.keyboard-shortcuts-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 10000;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.keyboard-shortcuts-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+.shortcuts-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-color);
+    border-radius: 0.375rem;
+}
+
+.shortcut-description {
+    font-weight: 500;
+}
+
+.shortcut-keys {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.shortcut-keys kbd {
+    padding: 0.25rem 0.5rem;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .dashboard-header,
+    .tab-navigation,
+    .dashboard-footer,
+    .btn,
+    #notification-container {
+        display: none;
+    }
+    
+    .card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .data-table {
+        page-break-inside: auto;
+    }
+    
+    .data-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (Optional)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #1e293b;
+        --card-bg: #334155;
+        --text-color: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border-color: #475569;
+    }
+    
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+    
+    .card {
+        background-color: var(--card-bg);
+    }
+    
+    .form-control {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+    
+    .data-table th {
+        background-color: var(--bg-color);
+    }
+    
+    .data-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+}

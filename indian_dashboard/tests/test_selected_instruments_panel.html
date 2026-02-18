@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Selected Instruments Panel</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .test-result {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Selected Instruments Panel - Test Suite</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Empty State Display</h3>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test1-count">0</span>)</h3>
+                <button id="test1-clear-btn" class="btn btn-sm btn-secondary" style="display: none;">Clear All</button>
+            </div>
+            <div id="test1-container">
+                <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>
+            </div>
+            <button id="test1-continue-btn" class="btn btn-primary" disabled>Continue to Configuration</button>
+        </div>
+        <div id="test1-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Single Instrument Display</h3>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test2-count">1</span>)</h3>
+                <button id="test2-clear-btn" class="btn btn-sm btn-secondary">Clear All</button>
+            </div>
+            <div id="test2-container">
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">RELIANCE</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove RELIANCE">&times;</button>
+                </div>
+            </div>
+            <button id="test2-continue-btn" class="btn btn-primary">Continue to Configuration</button>
+        </div>
+        <div id="test2-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Multiple Instruments Display</h3>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test3-count">5</span>)</h3>
+                <button id="test3-clear-btn" class="btn btn-sm btn-secondary">Clear All</button>
+            </div>
+            <div id="test3-container">
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">RELIANCE</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove RELIANCE">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">TCS</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove TCS">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">INFY</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove INFY">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">HDFCBANK</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove HDFCBANK">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">ICICIBANK</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove ICICIBANK">&times;</button>
+                </div>
+            </div>
+            <button id="test3-continue-btn" class="btn btn-primary">Continue to Configuration</button>
+        </div>
+        <div id="test3-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Remove Button Interaction</h3>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test4-count">3</span>)</h3>
+                <button id="test4-clear-btn" class="btn btn-sm btn-secondary">Clear All</button>
+            </div>
+            <div id="test4-container">
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">RELIANCE</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" id="test4-remove-btn" aria-label="Remove RELIANCE">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">TCS</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove TCS">&times;</button>
+                </div>
+                <div class="selected-instrument-tag">
+                    <div class="instrument-info">
+                        <span class="instrument-symbol">INFY</span>
+                        <span class="instrument-exchange">NSE</span>
+                    </div>
+                    <button class="remove-instrument" aria-label="Remove INFY">&times;</button>
+                </div>
+            </div>
+            <button id="test4-continue-btn" class="btn btn-primary">Continue to Configuration</button>
+        </div>
+        <div id="test4-result" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 5: Continue Button State</h3>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Selected Instruments (<span id="test5-count">0</span>)</h3>
+                <button id="test5-clear-btn" class="btn btn-sm btn-secondary" style="display: none;">Clear All</button>
+            </div>
+            <div id="test5-container">
+                <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>
+            </div>
+            <button id="test5-continue-btn" class="btn btn-primary" disabled>Continue to Configuration</button>
+        </div>
+        <button id="test5-add-btn" class="btn btn-secondary" style="margin-top: 1rem;">Add Instrument</button>
+        <div id="test5-result" class="test-result"></div>
+    </div>
+
+    <script>
+        // Test 1: Empty State Display
+        function test1() {
+            const container = document.getElementById('test1-container');
+            const count = document.getElementById('test1-count');
+            const clearBtn = document.getElementById('test1-clear-btn');
+            const continueBtn = document.getElementById('test1-continue-btn');
+            const result = document.getElementById('test1-result');
+            
+            const checks = [
+                { name: 'Count is 0', pass: count.textContent === '0' },
+                { name: 'Empty message displayed', pass: container.textContent.includes('No instruments selected') },
+                { name: 'Clear button hidden', pass: clearBtn.style.display === 'none' },
+                { name: 'Continue button disabled', pass: continueBtn.disabled === true }
+            ];
+            
+            const allPass = checks.every(c => c.pass);
+            result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+            result.innerHTML = checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('<br>');
+        }
+
+        // Test 2: Single Instrument Display
+        function test2() {
+            const container = document.getElementById('test2-container');
+            const count = document.getElementById('test2-count');
+            const clearBtn = document.getElementById('test2-clear-btn');
+            const continueBtn = document.getElementById('test2-continue-btn');
+            const result = document.getElementById('test2-result');
+            
+            const tags = container.querySelectorAll('.selected-instrument-tag');
+            const removeBtn = container.querySelector('.remove-instrument');
+            
+            const checks = [
+                { name: 'Count is 1', pass: count.textContent === '1' },
+                { name: 'One instrument tag displayed', pass: tags.length === 1 },
+                { name: 'Symbol displayed', pass: container.textContent.includes('RELIANCE') },
+                { name: 'Exchange displayed', pass: container.textContent.includes('NSE') },
+                { name: 'Remove button present', pass: removeBtn !== null },
+                { name: 'Clear button visible', pass: clearBtn.style.display !== 'none' },
+                { name: 'Continue button enabled', pass: continueBtn.disabled === false }
+            ];
+            
+            const allPass = checks.every(c => c.pass);
+            result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+            result.innerHTML = checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('<br>');
+        }
+
+        // Test 3: Multiple Instruments Display
+        function test3() {
+            const container = document.getElementById('test3-container');
+            const count = document.getElementById('test3-count');
+            const clearBtn = document.getElementById('test3-clear-btn');
+            const continueBtn = document.getElementById('test3-continue-btn');
+            const result = document.getElementById('test3-result');
+            
+            const tags = container.querySelectorAll('.selected-instrument-tag');
+            const symbols = Array.from(container.querySelectorAll('.instrument-symbol')).map(el => el.textContent);
+            
+            const checks = [
+                { name: 'Count is 5', pass: count.textContent === '5' },
+                { name: 'Five instrument tags displayed', pass: tags.length === 5 },
+                { name: 'All symbols present', pass: symbols.includes('RELIANCE') && symbols.includes('TCS') && symbols.includes('INFY') && symbols.includes('HDFCBANK') && symbols.includes('ICICIBANK') },
+                { name: 'Each tag has remove button', pass: tags.length === container.querySelectorAll('.remove-instrument').length },
+                { name: 'Clear button visible', pass: clearBtn.style.display !== 'none' },
+                { name: 'Continue button enabled', pass: continueBtn.disabled === false }
+            ];
+            
+            const allPass = checks.every(c => c.pass);
+            result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+            result.innerHTML = checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('<br>');
+        }
+
+        // Test 4: Remove Button Interaction
+        function test4() {
+            const container = document.getElementById('test4-container');
+            const count = document.getElementById('test4-count');
+            const removeBtn = document.getElementById('test4-remove-btn');
+            const result = document.getElementById('test4-result');
+            
+            let initialCount = container.querySelectorAll('.selected-instrument-tag').length;
+            
+            // Simulate remove
+            removeBtn.addEventListener('click', () => {
+                removeBtn.closest('.selected-instrument-tag').remove();
+                const newCount = container.querySelectorAll('.selected-instrument-tag').length;
+                count.textContent = newCount;
+                
+                const checks = [
+                    { name: 'Initial count was 3', pass: initialCount === 3 },
+                    { name: 'Remove button clickable', pass: true },
+                    { name: 'Instrument removed from display', pass: newCount === initialCount - 1 },
+                    { name: 'Count updated', pass: count.textContent === '2' }
+                ];
+                
+                const allPass = checks.every(c => c.pass);
+                result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+                result.innerHTML = checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('<br>');
+            });
+            
+            result.className = 'test-result';
+            result.innerHTML = 'Click the remove button (×) on RELIANCE to test';
+        }
+
+        // Test 5: Continue Button State
+        function test5() {
+            const container = document.getElementById('test5-container');
+            const count = document.getElementById('test5-count');
+            const clearBtn = document.getElementById('test5-clear-btn');
+            const continueBtn = document.getElementById('test5-continue-btn');
+            const addBtn = document.getElementById('test5-add-btn');
+            const result = document.getElementById('test5-result');
+            
+            addBtn.addEventListener('click', () => {
+                // Add an instrument
+                container.innerHTML = `
+                    <div class="selected-instrument-tag">
+                        <div class="instrument-info">
+                            <span class="instrument-symbol">RELIANCE</span>
+                            <span class="instrument-exchange">NSE</span>
+                        </div>
+                        <button class="remove-instrument" aria-label="Remove RELIANCE">&times;</button>
+                    </div>
+                `;
+                count.textContent = '1';
+                clearBtn.style.display = 'inline-block';
+                continueBtn.disabled = false;
+                
+                const checks = [
+                    { name: 'Count updated to 1', pass: count.textContent === '1' },
+                    { name: 'Instrument displayed', pass: container.querySelector('.selected-instrument-tag') !== null },
+                    { name: 'Clear button visible', pass: clearBtn.style.display !== 'none' },
+                    { name: 'Continue button enabled', pass: continueBtn.disabled === false }
+                ];
+                
+                const allPass = checks.every(c => c.pass);
+                result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+                result.innerHTML = checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('<br>');
+            });
+            
+            result.className = 'test-result';
+            result.innerHTML = 'Click "Add Instrument" to test state change';
+        }
+
+        // Run tests on load
+        window.addEventListener('DOMContentLoaded', () => {
+            test1();
+            test2();
+            test3();
+            test4();
+            test5();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Metrics Panel Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 3rem;
+        }
+        .test-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .test-description {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+        .test-controls {
+            background-color: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .test-result {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Risk Metrics Panel - Test Suite</h1>
+    <p>This page tests the risk metrics panel functionality including calculations, display, and real-time updates.</p>
+
+    <!-- Test 1: Panel Display -->
+    <div class="test-section">
+        <div class="test-title">Test 1: Risk Metrics Panel Display</div>
+        <div class="test-description">
+            Verify that the risk metrics panel displays all required metrics with proper styling.
+        </div>
+        
+        <div class="card">
+            <h3>Risk Management</h3>
+            
+            <div class="form-group">
+                <label for="test-risk-per-trade">Risk Per Trade (%)</label>
+                <div class="slider-input-group">
+                    <input type="range" id="test-risk-per-trade-slider" class="form-slider" min="0.1" max="10" step="0.1" value="1.0">
+                    <input type="number" id="test-risk-per-trade" class="form-control slider-number-input" min="0.1" max="10" step="0.1" value="1.0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="test-max-positions">Max Concurrent Positions</label>
+                <input type="number" id="test-max-positions" class="form-control" min="1" max="20" value="3">
+            </div>
+
+            <div class="form-group">
+                <label for="test-max-daily-loss">Max Daily Loss (%)</label>
+                <div class="slider-input-group">
+                    <input type="range" id="test-max-daily-loss-slider" class="form-slider" min="0.5" max="20" step="0.5" value="3.0">
+                    <input type="number" id="test-max-daily-loss" class="form-control slider-number-input" min="0.5" max="20" step="0.5" value="3.0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="test-stop-loss">Stop Loss (%)</label>
+                <input type="number" id="test-stop-loss" class="form-control" min="0.5" max="10" step="0.5" value="1.0">
+            </div>
+
+            <div class="form-group">
+                <label for="test-take-profit">Take Profit (%)</label>
+                <input type="number" id="test-take-profit" class="form-control" min="0.5" max="20" step="0.5" value="2.0">
+            </div>
+
+            <div class="form-group">
+                <label for="test-base-position-size">Base Position Size (₹)</label>
+                <input type="number" id="test-base-position-size" class="form-control" min="1000" step="1000" value="10000">
+            </div>
+
+            <!-- Risk Metrics Panel -->
+            <div class="risk-metrics-panel">
+                <h4 class="metrics-title">Risk Metrics</h4>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span class="metric-label">Risk Per Trade (₹)</span>
+                        <span class="metric-value" id="test-risk-amount-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Max Position Size (₹)</span>
+                        <span class="metric-value" id="test-max-position-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Risk Exposure (₹)</span>
+                        <span class="metric-value" id="test-total-risk-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Max Daily Loss (₹)</span>
+                        <span class="metric-value" id="test-max-daily-loss-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Capital Required</span>
+                        <span class="metric-value" id="test-capital-required-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Risk/Reward Ratio</span>
+                        <span class="metric-value" id="test-risk-reward-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="test1-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test 2: Real-time Calculation -->
+    <div class="test-section">
+        <div class="test-title">Test 2: Real-time Metric Calculations</div>
+        <div class="test-description">
+            Verify that metrics update in real-time when parameters change.
+        </div>
+        
+        <div class="test-controls">
+            <button id="test2-run" class="btn btn-primary">Run Test</button>
+            <button id="test2-reset" class="btn btn-secondary">Reset</button>
+        </div>
+
+        <div id="test2-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test 3: Margin Requirements -->
+    <div class="test-section">
+        <div class="test-title">Test 3: Margin Requirements Calculation</div>
+        <div class="test-description">
+            Verify that margin requirements are calculated correctly based on position size and max positions.
+        </div>
+        
+        <div class="test-controls">
+            <button id="test3-run" class="btn btn-primary">Run Test</button>
+        </div>
+
+        <div id="test3-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test 4: Color Coding -->
+    <div class="test-section">
+        <div class="test-title">Test 4: Risk Level Color Coding</div>
+        <div class="test-description">
+            Verify that metrics display appropriate colors based on risk levels.
+        </div>
+        
+        <div class="test-controls">
+            <button id="test4-run" class="btn btn-primary">Run Test</button>
+        </div>
+
+        <div id="test4-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Test Risk Management Module
+        const TestRiskManagement = {
+            capital: 100000,
+
+            init() {
+                this.setupSliders();
+                this.setupInputListeners();
+                this.calculateMetrics();
+            },
+
+            setupSliders() {
+                const riskSlider = document.getElementById('test-risk-per-trade-slider');
+                const riskInput = document.getElementById('test-risk-per-trade');
+                
+                if (riskSlider && riskInput) {
+                    riskSlider.addEventListener('input', (e) => {
+                        riskInput.value = e.target.value;
+                        this.calculateMetrics();
+                    });
+                    
+                    riskInput.addEventListener('input', (e) => {
+                        riskSlider.value = e.target.value;
+                        this.calculateMetrics();
+                    });
+                }
+
+                const dailyLossSlider = document.getElementById('test-max-daily-loss-slider');
+                const dailyLossInput = document.getElementById('test-max-daily-loss');
+                
+                if (dailyLossSlider && dailyLossInput) {
+                    dailyLossSlider.addEventListener('input', (e) => {
+                        dailyLossInput.value = e.target.value;
+                        this.calculateMetrics();
+                    });
+                    
+                    dailyLossInput.addEventListener('input', (e) => {
+                        dailyLossSlider.value = e.target.value;
+                        this.calculateMetrics();
+                    });
+                }
+            },
+
+            setupInputListeners() {
+                const inputs = [
+                    'test-risk-per-trade',
+                    'test-max-positions',
+                    'test-max-daily-loss',
+                    'test-base-position-size',
+                    'test-stop-loss',
+                    'test-take-profit'
+                ];
+
+                inputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('change', () => this.calculateMetrics());
+                        input.addEventListener('input', () => this.calculateMetrics());
+                    }
+                });
+            },
+
+            calculateMetrics() {
+                const riskPerTrade = parseFloat(document.getElementById('test-risk-per-trade')?.value || 1.0);
+                const maxPositions = parseInt(document.getElementById('test-max-positions')?.value || 3);
+                const maxDailyLoss = parseFloat(document.getElementById('test-max-daily-loss')?.value || 3.0);
+                const basePositionSize = parseFloat(document.getElementById('test-base-position-size')?.value || 10000);
+                const stopLoss = parseFloat(document.getElementById('test-stop-loss')?.value || 1.0);
+                const takeProfit = parseFloat(document.getElementById('test-take-profit')?.value || 2.0);
+
+                const riskAmount = (this.capital * riskPerTrade) / 100;
+                const maxPositionSize = (riskAmount / stopLoss) * 100;
+                const totalRiskExposure = riskAmount * maxPositions;
+                const maxDailyLossAmount = (this.capital * maxDailyLoss) / 100;
+                const capitalRequired = basePositionSize * maxPositions;
+                const riskRewardRatio = takeProfit / stopLoss;
+
+                this.updateMetricDisplay('test-risk-amount-value', riskAmount, '₹');
+                this.updateMetricDisplay('test-max-position-value', maxPositionSize, '₹');
+                this.updateMetricDisplay('test-total-risk-value', totalRiskExposure, '₹');
+                this.updateMetricDisplay('test-max-daily-loss-value', maxDailyLossAmount, '₹');
+                this.updateMetricDisplay('test-capital-required-value', capitalRequired, '₹');
+                this.updateMetricDisplay('test-risk-reward-value', riskRewardRatio, '', 2);
+
+                this.applyColorCoding(totalRiskExposure, maxDailyLossAmount, riskRewardRatio);
+            },
+
+            updateMetricDisplay(elementId, value, prefix = '', decimals = 0) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    const formattedValue = this.formatNumber(value, decimals);
+                    element.textContent = prefix ? `${prefix}${formattedValue}` : formattedValue;
+                }
+            },
+
+            formatNumber(value, decimals = 0) {
+                if (isNaN(value)) return '--';
+                return value.toLocaleString('en-IN', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                });
+            },
+
+            applyColorCoding(totalRisk, maxDailyLoss, riskReward) {
+                const totalRiskElement = document.getElementById('test-total-risk-value');
+                if (totalRiskElement) {
+                    totalRiskElement.classList.remove('positive', 'negative', 'warning');
+                    if (totalRisk > maxDailyLoss) {
+                        totalRiskElement.classList.add('warning');
+                    } else {
+                        totalRiskElement.classList.add('positive');
+                    }
+                }
+
+                const riskRewardElement = document.getElementById('test-risk-reward-value');
+                if (riskRewardElement) {
+                    riskRewardElement.classList.remove('positive', 'negative', 'warning');
+                    if (riskReward >= 2) {
+                        riskRewardElement.classList.add('positive');
+                    } else if (riskReward >= 1.5) {
+                        riskRewardElement.classList.add('warning');
+                    } else {
+                        riskRewardElement.classList.add('negative');
+                    }
+                }
+
+                const maxDailyLossElement = document.getElementById('test-max-daily-loss-value');
+                if (maxDailyLossElement) {
+                    maxDailyLossElement.classList.remove('positive', 'negative', 'warning');
+                    const dailyLossPercent = (maxDailyLoss / this.capital) * 100;
+                    if (dailyLossPercent > 5) {
+                        maxDailyLossElement.classList.add('negative');
+                    } else if (dailyLossPercent > 3) {
+                        maxDailyLossElement.classList.add('warning');
+                    } else {
+                        maxDailyLossElement.classList.add('positive');
+                    }
+                }
+            },
+
+            getMetrics() {
+                const riskPerTrade = parseFloat(document.getElementById('test-risk-per-trade')?.value || 1.0);
+                const maxPositions = parseInt(document.getElementById('test-max-positions')?.value || 3);
+                const maxDailyLoss = parseFloat(document.getElementById('test-max-daily-loss')?.value || 3.0);
+                const stopLoss = parseFloat(document.getElementById('test-stop-loss')?.value || 1.0);
+                const takeProfit = parseFloat(document.getElementById('test-take-profit')?.value || 2.0);
+                const basePositionSize = parseFloat(document.getElementById('test-base-position-size')?.value || 10000);
+
+                const riskAmount = (this.capital * riskPerTrade) / 100;
+                const maxPositionSize = (riskAmount / stopLoss) * 100;
+                const totalRiskExposure = riskAmount * maxPositions;
+                const maxDailyLossAmount = (this.capital * maxDailyLoss) / 100;
+                const riskRewardRatio = takeProfit / stopLoss;
+                const capitalRequired = basePositionSize * maxPositions;
+
+                return {
+                    riskPerTrade,
+                    riskAmount,
+                    maxPositions,
+                    maxPositionSize,
+                    totalRiskExposure,
+                    maxDailyLoss,
+                    maxDailyLossAmount,
+                    riskRewardRatio,
+                    capitalRequired,
+                    capital: this.capital
+                };
+            }
+        };
+
+        // Initialize
+        TestRiskManagement.init();
+
+        // Test 1: Panel Display
+        setTimeout(() => {
+            const result = document.getElementById('test1-result');
+            const metrics = TestRiskManagement.getMetrics();
+            
+            const checks = [
+                { name: 'Risk Amount', value: metrics.riskAmount, expected: 1000 },
+                { name: 'Max Position Size', value: metrics.maxPositionSize, expected: 100000 },
+                { name: 'Total Risk Exposure', value: metrics.totalRiskExposure, expected: 3000 },
+                { name: 'Max Daily Loss', value: metrics.maxDailyLossAmount, expected: 3000 },
+                { name: 'Capital Required', value: metrics.capitalRequired, expected: 30000 },
+                { name: 'Risk/Reward Ratio', value: metrics.riskRewardRatio, expected: 2.0 }
+            ];
+
+            const allPass = checks.every(check => Math.abs(check.value - check.expected) < 0.01);
+            
+            result.className = `test-result ${allPass ? 'pass' : 'fail'}`;
+            result.style.display = 'block';
+            result.innerHTML = allPass 
+                ? '✓ PASS: All metrics display correctly with default values'
+                : '✗ FAIL: Some metrics are incorrect';
+        }, 100);
+
+        // Test 2: Real-time Calculation
+        document.getElementById('test2-run').addEventListener('click', () => {
+            const result = document.getElementById('test2-result');
+            
+            // Change risk per trade
+            document.getElementById('test-risk-per-trade').value = 2.0;
+            document.getElementById('test-risk-per-trade-slider').value = 2.0;
+            document.getElementById('test-risk-per-trade').dispatchEvent(new Event('input'));
+            
+            setTimeout(() => {
+                const metrics = TestRiskManagement.getMetrics();
+                const expectedRiskAmount = 2000;
+                const pass = Math.abs(metrics.riskAmount - expectedRiskAmount) < 0.01;
+                
+                result.className = `test-result ${pass ? 'pass' : 'fail'}`;
+                result.style.display = 'block';
+                result.innerHTML = pass 
+                    ? '✓ PASS: Metrics update in real-time when parameters change'
+                    : `✗ FAIL: Expected risk amount ${expectedRiskAmount}, got ${metrics.riskAmount}`;
+            }, 100);
+        });
+
+        document.getElementById('test2-reset').addEventListener('click', () => {
+            document.getElementById('test-risk-per-trade').value = 1.0;
+            document.getElementById('test-risk-per-trade-slider').value = 1.0;
+            document.getElementById('test-risk-per-trade').dispatchEvent(new Event('input'));
+        });
+
+        // Test 3: Margin Requirements
+        document.getElementById('test3-run').addEventListener('click', () => {
+            const result = document.getElementById('test3-result');
+            
+            document.getElementById('test-base-position-size').value = 50000;
+            document.getElementById('test-max-positions').value = 5;
+            document.getElementById('test-base-position-size').dispatchEvent(new Event('input'));
+            
+            setTimeout(() => {
+                const metrics = TestRiskManagement.getMetrics();
+                const expectedCapital = 250000;
+                const pass = Math.abs(metrics.capitalRequired - expectedCapital) < 0.01;
+                
+                result.className = `test-result ${pass ? 'pass' : 'fail'}`;
+                result.style.display = 'block';
+                result.innerHTML = pass 
+                    ? `✓ PASS: Margin requirements calculated correctly (₹${metrics.capitalRequired.toLocaleString('en-IN')})`
+                    : `✗ FAIL: Expected ₹${expectedCapital.toLocaleString('en-IN')}, got ₹${metrics.capitalRequired.toLocaleString('en-IN')}`;
+                
+                // Reset
+                document.getElementById('test-base-position-size').value = 10000;
+                document.getElementById('test-max-positions').value = 3;
+                document.getElementById('test-base-position-size').dispatchEvent(new Event('input'));
+            }, 100);
+        });
+
+        // Test 4: Color Coding
+        document.getElementById('test4-run').addEventListener('click', () => {
+            const result = document.getElementById('test4-result');
+            
+            // Set high risk/reward ratio
+            document.getElementById('test-take-profit').value = 4.0;
+            document.getElementById('test-take-profit').dispatchEvent(new Event('input'));
+            
+            setTimeout(() => {
+                const riskRewardElement = document.getElementById('test-risk-reward-value');
+                const hasPositiveClass = riskRewardElement.classList.contains('positive');
+                
+                result.className = `test-result ${hasPositiveClass ? 'pass' : 'fail'}`;
+                result.style.display = 'block';
+                result.innerHTML = hasPositiveClass 
+                    ? '✓ PASS: Color coding applied correctly (green for good risk/reward)'
+                    : '✗ FAIL: Color coding not applied correctly';
+                
+                // Reset
+                document.getElementById('test-take-profit').value = 2.0;
+                document.getElementById('test-take-profit').dispatchEvent(new Event('input'));
+            }, 100);
+        });
+    </script>
+</body>
+</html>

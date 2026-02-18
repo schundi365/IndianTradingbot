@@ -1,0 +1,15 @@
+{
+  "name": "Test Config",
+  "description": "Test configuration",
+  "broker": "kite",
+  "strategy": "trend_following",
+  "timeframe": "5minute",
+  "risk_per_trade": 1.0,
+  "max_positions": 3,
+  "instruments": [
+    {
+      "symbol": "NIFTY",
+      "exchange": "NSE"
+    }
+  ]
+}

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI/UX Visual Demo - Indian Market Dashboard</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <link rel="stylesheet" href="../static/css/ui-enhancements.css">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .demo-section {
+            margin: 3rem 0;
+        }
+        
+        .demo-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .demo-description {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-description {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .interactive-demo {
+            background: var(--bg-color);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .button-showcase {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        
+        .animation-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .animation-box {
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .animation-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .responsive-demo {
+            background: white;
+            padding: 1rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        
+        .shortcut-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            margin: 0.25rem;
+        }
+        
+        .shortcut-badge kbd {
+            background: white;
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <header style="text-align: center; margin: 3rem 0;">
+            <h1 style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 0.5rem;">
+                🎨 UI/UX Enhancements Visual Demo
+            </h1>
+            <p style="font-size: 1.125rem; color: var(--text-muted);">
+                Interactive demonstration of all UI/UX improvements
+            </p>
+        </header>
+        
+        <!-- Feature Overview -->
+        <section class="demo-section">
+            <h2 class="demo-title">✨ Feature Overview</h2>
+            <p class="demo-description">
+                Hover over each card to see the smooth animations in action
+            </p>
+            
+            <div class="demo-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎬</div>
+                    <div class="feature-title">Smooth Animations</div>
+                    <div class="feature-description">
+                        Fade in, slide up, scale, and bounce animations throughout the app
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-title">Mobile Responsive</div>
+                    <div class="feature-description">
+                        Fully responsive design with touch optimizations and swipe gestures
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⌨️</div>
+                    <div class="feature-title">Keyboard Shortcuts</div>
+                    <div class="feature-description">
+                        Comprehensive shortcuts for power users (Press Shift+H)
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">♿</div>
+                    <div class="feature-title">Accessibility</div>
+                    <div class="feature-description">
+                        WCAG 2.1 Level AA compliant with screen reader support
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <div class="feature-title">Dark Mode</div>
+                    <div class="feature-description">
+                        Automatic dark theme based on system preferences
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">High Contrast</div>
+                    <div class="feature-description">
+                        Enhanced colors for high contrast mode users
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Button Interactions -->
+        <section class="demo-section">
+            <h2 class="demo-title">🔘 Button Interactions</h2>
+            <p class="demo-description">
+                Hover and click buttons to see lift and press animations
+            </p>
+            
+            <div class="interactive-demo">
+                <div class="button-showcase">
+                    <button class="btn btn-primary">
+                        <span class="btn-icon">✓</span> Primary Action
+                    </button>
+                    <button class="btn btn-secondary">
+                        <span class="btn-icon">⚙️</span> Secondary
+                    </button>
+                    <button class="btn btn-success">
+                        <span class="btn-icon">✓</span> Success
+                    </button>
+                    <button class="btn btn-danger">
+                        <span class="btn-icon">✗</span> Danger
+                    </button>
+                    <button class="btn btn-warning">
+                        <span class="btn-icon">⚠️</span> Warning
+                    </button>
+                    <button class="btn btn-primary" disabled>
+                        <span class="btn-icon">🔒</span> Disabled
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Animation Showcase -->
+        <section class="demo-section">
+            <h2 class="demo-title">🎭 Animation Showcase</h2>
+            <p class="demo-description">
+                Click boxes to trigger different animations
+            </p>
+            
+            <div class="interactive-demo">
+                <div class="animation-showcase">
+                    <div class="animation-box" onclick="animateBox(this, 'fadeIn')">
+                        Fade In
+                    </div>
+                    <div class="animation-box" onclick="animateBox(this, 'slideInUp')">
+                        Slide Up
+                    </div>
+                    <div class="animation-box" onclick="animateBox(this, 'scaleIn')">
+                        Scale In
+                    </div>
+                    <div class="animation-box" onclick="animateBox(this, 'bounce')">
+                        Bounce
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Keyboard Shortcuts -->
+        <section class="demo-section">
+            <h2 class="demo-title">⌨️ Keyboard Shortcuts</h2>
+            <p class="demo-description">
+                Try these keyboard shortcuts (works on main dashboard)
+            </p>
+            
+            <div class="interactive-demo">
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <span class="shortcut-badge">
+                        <kbd>1</kbd>-<kbd>5</kbd> Switch Tabs
+                    </span>
+                    <span class="shortcut-badge">
+                        <kbd>S</kbd> Focus Search
+                    </span>
+                    <span class="shortcut-badge">
+                        <kbd>R</kbd> Refresh
+                    </span>
+                    <span class="shortcut-badge">
+                        <kbd>Ctrl</kbd>+<kbd>S</kbd> Save
+                    </span>
+                    <span class="shortcut-badge">
+                        <kbd>Shift</kbd>+<kbd>H</kbd> Help
+                    </span>
+                    <span class="shortcut-badge">
+                        <kbd>Esc</kbd> Close
+                    </span>
+                </div>
+                
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button class="btn btn-primary" onclick="KeyboardShortcuts.showHelp()">
+                        <span class="btn-icon">❓</span> Show All Shortcuts
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Responsive Design -->
+        <section class="demo-section">
+            <h2 class="demo-title">📱 Responsive Design</h2>
+            <p class="demo-description">
+                Resize your browser window to see the layout adapt
+            </p>
+            
+            <div class="interactive-demo">
+                <div class="responsive-demo">
+                    <h3>Current Viewport</h3>
+                    <p id="viewport-info" style="font-size: 1.5rem; font-weight: 600; color: var(--primary-color);">
+                        --
+                    </p>
+                    <p id="device-info" style="color: var(--text-muted);">
+                        --
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Accessibility Features -->
+        <section class="demo-section">
+            <h2 class="demo-title">♿ Accessibility Features</h2>
+            <p class="demo-description">
+                All features are keyboard accessible and screen reader friendly
+            </p>
+            
+            <div class="card">
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        ✓ <strong>Keyboard Navigation:</strong> Tab through all elements
+                    </li>
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        ✓ <strong>Focus Indicators:</strong> Clear visual focus on all elements
+                    </li>
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        ✓ <strong>ARIA Labels:</strong> Proper labels for screen readers
+                    </li>
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        ✓ <strong>Skip Link:</strong> Skip to main content (Press Tab)
+                    </li>
+                    <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+                        ✓ <strong>Live Regions:</strong> Status updates announced
+                    </li>
+                    <li style="padding: 0.75rem;">
+                        ✓ <strong>Reduced Motion:</strong> Respects OS preferences
+                    </li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Test Notifications -->
+        <section class="demo-section">
+            <h2 class="demo-title">🔔 Notification Animations</h2>
+            <p class="demo-description">
+                Click buttons to see notification animations
+            </p>
+            
+            <div class="interactive-demo">
+                <div class="button-showcase">
+                    <button class="btn btn-success" onclick="showDemoNotification('success')">
+                        Show Success
+                    </button>
+                    <button class="btn btn-danger" onclick="showDemoNotification('error')">
+                        Show Error
+                    </button>
+                    <button class="btn btn-primary" onclick="showDemoNotification('info')">
+                        Show Info
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Call to Action -->
+        <section class="demo-section" style="text-align: center; background: linear-gradient(135deg, var(--primary-color), var(--success-color)); color: white; padding: 3rem; border-radius: 0.5rem;">
+            <h2 style="font-size: 2rem; margin-bottom: 1rem;">Ready to Experience It?</h2>
+            <p style="font-size: 1.125rem; margin-bottom: 2rem; opacity: 0.9;">
+                All these enhancements are live on the main dashboard
+            </p>
+            <a href="/" class="btn" style="background: white; color: var(--primary-color); font-size: 1.125rem; padding: 1rem 2rem;">
+                <span class="btn-icon">🚀</span> Go to Dashboard
+            </a>
+        </section>
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+    
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/ui-enhancements.js"></script>
+    
+    <script>
+        // Animation demo
+        function animateBox(element, animationClass) {
+            element.style.animation = 'none';
+            setTimeout(() => {
+                element.style.animation = '';
+                element.classList.add(animationClass);
+                setTimeout(() => {
+                    element.classList.remove(animationClass);
+                }, 600);
+            }, 10);
+        }
+        
+        // Viewport info
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            document.getElementById('viewport-info').textContent = `${width} × ${height}px`;
+            
+            let device = 'Desktop';
+            if (width < 640) device = 'Mobile Phone';
+            else if (width < 1024) device = 'Tablet';
+            
+            const touch = 'ontouchstart' in window ? 'Touch' : 'Mouse';
+            document.getElementById('device-info').textContent = `${device} • ${touch} Input`;
+        }
+        
+        // Notification demo
+        function showDemoNotification(type) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.setAttribute('role', 'alert');
+            
+            const messages = {
+                success: '✓ Success! This is a success notification with smooth animations.',
+                error: '✗ Error! This is an error notification that slides in from the right.',
+                info: 'ℹ️ Info: This notification will auto-dismiss after 5 seconds.'
+            };
+            
+            notification.textContent = messages[type];
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('removing');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Initialize
+        window.addEventListener('load', updateViewportInfo);
+        window.addEventListener('resize', updateViewportInfo);
+        
+        console.log('UI/UX Visual Demo Loaded');
+        console.log('Press Shift+H to view keyboard shortcuts');
+    </script>
+</body>
+</html>

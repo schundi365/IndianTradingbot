@@ -1,0 +1,43 @@
+# Systemd service file for Indian Market Web Dashboard
+# 
+# Installation:
+# 1. Edit this file and replace placeholders with actual paths
+# 2. Copy to /etc/systemd/system/indian-dashboard.service
+# 3. Run: sudo systemctl daemon-reload
+# 4. Run: sudo systemctl enable indian-dashboard
+# 5. Run: sudo systemctl start indian-dashboard
+# 6. Check status: sudo systemctl status indian-dashboard
+
+[Unit]
+Description=Indian Market Web Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+Group=YOUR_GROUP
+WorkingDirectory=/path/to/indian_dashboard
+Environment="PATH=/path/to/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+# Using Flask development server (for testing)
+# ExecStart=/path/to/venv/bin/python indian_dashboard.py --host 127.0.0.1 --port 8080
+
+# Using Gunicorn (recommended for production)
+ExecStart=/path/to/venv/bin/gunicorn -w 4 -b 127.0.0.1:8080 --timeout 120 --access-logfile logs/access.log --error-logfile logs/error.log indian_dashboard:app
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=indian-dashboard
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Management Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 2rem;
+        }
+        .test-results {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            color: green;
+            font-weight: bold;
+        }
+        .test-fail {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Risk Management Test</h1>
+        
+        <div class="test-section">
+            <h2>Risk Management Controls</h2>
+            
+            <div class="form-group">
+                <label for="config-risk-per-trade">Risk Per Trade (%)</label>
+                <div class="slider-input-group">
+                    <input type="range" id="config-risk-per-trade-slider" class="form-slider" min="0.1" max="10" step="0.1" value="1.0">
+                    <input type="number" id="config-risk-per-trade" name="risk_per_trade" class="form-control slider-number-input" min="0.1" max="10" step="0.1" value="1.0">
+                </div>
+                <small class="form-help">Maximum risk per trade as percentage of capital</small>
+            </div>
+
+            <div class="form-group">
+                <label for="config-max-positions">Max Concurrent Positions</label>
+                <input type="number" id="config-max-positions" name="max_positions" class="form-control" min="1" max="20" value="3">
+                <small class="form-help">Maximum number of positions open at the same time</small>
+            </div>
+
+            <div class="form-group">
+                <label for="config-max-daily-loss">Max Daily Loss (%)</label>
+                <div class="slider-input-group">
+                    <input type="range" id="config-max-daily-loss-slider" class="form-slider" min="0.5" max="20" step="0.5" value="3.0">
+                    <input type="number" id="config-max-daily-loss" name="max_daily_loss" class="form-control slider-number-input" min="0.5" max="20" step="0.5" value="3.0">
+                </div>
+                <small class="form-help">Bot will stop trading if daily loss exceeds this limit</small>
+            </div>
+
+            <div class="form-group">
+                <label for="config-base-position-size">Base Position Size (₹)</label>
+                <input type="number" id="config-base-position-size" name="base_position_size" class="form-control" min="1000" step="1000" value="10000">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="config-take-profit">Take Profit (%)</label>
+                    <input type="number" id="config-take-profit" name="take_profit" class="form-control" min="0.5" max="20" step="0.5" value="2.0">
+                </div>
+                <div class="form-group">
+                    <label for="config-stop-loss">Stop Loss (%)</label>
+                    <input type="number" id="config-stop-loss" name="stop_loss" class="form-control" min="0.5" max="10" step="0.5" value="1.0">
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Risk Metrics</h2>
+            <div class="risk-metrics-panel">
+                <h4 class="metrics-title">Risk Metrics</h4>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span class="metric-label">Risk Per Trade (₹)</span>
+                        <span class="metric-value" id="risk-amount-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Max Position Size (₹)</span>
+                        <span class="metric-value" id="max-position-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Risk Exposure (₹)</span>
+                        <span class="metric-value" id="total-risk-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Max Daily Loss (₹)</span>
+                        <span class="metric-value" id="max-daily-loss-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Capital Required</span>
+                        <span class="metric-value" id="capital-required-value">--</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Risk/Reward Ratio</span>
+                        <span class="metric-value" id="risk-reward-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button id="run-tests-btn" class="btn btn-primary">Run Tests</button>
+            <button id="update-capital-btn" class="btn btn-secondary">Update Capital (₹200,000)</button>
+        </div>
+
+        <div class="test-results" id="test-results">
+            <h3>Test Results</h3>
+            <div id="test-output">Click "Run Tests" to start</div>
+        </div>
+    </div>
+
+    <script src="../static/js/risk-management.js"></script>
+    <script>
+        // Test suite
+        const Tests = {
+            results: [],
+
+            run() {
+                this.results = [];
+                this.testSliderSync();
+                this.testMetricsCalculation();
+                this.testValidation();
+                this.displayResults();
+            },
+
+            testSliderSync() {
+                const slider = document.getElementById('config-risk-per-trade-slider');
+                const input = document.getElementById('config-risk-per-trade');
+                
+                // Test slider updates input
+                slider.value = 2.5;
+                slider.dispatchEvent(new Event('input'));
+                const pass1 = input.value === '2.5';
+                this.results.push({
+                    name: 'Slider updates input',
+                    pass: pass1
+                });
+
+                // Test input updates slider
+                input.value = 3.5;
+                input.dispatchEvent(new Event('input'));
+                const pass2 = slider.value === '3.5';
+                this.results.push({
+                    name: 'Input updates slider',
+                    pass: pass2
+                });
+
+                // Reset
+                input.value = 1.0;
+                slider.value = 1.0;
+            },
+
+            testMetricsCalculation() {
+                // Set known values
+                document.getElementById('config-risk-per-trade').value = 2.0;
+                document.getElementById('config-max-positions').value = 3;
+                document.getElementById('config-max-daily-loss').value = 5.0;
+                document.getElementById('config-stop-loss').value = 1.0;
+                document.getElementById('config-take-profit').value = 2.0;
+
+                // Trigger calculation
+                RiskManagement.calculateMetrics();
+
+                // Check if metrics are calculated
+                const riskAmount = document.getElementById('risk-amount-value').textContent;
+                const totalRisk = document.getElementById('total-risk-value').textContent;
+                const riskReward = document.getElementById('risk-reward-value').textContent;
+
+                this.results.push({
+                    name: 'Risk amount calculated',
+                    pass: riskAmount !== '--' && riskAmount.includes('₹')
+                });
+
+                this.results.push({
+                    name: 'Total risk calculated',
+                    pass: totalRisk !== '--' && totalRisk.includes('₹')
+                });
+
+                this.results.push({
+                    name: 'Risk/Reward ratio calculated',
+                    pass: riskReward !== '--' && riskReward === '2.00'
+                });
+            },
+
+            testValidation() {
+                // Test validation function
+                const validation = RiskManagement.validateRiskParameters();
+                
+                this.results.push({
+                    name: 'Validation function works',
+                    pass: validation.hasOwnProperty('valid') && validation.hasOwnProperty('errors')
+                });
+
+                // Test getMetrics function
+                const metrics = RiskManagement.getMetrics();
+                
+                this.results.push({
+                    name: 'Get metrics function works',
+                    pass: metrics.hasOwnProperty('riskPerTrade') && 
+                          metrics.hasOwnProperty('maxPositions') &&
+                          metrics.hasOwnProperty('riskRewardRatio')
+                });
+            },
+
+            displayResults() {
+                const output = document.getElementById('test-output');
+                const passed = this.results.filter(r => r.pass).length;
+                const total = this.results.length;
+                
+                let html = `<p><strong>Tests: ${passed}/${total} passed</strong></p><ul>`;
+                this.results.forEach(result => {
+                    const className = result.pass ? 'test-pass' : 'test-fail';
+                    const status = result.pass ? '✓' : '✗';
+                    html += `<li class="${className}">${status} ${result.name}</li>`;
+                });
+                html += '</ul>';
+                
+                output.innerHTML = html;
+            }
+        };
+
+        // Event listeners
+        document.getElementById('run-tests-btn').addEventListener('click', () => {
+            Tests.run();
+        });
+
+        document.getElementById('update-capital-btn').addEventListener('click', () => {
+            RiskManagement.updateCapital(200000);
+            alert('Capital updated to ₹200,000. Metrics recalculated.');
+        });
+
+        // Run tests on load
+        setTimeout(() => {
+            Tests.run();
+        }, 500);
+    </script>
+</body>
+</html>

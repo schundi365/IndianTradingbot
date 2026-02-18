@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade History Table Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .test-info {
+            background-color: #f0f9ff;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trade History Table Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <button id="load-sample-trades" class="btn btn-primary">Load Sample Trades</button>
+            <button id="load-many-trades" class="btn btn-secondary">Load Many Trades (50)</button>
+            <button id="clear-trades" class="btn btn-danger">Clear Trades</button>
+        </div>
+        <div class="test-info">
+            <strong>Test Instructions:</strong>
+            <ul>
+                <li>Click "Load Sample Trades" to load test data</li>
+                <li>Click column headers to sort (Date, Symbol, Type, Qty, Entry, Exit, P&L)</li>
+                <li>Use pagination controls to navigate pages</li>
+                <li>Verify P&L colors (green for positive, red for negative)</li>
+                <li>Verify trade type badges (green for BUY, red for SELL)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Trade History</h2>
+        
+        <div class="card">
+            <div class="filters">
+                <label>From:</label>
+                <input type="date" id="from-date" class="form-control">
+                <label>To:</label>
+                <input type="date" id="to-date" class="form-control">
+                <button id="filter-trades-btn" class="btn btn-secondary">Filter</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <table id="trades-table" class="data-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="timestamp">Date <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="symbol">Symbol <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="transaction_type">Type <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="quantity">Qty <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="price">Entry <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="exit_price">Exit <span class="sort-icon"></span></th>
+                        <th class="sortable" data-sort="pnl">P&L <span class="sort-icon"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="trades-tbody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            Click "Load Sample Trades" to see test data
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button id="trades-prev-page" class="btn btn-sm">Previous</button>
+                <span id="trades-page-info">Page 1</span>
+                <button id="trades-next-page" class="btn btn-sm">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/trades.js"></script>
+    
+    <script>
+        // Mock API for testing
+        const api = {
+            getTrades: async (fromDate, toDate) => {
+                // Return mock trades from global variable
+                return {
+                    success: true,
+                    trades: window.mockTrades || [],
+                    count: window.mockTrades?.length || 0
+                };
+            }
+        };
+        
+        // Generate sample trades
+        function generateSampleTrades(count = 10) {
+            const symbols = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'SBIN', 'BHARTIARTL', 'ITC', 'KOTAKBANK', 'LT'];
+            const types = ['BUY', 'SELL'];
+            const trades = [];
+            
+            const now = new Date();
+            
+            for (let i = 0; i < count; i++) {
+                const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const quantity = Math.floor(Math.random() * 100) + 1;
+                const entryPrice = Math.random() * 2000 + 100;
+                const exitPrice = Math.random() * 2000 + 100;
+                
+                // Calculate P&L
+                let pnl;
+                if (type === 'BUY') {
+                    pnl = (exitPrice - entryPrice) * quantity;
+                } else {
+                    pnl = (entryPrice - exitPrice) * quantity;
+                }
+                
+                // Random date in the past 30 days
+                const daysAgo = Math.floor(Math.random() * 30);
+                const timestamp = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+                
+                trades.push({
+                    timestamp: timestamp.toISOString(),
+                    symbol: symbol,
+                    transaction_type: type,
+                    quantity: quantity,
+                    price: entryPrice,
+                    exit_price: exitPrice,
+                    pnl: pnl
+                });
+            }
+            
+            return trades;
+        }
+        
+        // Initialize TradeHistory module
+        document.addEventListener('DOMContentLoaded', () => {
+            TradeHistory.init();
+            
+            // Test controls
+            document.getElementById('load-sample-trades').addEventListener('click', async () => {
+                window.mockTrades = generateSampleTrades(10);
+                await TradeHistory.loadTrades();
+                notifications.success('Loaded 10 sample trades');
+            });
+            
+            document.getElementById('load-many-trades').addEventListener('click', async () => {
+                window.mockTrades = generateSampleTrades(50);
+                await TradeHistory.loadTrades();
+                notifications.success('Loaded 50 sample trades');
+            });
+            
+            document.getElementById('clear-trades').addEventListener('click', async () => {
+                window.mockTrades = [];
+                await TradeHistory.loadTrades();
+                notifications.info('Cleared all trades');
+            });
+        });
+    </script>
+</body>
+</html>

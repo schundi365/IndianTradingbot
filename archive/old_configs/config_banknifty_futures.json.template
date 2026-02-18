@@ -1,0 +1,66 @@
+{
+  "_comment": "BANKNIFTY Futures Trading Configuration",
+  "_description": "Optimized for BANKNIFTY futures with 15-minute timeframe for higher volatility",
+  "broker": "kite",
+  "kite_api_key": "YOUR_KITE_API_KEY_HERE",
+  "kite_token_file": "kite_token.json",
+  "default_exchange": "NFO",
+  "symbols": [
+    "BANKNIFTY24JANFUT",
+    "BANKNIFTY24FEBFUT"
+  ],
+  "timeframe": 15,
+  "magic_number": 12346,
+  "risk_percent": 0.75,
+  "reward_ratio": 2.5,
+  "max_daily_loss_percent": 2.5,
+  "max_drawdown_percent": 7.0,
+  "fast_ma_period": 8,
+  "slow_ma_period": 21,
+  "atr_period": 14,
+  "atr_multiplier": 2.5,
+  "macd_fast": 12,
+  "macd_slow": 26,
+  "macd_signal": 9,
+  "rsi_period": 14,
+  "rsi_overbought": 70,
+  "rsi_oversold": 30,
+  "trail_activation": 2.0,
+  "trail_distance": 1.2,
+  "use_split_orders": true,
+  "num_positions": 3,
+  "tp_levels": [
+    1.5,
+    2.0,
+    3.0
+  ],
+  "partial_close_percent": [
+    40,
+    30,
+    30
+  ],
+  "trading_hours": {
+    "start": "09:15",
+    "end": "15:30"
+  },
+  "product_type": "MIS",
+  "use_adaptive_risk": true,
+  "ml_enabled": false,
+  "use_volume_filter": true,
+  "use_trend_detection": true,
+  "min_volume_ratio": 1.3,
+  "volume_ma_period": 20,
+  "adx_period": 14,
+  "adx_threshold": 30,
+  "max_positions": 1,
+  "max_trades_per_day": 4,
+  "_notes": [
+    "BANKNIFTY futures have a lot size of 25",
+    "Update symbols monthly to current/next month contract",
+    "Higher volatility requires tighter risk management (0.75% per trade)",
+    "15-minute timeframe captures intraday momentum moves",
+    "Higher ADX threshold (30) filters for stronger trends",
+    "Single position limit due to higher capital requirement",
+    "Wider trailing stops to accommodate volatility"
+  ]
+}

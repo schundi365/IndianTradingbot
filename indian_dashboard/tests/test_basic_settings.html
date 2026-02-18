@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Settings Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .test-result {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Basic Settings Section Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Selected Instruments Display</h3>
+        <div class="card">
+            <div class="form-group">
+                <label>Selected Instruments</label>
+                <div id="test-selected-instruments" class="selected-instruments-display">
+                    <p class="text-muted">No instruments selected.</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="testInstrumentsDisplay()" class="btn btn-primary">Test Display</button>
+        <div id="test1-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Timeframe Selector</h3>
+        <div class="card">
+            <div class="form-group">
+                <label for="test-timeframe">Timeframe</label>
+                <select id="test-timeframe" name="timeframe" class="form-control">
+                    <option value="1minute">1 Minute</option>
+                    <option value="5minute" selected>5 Minutes</option>
+                    <option value="15minute">15 Minutes</option>
+                    <option value="30minute">30 Minutes</option>
+                    <option value="1hour">1 Hour</option>
+                    <option value="1day">1 Day</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="testTimeframeSelector()" class="btn btn-primary">Test Selector</button>
+        <div id="test2-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Strategy Selector</h3>
+        <div class="card">
+            <div class="form-group">
+                <label for="test-strategy">Strategy</label>
+                <select id="test-strategy" name="strategy" class="form-control">
+                    <option value="trend_following" selected>Trend Following</option>
+                    <option value="momentum">Momentum</option>
+                    <option value="mean_reversion">Mean Reversion</option>
+                    <option value="breakout">Breakout</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="testStrategySelector()" class="btn btn-primary">Test Selector</button>
+        <div id="test3-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Trading Hours Inputs</h3>
+        <div class="card">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="test-trading-start">Trading Start Time</label>
+                    <input type="time" id="test-trading-start" name="trading_start" class="form-control" value="09:15">
+                </div>
+                <div class="form-group">
+                    <label for="test-trading-end">Trading End Time</label>
+                    <input type="time" id="test-trading-end" name="trading_end" class="form-control" value="15:30">
+                </div>
+            </div>
+        </div>
+        <button onclick="testTradingHours()" class="btn btn-primary">Test Hours</button>
+        <div id="test4-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 5: Complete Form Data Extraction</h3>
+        <button onclick="testFormDataExtraction()" class="btn btn-primary">Test Form Data</button>
+        <div id="test5-result" class="test-result" style="display: none;"></div>
+        <pre id="form-data-display" style="background: #f8fafc; padding: 1rem; border-radius: 0.375rem; margin-top: 1rem; display: none;"></pre>
+    </div>
+
+    <script>
+        // Mock selected instruments
+        const mockInstruments = [
+            { symbol: 'RELIANCE', exchange: 'NSE', instrument_token: '738561' },
+            { symbol: 'TCS', exchange: 'NSE', instrument_token: '2953217' },
+            { symbol: 'INFY', exchange: 'NSE', instrument_token: '408065' }
+        ];
+
+        function showResult(testId, pass, message) {
+            const resultDiv = document.getElementById(`test${testId}-result`);
+            resultDiv.style.display = 'block';
+            resultDiv.className = `test-result ${pass ? 'pass' : 'fail'}`;
+            resultDiv.textContent = pass ? `✓ PASS: ${message}` : `✗ FAIL: ${message}`;
+        }
+
+        function testInstrumentsDisplay() {
+            const container = document.getElementById('test-selected-instruments');
+            
+            // Test empty state
+            if (container.querySelector('.text-muted')) {
+                showResult(1, true, 'Empty state displays correctly');
+            } else {
+                showResult(1, false, 'Empty state not found');
+                return;
+            }
+
+            // Test with instruments
+            container.innerHTML = mockInstruments.map(inst => `
+                <div class="instrument-chip">
+                    <span class="symbol">${inst.symbol}</span>
+                    <span class="exchange">${inst.exchange}</span>
+                </div>
+            `).join('');
+
+            const chips = container.querySelectorAll('.instrument-chip');
+            if (chips.length === 3) {
+                showResult(1, true, `Displayed ${chips.length} instruments correctly`);
+            } else {
+                showResult(1, false, `Expected 3 instruments, got ${chips.length}`);
+            }
+        }
+
+        function testTimeframeSelector() {
+            const selector = document.getElementById('test-timeframe');
+            const options = selector.querySelectorAll('option');
+            
+            if (options.length === 6) {
+                showResult(2, true, `All 6 timeframe options present`);
+            } else {
+                showResult(2, false, `Expected 6 options, got ${options.length}`);
+                return;
+            }
+
+            // Test selection
+            selector.value = '15minute';
+            if (selector.value === '15minute') {
+                showResult(2, true, 'Timeframe selection works correctly');
+            } else {
+                showResult(2, false, 'Timeframe selection failed');
+            }
+        }
+
+        function testStrategySelector() {
+            const selector = document.getElementById('test-strategy');
+            const options = selector.querySelectorAll('option');
+            
+            if (options.length === 4) {
+                showResult(3, true, `All 4 strategy options present`);
+            } else {
+                showResult(3, false, `Expected 4 options, got ${options.length}`);
+                return;
+            }
+
+            // Test selection
+            selector.value = 'momentum';
+            if (selector.value === 'momentum') {
+                showResult(3, true, 'Strategy selection works correctly');
+            } else {
+                showResult(3, false, 'Strategy selection failed');
+            }
+        }
+
+        function testTradingHours() {
+            const startInput = document.getElementById('test-trading-start');
+            const endInput = document.getElementById('test-trading-end');
+            
+            // Test default values
+            if (startInput.value === '09:15' && endInput.value === '15:30') {
+                showResult(4, true, 'Default trading hours set correctly (09:15 - 15:30)');
+            } else {
+                showResult(4, false, `Unexpected default values: ${startInput.value} - ${endInput.value}`);
+                return;
+            }
+
+            // Test custom values
+            startInput.value = '09:30';
+            endInput.value = '15:00';
+            
+            if (startInput.value === '09:30' && endInput.value === '15:00') {
+                showResult(4, true, 'Trading hours can be modified correctly');
+            } else {
+                showResult(4, false, 'Failed to modify trading hours');
+            }
+        }
+
+        function testFormDataExtraction() {
+            // Set all form values
+            document.getElementById('test-timeframe').value = '5minute';
+            document.getElementById('test-strategy').value = 'trend_following';
+            document.getElementById('test-trading-start').value = '09:15';
+            document.getElementById('test-trading-end').value = '15:30';
+
+            // Extract form data
+            const formData = {
+                timeframe: document.getElementById('test-timeframe').value,
+                strategy: document.getElementById('test-strategy').value,
+                trading_start: document.getElementById('test-trading-start').value,
+                trading_end: document.getElementById('test-trading-end').value,
+                instruments: mockInstruments
+            };
+
+            // Display form data
+            const display = document.getElementById('form-data-display');
+            display.style.display = 'block';
+            display.textContent = JSON.stringify(formData, null, 2);
+
+            // Validate
+            const isValid = formData.timeframe && formData.strategy && 
+                           formData.trading_start && formData.trading_end &&
+                           formData.instruments.length > 0;
+
+            if (isValid) {
+                showResult(5, true, 'Form data extracted successfully with all required fields');
+            } else {
+                showResult(5, false, 'Form data extraction incomplete');
+            }
+        }
+
+        // Run all tests on load
+        window.addEventListener('load', () => {
+            console.log('Basic Settings Test Page Loaded');
+        });
+    </script>
+</body>
+</html>

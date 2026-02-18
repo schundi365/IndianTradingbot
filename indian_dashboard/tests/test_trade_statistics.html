@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Statistics Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trade Statistics Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Statistics Display</h2>
+        <p>Testing if statistics are calculated and displayed correctly</p>
+        
+        <!-- Statistics Card -->
+        <div class="card" id="trade-statistics-card">
+            <h3>Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Total Trades</div>
+                    <div class="stat-value" id="stat-total-trades">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-value" id="stat-win-rate">0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total P&L</div>
+                    <div class="stat-value" id="stat-total-pnl">₹0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Avg P&L per Trade</div>
+                    <div class="stat-value" id="stat-avg-pnl">₹0.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <button id="test-calculate-btn" class="btn btn-primary">Run Statistics Test</button>
+        <div id="test-result-1" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Win Rate Calculation</h2>
+        <p>Testing win rate calculation with mixed winning and losing trades</p>
+        <button id="test-winrate-btn" class="btn btn-primary">Test Win Rate</button>
+        <div id="test-result-2" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Empty Trades</h2>
+        <p>Testing statistics with no trades</p>
+        <button id="test-empty-btn" class="btn btn-primary">Test Empty Trades</button>
+        <div id="test-result-3" class="test-result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Color Coding</h2>
+        <p>Testing positive/negative color coding</p>
+        <button id="test-colors-btn" class="btn btn-primary">Test Color Coding</button>
+        <div id="test-result-4" class="test-result" style="display: none;"></div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/trades.js"></script>
+    <script>
+        // Test 1: Basic statistics calculation
+        document.getElementById('test-calculate-btn').addEventListener('click', () => {
+            const testTrades = [
+                { pnl: 1000, quantity: 10, price: 100, exit_price: 110, transaction_type: 'BUY' },
+                { pnl: -500, quantity: 10, price: 100, exit_price: 95, transaction_type: 'BUY' },
+                { pnl: 750, quantity: 5, price: 200, exit_price: 350, transaction_type: 'BUY' },
+                { pnl: -250, quantity: 10, price: 50, exit_price: 25, transaction_type: 'SELL' }
+            ];
+            
+            const stats = TradeHistory.calculateStatistics(testTrades);
+            
+            const resultDiv = document.getElementById('test-result-1');
+            resultDiv.style.display = 'block';
+            
+            // Verify calculations
+            const totalTradesCorrect = stats.totalTrades === 4;
+            const winRateCorrect = stats.winRate === 50; // 2 wins out of 4
+            const totalPnLCorrect = stats.totalPnL === 1000; // 1000 - 500 + 750 - 250
+            const avgPnLCorrect = stats.avgPnL === 250; // 1000 / 4
+            
+            if (totalTradesCorrect && winRateCorrect && totalPnLCorrect && avgPnLCorrect) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.innerHTML = `
+                    <strong>✓ PASS</strong><br>
+                    Total Trades: ${stats.totalTrades} (expected 4)<br>
+                    Win Rate: ${stats.winRate}% (expected 50%)<br>
+                    Total P&L: ₹${stats.totalPnL} (expected ₹1000)<br>
+                    Avg P&L: ₹${stats.avgPnL} (expected ₹250)
+                `;
+                
+                // Display in UI
+                TradeHistory.displayStatistics(stats);
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `
+                    <strong>✗ FAIL</strong><br>
+                    Total Trades: ${stats.totalTrades} (expected 4) ${totalTradesCorrect ? '✓' : '✗'}<br>
+                    Win Rate: ${stats.winRate}% (expected 50%) ${winRateCorrect ? '✓' : '✗'}<br>
+                    Total P&L: ₹${stats.totalPnL} (expected ₹1000) ${totalPnLCorrect ? '✓' : '✗'}<br>
+                    Avg P&L: ₹${stats.avgPnL} (expected ₹250) ${avgPnLCorrect ? '✓' : '✗'}
+                `;
+            }
+        });
+        
+        // Test 2: Win rate calculation
+        document.getElementById('test-winrate-btn').addEventListener('click', () => {
+            const testTrades = [
+                { pnl: 100 },
+                { pnl: 200 },
+                { pnl: 300 },
+                { pnl: -50 },
+                { pnl: -75 }
+            ];
+            
+            const stats = TradeHistory.calculateStatistics(testTrades);
+            
+            const resultDiv = document.getElementById('test-result-2');
+            resultDiv.style.display = 'block';
+            
+            // 3 wins out of 5 = 60%
+            const expectedWinRate = 60;
+            const winRateCorrect = Math.abs(stats.winRate - expectedWinRate) < 0.1;
+            
+            if (winRateCorrect) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.innerHTML = `<strong>✓ PASS</strong><br>Win Rate: ${stats.winRate.toFixed(1)}% (expected ${expectedWinRate}%)`;
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `<strong>✗ FAIL</strong><br>Win Rate: ${stats.winRate.toFixed(1)}% (expected ${expectedWinRate}%)`;
+            }
+        });
+        
+        // Test 3: Empty trades
+        document.getElementById('test-empty-btn').addEventListener('click', () => {
+            const stats = TradeHistory.calculateStatistics([]);
+            
+            const resultDiv = document.getElementById('test-result-3');
+            resultDiv.style.display = 'block';
+            
+            const allZero = stats.totalTrades === 0 && 
+                           stats.winRate === 0 && 
+                           stats.totalPnL === 0 && 
+                           stats.avgPnL === 0;
+            
+            if (allZero) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.innerHTML = '<strong>✓ PASS</strong><br>All statistics correctly set to 0 for empty trades';
+                TradeHistory.displayStatistics(stats);
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = '<strong>✗ FAIL</strong><br>Statistics not correctly zeroed';
+            }
+        });
+        
+        // Test 4: Color coding
+        document.getElementById('test-colors-btn').addEventListener('click', () => {
+            // Test positive P&L
+            const positiveStats = {
+                totalTrades: 5,
+                winRate: 60,
+                totalPnL: 5000,
+                avgPnL: 1000
+            };
+            
+            TradeHistory.displayStatistics(positiveStats);
+            
+            const totalPnLEl = document.getElementById('stat-total-pnl');
+            const avgPnLEl = document.getElementById('stat-avg-pnl');
+            const winRateEl = document.getElementById('stat-win-rate');
+            
+            const resultDiv = document.getElementById('test-result-4');
+            resultDiv.style.display = 'block';
+            
+            const totalPnLPositive = totalPnLEl.classList.contains('positive');
+            const avgPnLPositive = avgPnLEl.classList.contains('positive');
+            const winRatePositive = winRateEl.classList.contains('positive');
+            
+            if (totalPnLPositive && avgPnLPositive && winRatePositive) {
+                resultDiv.className = 'test-result pass';
+                resultDiv.innerHTML = '<strong>✓ PASS</strong><br>Positive values correctly colored green';
+            } else {
+                resultDiv.className = 'test-result fail';
+                resultDiv.innerHTML = `
+                    <strong>✗ FAIL</strong><br>
+                    Total P&L positive class: ${totalPnLPositive ? '✓' : '✗'}<br>
+                    Avg P&L positive class: ${avgPnLPositive ? '✓' : '✗'}<br>
+                    Win Rate positive class: ${winRatePositive ? '✓' : '✗'}
+                `;
+            }
+            
+            // Test negative P&L after a short delay
+            setTimeout(() => {
+                const negativeStats = {
+                    totalTrades: 5,
+                    winRate: 40,
+                    totalPnL: -2000,
+                    avgPnL: -400
+                };
+                
+                TradeHistory.displayStatistics(negativeStats);
+                
+                const totalPnLNegative = totalPnLEl.classList.contains('negative');
+                const avgPnLNegative = avgPnLEl.classList.contains('negative');
+                
+                if (totalPnLNegative && avgPnLNegative) {
+                    resultDiv.innerHTML += '<br><strong>✓ PASS</strong><br>Negative values correctly colored red';
+                } else {
+                    resultDiv.className = 'test-result fail';
+                    resultDiv.innerHTML += `<br><strong>✗ FAIL</strong><br>Negative values not correctly colored`;
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

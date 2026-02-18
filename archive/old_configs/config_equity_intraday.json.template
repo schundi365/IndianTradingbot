@@ -1,0 +1,71 @@
+{
+  "_comment": "Equity Intraday Trading Configuration",
+  "_description": "Optimized for liquid equity stocks (RELIANCE, TCS, INFY) with 5-minute timeframe",
+  "broker": "kite",
+  "kite_api_key": "YOUR_KITE_API_KEY_HERE",
+  "kite_token_file": "kite_token.json",
+  "default_exchange": "NSE",
+  "symbols": [
+    "RELIANCE",
+    "TCS",
+    "INFY"
+  ],
+  "timeframe": 5,
+  "magic_number": 12347,
+  "risk_percent": 1.0,
+  "reward_ratio": 2.0,
+  "max_daily_loss_percent": 4.0,
+  "max_drawdown_percent": 10.0,
+  "fast_ma_period": 12,
+  "slow_ma_period": 26,
+  "atr_period": 14,
+  "atr_multiplier": 1.5,
+  "macd_fast": 12,
+  "macd_slow": 26,
+  "macd_signal": 9,
+  "rsi_period": 14,
+  "rsi_overbought": 70,
+  "rsi_oversold": 30,
+  "trail_activation": 1.5,
+  "trail_distance": 0.8,
+  "use_split_orders": true,
+  "num_positions": 3,
+  "tp_levels": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "partial_close_percent": [
+    50,
+    30,
+    20
+  ],
+  "trading_hours": {
+    "start": "09:15",
+    "end": "15:30"
+  },
+  "product_type": "MIS",
+  "use_adaptive_risk": true,
+  "ml_enabled": false,
+  "use_volume_filter": true,
+  "use_trend_detection": true,
+  "min_volume_ratio": 1.5,
+  "volume_ma_period": 20,
+  "adx_period": 14,
+  "adx_threshold": 20,
+  "max_positions": 3,
+  "max_trades_per_day": 8,
+  "_notes": [
+    "Equity stocks have lot size of 1 (no minimum lot requirement)",
+    "5-minute timeframe for active intraday trading",
+    "MIS product type provides 5x intraday leverage",
+    "Volume filter is critical for equity liquidity",
+    "Lower ADX threshold (20) allows more trading opportunities",
+    "Multiple positions allowed across different stocks",
+    "RELIANCE: High liquidity, good for momentum trades",
+    "TCS: IT sector leader, stable price action",
+    "INFY: High volume, good for scalping",
+    "Tighter ATR multiplier (1.5) for smaller stop losses",
+    "50% profit booking at first TP for quick gains"
+  ]
+}

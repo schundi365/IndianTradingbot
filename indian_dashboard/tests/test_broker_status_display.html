@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broker Status Display Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            background-color: #f8fafc;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .test-section h2 {
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Broker Status Display Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <button onclick="testKiteConnection()" class="btn btn-primary">Test Kite Connection</button>
+            <button onclick="testAliceConnection()" class="btn btn-primary">Test Alice Blue Connection</button>
+            <button onclick="testWithToken()" class="btn btn-secondary">Test with Token Expiry</button>
+            <button onclick="testDisconnected()" class="btn btn-danger">Test Disconnected</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Broker Status Display</h2>
+        <div id="connection-info" class="broker-status-display">
+            <!-- Status will be displayed here -->
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary">Test Connection</button>
+            <button type="button" class="btn btn-danger">Disconnect</button>
+        </div>
+    </div>
+
+    <script>
+        // Mock formatters
+        const formatters = {
+            datetime: (dateStr) => {
+                if (!dateStr) return 'N/A';
+                const date = new Date(dateStr);
+                return date.toLocaleString('en-IN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        };
+
+        function displayBrokerStatus(status) {
+            const info = document.getElementById('connection-info');
+            
+            // Get broker display name
+            const brokerNames = {
+                'kite': 'Zerodha Kite',
+                'alice_blue': 'Alice Blue',
+                'angel_one': 'Angel One',
+                'upstox': 'Upstox',
+                'paper': 'Paper Trading'
+            };
+            const brokerDisplayName = brokerNames[status.broker] || status.broker.toUpperCase();
+            
+            // Get user display name
+            const userInfo = status.user_info || {};
+            const userName = userInfo.user_name || userInfo.user_id || 'N/A';
+            const userId = userInfo.user_id || 'N/A';
+            
+            // Format connection time
+            const connectionTime = status.connection_time 
+                ? formatters.datetime(status.connection_time)
+                : 'Unknown';
+            
+            // Calculate connection duration
+            let connectionDuration = '';
+            if (status.connection_time) {
+                const connectedAt = new Date(status.connection_time);
+                const now = new Date();
+                const durationMs = now - connectedAt;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (hours > 0) {
+                    connectionDuration = `${hours}h ${minutes}m`;
+                } else {
+                    connectionDuration = `${minutes}m`;
+                }
+            }
+            
+            // Build status display HTML
+            let statusHTML = `
+                <div class="status-header">
+                    <div class="status-icon">✓</div>
+                    <div class="status-title">
+                        <h4>Connected to ${brokerDisplayName}</h4>
+                        <p><span class="connection-indicator">Active Connection</span></p>
+                    </div>
+                </div>
+                
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-item-label">Broker</div>
+                        <div class="status-item-value broker-name">${brokerDisplayName}</div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <div class="status-item-label">User ID</div>
+                        <div class="status-item-value">${userId}</div>
+                    </div>
+            `;
+            
+            // Add user name if different from user ID
+            if (userName !== userId && userName !== 'N/A') {
+                statusHTML += `
+                    <div class="status-item">
+                        <div class="status-item-label">User Name</div>
+                        <div class="status-item-value">${userName}</div>
+                    </div>
+                `;
+            }
+            
+            statusHTML += `
+                    <div class="status-item">
+                        <div class="status-item-label">Connected At</div>
+                        <div class="status-item-value">${connectionTime}</div>
+                    </div>
+            `;
+            
+            // Add connection duration
+            if (connectionDuration) {
+                statusHTML += `
+                    <div class="status-item">
+                        <div class="status-item-label">Duration</div>
+                        <div class="status-item-value">${connectionDuration}</div>
+                    </div>
+                `;
+            }
+            
+            // Add email if available
+            if (userInfo.email) {
+                statusHTML += `
+                    <div class="status-item">
+                        <div class="status-item-label">Email</div>
+                        <div class="status-item-value">${userInfo.email}</div>
+                    </div>
+                `;
+            }
+            
+            // Show token expiry if available (for OAuth connections)
+            if (status.token_expiry) {
+                const expiryDate = new Date(status.token_expiry);
+                const now = new Date();
+                const hoursUntilExpiry = (expiryDate - now) / (1000 * 60 * 60);
+                
+                let expiryClass = '';
+                let expiryStatus = '';
+                if (hoursUntilExpiry < 0) {
+                    expiryClass = 'expired';
+                    expiryStatus = ' (EXPIRED)';
+                } else if (hoursUntilExpiry < 1) {
+                    expiryClass = 'warning';
+                    expiryStatus = ' (Expiring soon!)';
+                } else if (hoursUntilExpiry < 6) {
+                    expiryClass = 'warning';
+                    expiryStatus = ' (Expires soon)';
+                }
+                
+                statusHTML += `
+                    <div class="status-item">
+                        <div class="status-item-label">Token Expiry</div>
+                        <div class="status-item-value">
+                            <div class="token-expiry ${expiryClass}">
+                                ${formatters.datetime(status.token_expiry)}${expiryStatus}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            statusHTML += `
+                </div>
+            `;
+            
+            info.innerHTML = statusHTML;
+        }
+
+        // Test functions
+        function testKiteConnection() {
+            const status = {
+                connected: true,
+                broker: 'kite',
+                user_info: {
+                    user_id: 'AB1234',
+                    user_name: 'John Doe',
+                    email: 'john.doe@example.com',
+                    broker: 'ZERODHA'
+                },
+                connection_time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+                access_token: null,
+                token_expiry: null
+            };
+            displayBrokerStatus(status);
+        }
+
+        function testAliceConnection() {
+            const status = {
+                connected: true,
+                broker: 'alice_blue',
+                user_info: {
+                    user_id: 'ALICE123',
+                    user_name: 'Jane Smith',
+                    email: 'jane.smith@example.com'
+                },
+                connection_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+                access_token: null,
+                token_expiry: null
+            };
+            displayBrokerStatus(status);
+        }
+
+        function testWithToken() {
+            const tomorrow6am = new Date();
+            tomorrow6am.setDate(tomorrow6am.getDate() + 1);
+            tomorrow6am.setHours(6, 0, 0, 0);
+            
+            const status = {
+                connected: true,
+                broker: 'kite',
+                user_info: {
+                    user_id: 'XY9876',
+                    user_name: 'Alice Johnson',
+                    email: 'alice@example.com'
+                },
+                connection_time: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
+                access_token: 'abcdef1234567890',
+                token_expiry: tomorrow6am.toISOString()
+            };
+            displayBrokerStatus(status);
+        }
+
+        function testDisconnected() {
+            const info = document.getElementById('connection-info');
+            info.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">Not connected to any broker</p>';
+        }
+
+        // Show initial test
+        testKiteConnection();
+    </script>
+</body>
+</html>

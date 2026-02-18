@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Configuration Presets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .preset-selector {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            width: 300px;
+        }
+        .config-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: inline-block;
+            width: 200px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration Presets Test</h1>
+
+    <div class="test-section">
+        <h2>1. Load Presets from API</h2>
+        <button onclick="testLoadPresets()">Load Presets</button>
+        <div id="presets-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Display Preset Selector</h2>
+        <select id="test-preset-selector" class="preset-selector">
+            <option value="">-- Select Preset --</option>
+        </select>
+        <button onclick="testPopulateSelector()">Populate Selector</button>
+        <div id="selector-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Apply Preset Configuration</h2>
+        <select id="apply-preset-selector" class="preset-selector">
+            <option value="">-- Select Preset to Apply --</option>
+            <option value="nifty_futures">NIFTY 50 Futures</option>
+            <option value="banknifty_futures">BANKNIFTY Futures</option>
+            <option value="equity_intraday">Equity Intraday</option>
+            <option value="options_trading">Options Trading</option>
+        </select>
+        <button onclick="testApplyPreset()">Apply Selected Preset</button>
+        <div id="apply-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Mock Configuration Form</h2>
+        <form id="config-form">
+            <div class="form-group">
+                <label>Timeframe:</label>
+                <select name="timeframe">
+                    <option value="1minute">1 Minute</option>
+                    <option value="5minute">5 Minutes</option>
+                    <option value="15minute">15 Minutes</option>
+                    <option value="1hour">1 Hour</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Strategy:</label>
+                <select name="strategy">
+                    <option value="trend_following">Trend Following</option>
+                    <option value="momentum">Momentum</option>
+                    <option value="mean_reversion">Mean Reversion</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Risk Per Trade (%):</label>
+                <input type="number" name="risk_per_trade" step="0.1" value="1.0">
+            </div>
+            <div class="form-group">
+                <label>Max Positions:</label>
+                <input type="number" name="max_positions" value="3">
+            </div>
+            <div class="form-group">
+                <label>Max Daily Loss (%):</label>
+                <input type="number" name="max_daily_loss" step="0.5" value="3.0">
+            </div>
+            <div class="form-group">
+                <label>Paper Trading:</label>
+                <input type="checkbox" name="paper_trading">
+            </div>
+        </form>
+        <button onclick="showCurrentFormValues()">Show Current Form Values</button>
+        <div id="form-values-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Preset Details</h2>
+        <div id="preset-details"></div>
+    </div>
+
+    <script>
+        // Mock API client
+        const api = {
+            async getPresets() {
+                // Simulate API call
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            success: true,
+                            presets: [
+                                {
+                                    id: 'nifty_futures',
+                                    name: 'NIFTY 50 Futures',
+                                    description: 'Trend following strategy for NIFTY futures with 15-minute timeframe',
+                                    strategy: 'trend_following',
+                                    config: {
+                                        timeframe: '15minute',
+                                        strategy: 'trend_following',
+                                        risk_per_trade: 1.0,
+                                        max_positions: 3,
+                                        max_daily_loss: 3.0,
+                                        trading_hours: {start: '09:15', end: '15:30'},
+                                        indicator_period: 20,
+                                        position_sizing: 'risk_based',
+                                        base_position_size: 50000,
+                                        take_profit: 2.0,
+                                        stop_loss: 1.0,
+                                        paper_trading: true
+                                    }
+                                },
+                                {
+                                    id: 'banknifty_futures',
+                                    name: 'BANKNIFTY Futures',
+                                    description: 'Momentum strategy for BANKNIFTY futures with higher risk tolerance',
+                                    strategy: 'momentum',
+                                    config: {
+                                        timeframe: '15minute',
+                                        strategy: 'momentum',
+                                        risk_per_trade: 1.5,
+                                        max_positions: 2,
+                                        max_daily_loss: 4.0,
+                                        trading_hours: {start: '09:15', end: '15:30'},
+                                        indicator_period: 14,
+                                        position_sizing: 'risk_based',
+                                        base_position_size: 75000,
+                                        take_profit: 2.5,
+                                        stop_loss: 1.5,
+                                        paper_trading: true
+                                    }
+                                },
+                                {
+                                    id: 'equity_intraday',
+                                    name: 'Equity Intraday',
+                                    description: 'Mean reversion strategy for liquid stocks with 5-minute timeframe',
+                                    strategy: 'mean_reversion',
+                                    config: {
+                                        timeframe: '5minute',
+                                        strategy: 'mean_reversion',
+                                        risk_per_trade: 0.5,
+                                        max_positions: 5,
+                                        max_daily_loss: 2.0,
+                                        trading_hours: {start: '09:15', end: '15:15'},
+                                        indicator_period: 20,
+                                        position_sizing: 'percentage',
+                                        base_position_size: 20000,
+                                        take_profit: 1.5,
+                                        stop_loss: 0.75,
+                                        paper_trading: true
+                                    }
+                                },
+                                {
+                                    id: 'options_trading',
+                                    name: 'Options Trading',
+                                    description: 'Options selling strategy with conservative risk management',
+                                    strategy: 'trend_following',
+                                    config: {
+                                        timeframe: '15minute',
+                                        strategy: 'trend_following',
+                                        risk_per_trade: 2.0,
+                                        max_positions: 3,
+                                        max_daily_loss: 5.0,
+                                        trading_hours: {start: '09:30', end: '15:00'},
+                                        indicator_period: 20,
+                                        position_sizing: 'fixed',
+                                        base_position_size: 30000,
+                                        take_profit: 3.0,
+                                        stop_loss: 2.0,
+                                        paper_trading: true
+                                    }
+                                }
+                            ]
+                        });
+                    }, 500);
+                });
+            }
+        };
+
+        // Mock AppState
+        const AppState = {
+            instruments: {
+                selected: []
+            },
+            config: {
+                isDirty: false
+            }
+        };
+
+        let loadedPresets = [];
+
+        async function testLoadPresets() {
+            const resultDiv = document.getElementById('presets-result');
+            resultDiv.innerHTML = '<div class="info">Loading presets...</div>';
+
+            try {
+                const response = await api.getPresets();
+                if (response.success) {
+                    loadedPresets = response.presets;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✓ Successfully loaded ${loadedPresets.length} presets
+                        </div>
+                        <div class="config-display">${JSON.stringify(loadedPresets, null, 2)}</div>
+                    `;
+                    displayPresetDetails();
+                } else {
+                    resultDiv.innerHTML = `<div class="error">✗ Failed to load presets</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        function testPopulateSelector() {
+            const selector = document.getElementById('test-preset-selector');
+            const resultDiv = document.getElementById('selector-result');
+
+            if (loadedPresets.length === 0) {
+                resultDiv.innerHTML = '<div class="error">✗ No presets loaded. Run test 1 first.</div>';
+                return;
+            }
+
+            // Clear and populate
+            selector.innerHTML = '<option value="">-- Select Preset --</option>';
+            loadedPresets.forEach(preset => {
+                const option = document.createElement('option');
+                option.value = preset.id;
+                option.textContent = preset.name;
+                option.title = preset.description;
+                selector.appendChild(option);
+            });
+
+            resultDiv.innerHTML = `
+                <div class="success">
+                    ✓ Populated selector with ${loadedPresets.length} presets
+                </div>
+            `;
+        }
+
+        async function testApplyPreset() {
+            const selector = document.getElementById('apply-preset-selector');
+            const presetId = selector.value;
+            const resultDiv = document.getElementById('apply-result');
+
+            if (!presetId) {
+                resultDiv.innerHTML = '<div class="error">✗ Please select a preset</div>';
+                return;
+            }
+
+            if (loadedPresets.length === 0) {
+                await testLoadPresets();
+            }
+
+            const preset = loadedPresets.find(p => p.id === presetId);
+            if (!preset) {
+                resultDiv.innerHTML = '<div class="error">✗ Preset not found</div>';
+                return;
+            }
+
+            // Apply to form
+            applyPresetToForm(preset.config);
+
+            resultDiv.innerHTML = `
+                <div class="success">
+                    ✓ Applied preset: ${preset.name}
+                </div>
+                <div class="config-display">${JSON.stringify(preset.config, null, 2)}</div>
+            `;
+        }
+
+        function applyPresetToForm(config) {
+            const form = document.getElementById('config-form');
+
+            if (config.timeframe) {
+                const field = form.querySelector('[name="timeframe"]');
+                if (field) field.value = config.timeframe;
+            }
+
+            if (config.strategy) {
+                const field = form.querySelector('[name="strategy"]');
+                if (field) field.value = config.strategy;
+            }
+
+            if (config.risk_per_trade !== undefined) {
+                const field = form.querySelector('[name="risk_per_trade"]');
+                if (field) field.value = config.risk_per_trade;
+            }
+
+            if (config.max_positions) {
+                const field = form.querySelector('[name="max_positions"]');
+                if (field) field.value = config.max_positions;
+            }
+
+            if (config.max_daily_loss !== undefined) {
+                const field = form.querySelector('[name="max_daily_loss"]');
+                if (field) field.value = config.max_daily_loss;
+            }
+
+            if (config.paper_trading !== undefined) {
+                const field = form.querySelector('[name="paper_trading"]');
+                if (field) field.checked = config.paper_trading;
+            }
+        }
+
+        function showCurrentFormValues() {
+            const form = document.getElementById('config-form');
+            const formData = new FormData(form);
+            const values = {};
+
+            for (let [key, value] of formData.entries()) {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field && field.type === 'checkbox') {
+                    values[key] = field.checked;
+                } else if (field && field.type === 'number') {
+                    values[key] = parseFloat(value);
+                } else {
+                    values[key] = value;
+                }
+            }
+
+            const resultDiv = document.getElementById('form-values-result');
+            resultDiv.innerHTML = `
+                <div class="config-display">${JSON.stringify(values, null, 2)}</div>
+            `;
+        }
+
+        function displayPresetDetails() {
+            const detailsDiv = document.getElementById('preset-details');
+            
+            if (loadedPresets.length === 0) {
+                detailsDiv.innerHTML = '<div class="info">No presets loaded</div>';
+                return;
+            }
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">';
+            html += '<th style="padding: 10px; text-align: left;">Preset</th>';
+            html += '<th style="padding: 10px; text-align: left;">Strategy</th>';
+            html += '<th style="padding: 10px; text-align: left;">Timeframe</th>';
+            html += '<th style="padding: 10px; text-align: left;">Risk %</th>';
+            html += '<th style="padding: 10px; text-align: left;">Max Positions</th>';
+            html += '</tr></thead><tbody>';
+
+            loadedPresets.forEach(preset => {
+                html += '<tr style="border-bottom: 1px solid #dee2e6;">';
+                html += `<td style="padding: 10px;"><strong>${preset.name}</strong><br><small>${preset.description}</small></td>`;
+                html += `<td style="padding: 10px;">${preset.config.strategy}</td>`;
+                html += `<td style="padding: 10px;">${preset.config.timeframe}</td>`;
+                html += `<td style="padding: 10px;">${preset.config.risk_per_trade}%</td>`;
+                html += `<td style="padding: 10px;">${preset.config.max_positions}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            detailsDiv.innerHTML = html;
+        }
+
+        // Auto-run first test on load
+        window.addEventListener('load', () => {
+            testLoadPresets();
+        });
+    </script>
+</body>
+</html>

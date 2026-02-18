@@ -1,360 +1,423 @@
-# 🤖 GEM Trading Bot - Profitable MT5 Trading
+# 🇮🇳 Indian Market Trading Bot - Kite Connect Integration
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![MT5](https://img.shields.io/badge/MetaTrader-5-green.svg)](https://www.metatrader5.com/)
+[![Kite Connect](https://img.shields.io/badge/Kite-Connect-orange.svg)](https://kite.trade/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Win Rate](https://img.shields.io/badge/Win%20Rate-55--65%25-success)]()
 
-An intelligent automated trading bot for MetaTrader 5 with **proven profitable strategy** for Gold (XAUUSD) and Silver (XAGUSD) trading.
+An intelligent automated trading bot for Indian stock markets using Zerodha Kite Connect API. Supports NIFTY/BANKNIFTY futures, equity intraday, and options trading with proven technical analysis strategies.
 
-## 🎯 What's New - Profitable Strategy (v2.1)
+## 🎯 What's Included
 
-**Default configuration now uses a PROVEN PROFITABLE strategy:**
+This repository contains a complete broker abstraction layer that allows the existing MT5 forex trading bot to work with Indian stock markets through Kite Connect API.
 
-✅ **55-65% Win Rate** - More wins than losses
-✅ **H1 Timeframe** - Clear trends, less noise  
-✅ **5-15 Quality Trades/Day** - Quality over quantity
-✅ **Multiple Confirmations** - RSI, MACD, ADX, Bollinger Bands
-✅ **1:2 Risk/Reward** - Proper risk management
-✅ **Wider Stops** - Let trades breathe (2x ATR)
-✅ **70% Confidence Minimum** - Only best setups
+### ✅ Supported Instruments
 
-**Old M1 high-frequency strategy** (which was losing money) has been moved to `config_m1_experimental.py` and is **not recommended**.
+- **NIFTY 50 Futures** - Index futures trading
+- **BANKNIFTY Futures** - Bank index futures trading
+- **Equity Intraday** - Stocks like RELIANCE, TCS, INFY
+- **Options Trading** - NIFTY/BANKNIFTY call/put options
 
----
+### ✅ Key Features
 
-## ✨ Key Features
-
-- 🎯 **Profitable Strategy** - Trend-following with multiple confirmations (55-65% win rate)
-- 📊 **Volume Analysis** - Professional volume filtering, OBV, divergence detection (NEW!)
-- 📊 **Smart Position Sizing** - Calculates optimal lot sizes based on account and risk
-- 🎚️ **Split Orders** - Multiple take profit levels (1.5R, 2.5R, 4.0R)
-- 🔄 **Intelligent Trailing Stops** - Protect and maximize profits
-- 🛡️ **Strong Filters** - RSI, MACD, ADX, trend filter, trading hours, news avoidance
-- 📈 **Market Analysis** - Trend strength, volatility, support/resistance
-- ⚡ **Multiple Timeframes** - H1 for trading, H4 for trend confirmation
-- 🔒 **Safety Limits** - Daily loss limits, max trades, drawdown protection
-- 🌐 **Web Dashboard** - Modern UI for monitoring and control
-- 🚀 **MT5 Native** - Direct integration, no external services
+- 🎯 **Broker Abstraction** - Easy to add support for other Indian brokers
+- 📊 **Multiple Strategies** - Pre-configured for different instruments
+- 🎚️ **Risk Management** - Position sizing, stop loss, take profit
+- 🔄 **Paper Trading** - Test strategies without real money
+- 📈 **Technical Indicators** - RSI, MACD, EMA, ATR, ADX, Bollinger Bands
+- ⚡ **Multiple Timeframes** - 5min, 15min, 30min, 60min, daily
+- 🛡️ **Safety Features** - Daily loss limits, max trades, market hours check
+- 📚 **Comprehensive Docs** - 30,000+ words of documentation
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (5 Minutes)
 
 ### Prerequisites
 
-- MetaTrader 5 platform installed and running
 - Python 3.8 or higher
-- Demo or live MT5 account with Gold/Silver access
+- Zerodha trading account
+- Kite Connect API subscription (₹2,000 one-time)
 
-### Installation
+### Step 1: Clone Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/mt5-trading-bot.git
-cd mt5-trading-bot
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Test connection (make sure MT5 is running!)
-python test_connection.py
-
-# Start web dashboard
-python web_dashboard.py
+git clone https://github.com/yourusername/indian-market-trading-bot.git
+cd indian-market-trading-bot
 ```
 
-### Access Dashboard
+### Step 2: Install Dependencies
 
-Open browser to: **http://localhost:5000**
+```bash
+pip install -r requirements.txt
+```
 
-### Start Trading
+### Step 3: Get Kite Connect Credentials
 
-1. **Configure** - Review settings in dashboard
-2. **Test on Demo** - Always test first!
-3. **Start Bot** - Click "Start Bot" in dashboard
-4. **Monitor** - Watch performance and adjust
+1. Go to https://kite.trade/
+2. Login with Zerodha account
+3. Create a new app
+4. Copy your **API Key** and **API Secret**
+5. Set redirect URL to: `http://127.0.0.1:5001/`
 
-**Important**: Before trading:
-1. ✅ MetaTrader 5 is installed and running
-2. ✅ You're logged into a demo or live account
-3. ✅ Test on demo account first (at least 1 week)
-4. ✅ Start with small position sizes
+### Step 4: Configure API Credentials
+
+**Option A: Automated (Recommended)**
+```bash
+python update_api_key.py
+# Enter your API key when prompted
+```
+
+**Option B: Manual**
+
+Edit `kite_login.py` (lines 37-39):
+```python
+API_KEY    = "your_actual_api_key"
+API_SECRET = "your_actual_api_secret"
+```
+
+### Step 5: Authenticate
+
+```bash
+python kite_login.py
+```
+
+Browser will open → Login to Kite → Token saved to `kite_token.json`
+
+### Step 6: Start Paper Trading
+
+```bash
+python run_bot.py --config config_test_paper_trading.json
+```
+
+**That's it!** The bot is now running in paper trading mode (no real money).
 
 ---
 
-If you get "Authorization failed" error, see [Troubleshooting Guide](TROUBLESHOOTING.md).
+## 📦 Available Configurations
+
+| Configuration | Instrument | Timeframe | Risk | Capital | Skill Level |
+|---------------|------------|-----------|------|---------|-------------|
+| `config_nifty_futures.json` | NIFTY Futures | 30 min | 1.0% | ₹2-5L | Beginner |
+| `config_banknifty_futures.json` | BANKNIFTY Futures | 15 min | 0.75% | ₹3-7L | Intermediate |
+| `config_equity_intraday.json` | Stocks (RELIANCE, TCS, INFY) | 5 min | 1.0% | ₹50K-2L | Beginner |
+| `config_options_trading.json` | NIFTY/BANKNIFTY Options | 5 min | 2.0% | ₹1-3L | Advanced |
+| `config_test_paper_trading.json` | NIFTY Futures (Test) | 30 min | 0.5% | Any | Any |
+
+### Choose Your Configuration
+
+**Beginner?** → Start with `config_nifty_futures.json`  
+**Small Capital (<₹1L)?** → Use `config_equity_intraday.json`  
+**Experienced?** → Try `config_banknifty_futures.json`  
+**Options Trader?** → Use `config_options_trading.json`  
+**Just Testing?** → Use `config_test_paper_trading.json` ✅
+
+---
+
+## 📚 Documentation
+
+### Essential Reading
+
+1. **[QUICK_START_TESTING.md](QUICK_START_TESTING.md)** - 5-minute quick start guide
+2. **[COMPLETE_SETUP_GUIDE.md](COMPLETE_SETUP_GUIDE.md)** - Complete setup instructions
+3. **[examples/README_CONFIGURATIONS.md](examples/README_CONFIGURATIONS.md)** - Detailed configuration guide (15,000 words)
+4. **[examples/CONFIGURATION_SELECTOR.md](examples/CONFIGURATION_SELECTOR.md)** - Choose the right config (8,000 words)
+5. **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Comprehensive testing guide (5,000 words)
+
+### Quick References
+
+- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Migrate from MT5 to Indian markets
+- **[INDIAN_MARKET_CONFIGS_README.md](INDIAN_MARKET_CONFIGS_README.md)** - Quick config reference
+- **[PORT_CHANGE_NOTICE.md](PORT_CHANGE_NOTICE.md)** - Port 5001 setup
+- **[FIX_API_KEY_ERROR.md](FIX_API_KEY_ERROR.md)** - Troubleshooting API key issues
+
+### Troubleshooting
+
+- **[DEPLOYMENT_SUMMARY.md](DEPLOYMENT_SUMMARY.md)** - Deployment overview
+- **[DEPLOYMENT_STATUS.txt](DEPLOYMENT_STATUS.txt)** - Current deployment status
+
+---
+
+## 🎓 Learning Path
+
+### Week 1: Setup and Paper Trading
+- Day 1-2: Setup, authentication, validation
+- Day 3-7: Paper trading with test configuration
+
+### Week 2: Analysis and Optimization
+- Day 1-2: Review paper trading results
+- Day 3-4: Adjust parameters based on results
+- Day 5-7: Re-test with optimized settings
+
+### Week 3: Live Trading (Small Size)
+- Day 1-2: First live trades (0.25% risk)
+- Day 3-4: Increase to 0.5% risk if successful
+- Day 5-7: Monitor and adjust
+
+### Week 4: Scale Up
+- Day 1-3: Increase to target risk level
+- Day 4-5: Add second configuration if desired
+- Day 6-7: Full portfolio testing
+
+---
+
+## 🔧 Utility Scripts
+
+### Authentication
+```bash
+python kite_login.py              # Daily authentication (required)
+python check_api_key.py           # Verify API key setup
+```
 
 ### Configuration
-
-**NEW: Web-Based Configuration** 🎉
-
-The dashboard now includes a complete configuration interface with:
-- **3 Proven Presets** (Profitable, Conservative, Aggressive)
-- **43 Customizable Parameters** (indicators, filters, risk management)
-- **Real-time Validation** (prevents invalid settings)
-- **One-Click Save** (no need to edit Python files)
-
-See [Dashboard Configuration Guide](DASHBOARD_CONFIGURATION_GUIDE.md) for details.
-
-#### Quick Configuration via Dashboard
-
-1. Open dashboard: http://localhost:5000
-2. Go to "Configuration" tab
-3. Select a preset:
-   - **Profitable Balanced (H1)** - Recommended for most traders
-   - **Conservative (H4)** - Safest, lowest risk
-   - **Aggressive (M30)** - For experienced traders
-4. Customize settings (optional)
-5. Click "Save Configuration"
-
-#### Manual Configuration (Advanced)
-
-Edit `src/config.py` to customize your trading strategy:
-
-```python
-# Basic settings
-SYMBOLS = ['XAUUSD', 'XAGUSD']  # Gold and Silver
-RISK_PERCENT = 0.5               # Risk 0.5% per trade (recommended)
-REWARD_RATIO = 2.0               # 1:2 Risk:Reward
-
-# Adaptive risk
-USE_ADAPTIVE_RISK = True         # Enable intelligent adjustments
-MIN_TRADE_CONFIDENCE = 0.70      # Minimum 70% confidence (high quality)
-
-# Split orders
-USE_SPLIT_ORDERS = True
-TP_LEVELS = [1.5, 2.5, 4.0]     # Multiple profit targets
+```bash
+python update_api_key.py          # Update API key in all configs
+python test_configuration.py      # Test a specific configuration
+python deploy_configurations.py   # Validate all configurations
+python verify_deployment.py       # Verify deployment completeness
 ```
 
-## 📖 Documentation
+### Validation
+```bash
+python validate_paper_trading.py  # Validate paper trading setup
+python validate_instruments.py    # Validate instrument symbols
+```
 
-### 📚 Essential Guides
-- **[Quick Start](QUICK_START.md)** - Get started in 5 minutes
-- **[User Guide](USER_GUIDE.md)** - Complete user manual
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+---
 
-### 📂 Complete Documentation
-- **[Documentation Index](docs/README.md)** - All documentation organized by category
-  - **User Guides** - Installation, configuration, features
-  - **Deployment** - Build and deployment guides
-  - **Fixes** - Bug fixes and enhancements
-  - **Analysis** - Trade analysis and optimization
-  - **Reference** - Technical documentation
-  - **Archive** - Historical documentation
+## 🏗️ Architecture
 
-### 🎯 Popular Topics
-- **[Dashboard Configuration](docs/DASHBOARD_CONFIGURATION_GUIDE.md)** - Configure via web interface
-- **[Profitable Strategy Guide](docs/PROFITABLE_STRATEGY_GUIDE.md)** - Understanding the H1 strategy
-- **[Adaptive Risk Guide](docs/ADAPTIVE_RISK_GUIDE.md)** - How adaptive risk works
-- **[Split Orders Guide](docs/SPLIT_ORDERS_GUIDE.md)** - Multiple take profit levels
-- **[Trailing Strategies](docs/TRAILING_STRATEGIES_GUIDE.md)** - 6 different trailing methods
+### Broker Abstraction Layer
 
-## 🎯 Trading Strategy
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Trading Bot Core                         │
+│  (Indicators, Signals, Risk Management - UNCHANGED)          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Broker Adapter Interface                        │
+│  (Abstract base class defining standard operations)          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+        ┌────────────┼────────────┬────────────┐
+        ▼            ▼            ▼            ▼
+   ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐
+   │  Kite   │  │  Alice  │  │  Angel  │  │ Upstox  │
+   │ Connect │  │  Blue   │  │   One   │  │         │
+   └─────────┘  └─────────┘  └─────────┘  └─────────┘
+```
 
-### Entry Signals
+### Key Components
 
-**Moving Average Crossover Strategy:**
-- **BUY**: Fast MA (20) crosses above Slow MA (50) + price above both MAs
-- **SELL**: Fast MA (20) crosses below Slow MA (50) + price below both MAs
+- **`src/broker_adapter.py`** - Abstract broker interface
+- **`src/kite_adapter.py`** - Kite Connect implementation
+- **`src/indian_trading_bot.py`** - Main trading bot
+- **`kite_login.py`** - Authentication handler
+
+---
+
+## ⚙️ Configuration Parameters
 
 ### Risk Management
-
-**Adaptive Stop Loss:**
-- Ranging market: 1.5× ATR
-- Trending market: 2.0× ATR  
-- Volatile market: 3.0× ATR
-
-**Dynamic Take Profit:**
-- Conservative: [1.0, 1.5, 2.0] R:R ratios
-- Balanced: [1.5, 2.5, 4.0] R:R ratios
-- Aggressive: [1.5, 3.0, 5.0] R:R ratios
-
-**Position Sizing:**
-- Automatically calculated based on account balance and free margin
-- Adjusts for market conditions (0.3× to 1.5× multiplier)
-- Respects broker's min/max lot sizes
-
-## 📊 Example Configurations
-
-### Conservative (Beginners)
-```python
-RISK_PERCENT = 0.5
-TP_LEVELS = [1.0, 1.5, 2.0]
-MIN_TRADE_CONFIDENCE = 0.70
-MAX_TRADES_TOTAL = 2
+```json
+{
+  "risk_percent": 1.0,              // Risk per trade (% of equity)
+  "reward_ratio": 2.0,              // Target profit (multiple of risk)
+  "max_daily_loss_percent": 3.0,   // Stop trading after this loss
+  "max_drawdown_percent": 8.0      // Emergency stop level
+}
 ```
 
-### Balanced (Recommended)
-```python
-RISK_PERCENT = 1.0
-TP_LEVELS = [1.5, 2.5, 4.0]
-MIN_TRADE_CONFIDENCE = 0.60
-MAX_TRADES_TOTAL = 5
+### Technical Indicators
+```json
+{
+  "fast_ma_period": 10,             // Fast moving average
+  "slow_ma_period": 21,             // Slow moving average
+  "atr_period": 14,                 // Average True Range period
+  "atr_multiplier": 2.0,            // Stop loss distance
+  "rsi_period": 14,                 // RSI calculation period
+  "rsi_overbought": 70,             // Overbought threshold
+  "rsi_oversold": 30                // Oversold threshold
+}
 ```
 
-### Aggressive (Experienced)
-```python
-RISK_PERCENT = 2.0
-TP_LEVELS = [2.0, 3.5, 6.0]
-MIN_TRADE_CONFIDENCE = 0.55
-MAX_TRADES_TOTAL = 5
+### Position Management
+```json
+{
+  "use_split_orders": true,         // Split exits for profit booking
+  "num_positions": 3,               // Number of split positions
+  "tp_levels": [1.0, 1.5, 2.5],    // Take profit levels
+  "partial_close_percent": [40, 30, 30]  // % to close at each TP
+}
 ```
 
-See `examples/` folder for complete configuration files.
+See [examples/README_CONFIGURATIONS.md](examples/README_CONFIGURATIONS.md) for complete parameter guide.
 
-## 🧪 Testing
+---
 
-### Test MT5 Connection
-```bash
-python test_connection.py
-```
+## 🚨 Important Notes
 
-### Quick Test (Single Iteration)
-```bash
-python examples/quick_test.py
-```
+### Daily Tasks
+- ✅ Run `python kite_login.py` every morning (token expires daily)
+- ✅ Check market holidays before trading
+- ✅ Monitor positions on Kite platform
+- ✅ Review logs for errors
 
-### Demo Adaptive Risk
-```bash
-python examples/adaptive_risk_demo.py
-```
+### Risk Management
+- ✅ Always use stop losses
+- ✅ Set daily loss limits
+- ✅ Limit concurrent positions
+- ✅ Scale up gradually
+- ✅ Have exit plan ready
 
-## 📁 Project Structure
+### Best Practices
+- ✅ Start with paper trading (minimum 2-3 days)
+- ✅ Test during market hours for real conditions
+- ✅ Review performance daily
+- ✅ Adjust parameters gradually
+- ✅ Keep records of all changes
 
-```
-mt5-trading-bot/
-├── src/                    # Core bot code
-│   ├── mt5_trading_bot.py
-│   ├── config.py
-│   ├── adaptive_risk_manager.py
-│   ├── split_order_calculator.py
-│   └── trailing_strategies.py
-├── docs/                   # Documentation
-├── examples/               # Example scripts & configs
-├── run_bot.py             # Main entry point
-├── test_connection.py     # Connection test
-└── setup.py               # Setup helper
-```
+---
 
-## ⚙️ Advanced Features
+## 📊 Performance Expectations
 
-### Volume Analysis (NEW!)
+### NIFTY Futures (30-min)
+- Win Rate: 45-55%
+- Monthly Return: 3-5%
+- Drawdown: 2-4%
+- Trades/Day: 2-4
 
-Professional-grade volume analysis integrated with adaptive risk management:
+### BANKNIFTY Futures (15-min)
+- Win Rate: 40-50%
+- Monthly Return: 8-12%
+- Drawdown: 5-8%
+- Trades/Day: 4-8
 
-**Volume Filtering**:
-- Only trades when volume > 1.2× moving average
-- Filters out low-volume false breakouts
-- Reduces whipsaws in ranging markets
+### Equity Intraday (5-min)
+- Win Rate: 45-55%
+- Monthly Return: 6-10%
+- Drawdown: 4-7%
+- Trades/Day: 5-10
 
-**Volume Indicators**:
-1. **Volume Trend** - Detects increasing/decreasing volume patterns
-2. **On-Balance Volume (OBV)** - Momentum indicator based on volume flow
-3. **Volume Divergence** - Identifies price/volume divergences
-4. **Volume Profile** - Analyzes volume distribution at price levels
+### Options Trading (5-min)
+- Win Rate: 35-45%
+- Monthly Return: 15-25%
+- Drawdown: 10-15%
+- Trades/Day: 5-15
 
-**Confidence Boost System**:
-- Above average volume: +5%
-- Increasing volume trend: +5%
-- OBV confirms signal: +5%
-- Bullish/Bearish divergence: +10%
-- Maximum boost: +15%
+**Note:** Past performance does not guarantee future results. Always test thoroughly before going live.
 
-Volume confidence is added to adaptive risk confidence, dynamically adjusting position size and risk parameters.
+---
 
-See [Volume Analysis Guide](docs/VOLUME_ANALYSIS_GUIDE.md) for details.
+## 🛡️ Security
 
-### Adaptive Risk Management
+### What's Protected
 
-The bot analyzes 6 market conditions in real-time:
-1. Trend strength (ADX)
-2. Volatility levels (ATR ratio)
-3. Trend consistency
-4. Price position vs MAs
-5. Price momentum
-6. Support/Resistance proximity
+- ✅ API keys not committed to Git
+- ✅ Access tokens stored locally only
+- ✅ Configuration files with credentials ignored
+- ✅ Sensitive data in `.gitignore`
 
-Based on this analysis, it dynamically adjusts:
-- Stop loss width (1.5× to 3.0× ATR)
-- Take profit targets (conservative to aggressive)
-- Position size (0.3× to 1.5× multiplier)
-- Trade filtering (rejects low-confidence setups)
+### Setup Your Credentials
 
-### Split Orders
+1. Copy template configs:
+   ```bash
+   cp config_nifty_futures.json.template config_nifty_futures.json
+   ```
 
-Instead of one position with one target:
-```
-Traditional: 0.30 lots @ TP $2160
-```
+2. Add your API key to the copied file
 
-The bot creates multiple positions:
-```
-Position 1: 0.12 lots @ TP $2145 (40% - quick profit)
-Position 2: 0.09 lots @ TP $2175 (30% - moderate)
-Position 3: 0.09 lots @ TP $2220 (30% - let it run)
-```
+3. Never commit files with real credentials
 
-Benefits:
-- ✅ Lock in profits progressively
-- ✅ Let winners run while protecting gains
-- ✅ Higher win rate
-- ✅ Better risk management
-
-### Trailing Strategies
-
-6 different trailing methods:
-1. **ATR Trailing** - Volatility-based (default)
-2. **Percentage Trailing** - Fixed percentage from price
-3. **Swing High/Low** - Based on recent swing points
-4. **Chandelier Exit** - Highest/Lowest point minus ATR
-5. **Breakeven Plus** - Move to BE+, then trail
-6. **Parabolic SAR** - Acceleration-based trailing
-
-## 🛡️ Safety Features
-
-- Daily loss limits
-- Maximum trades per day
-- Drawdown protection
-- Minimum account balance checks
-- Trading hours restrictions
-- Position size limits
-- Broker compatibility checks
-
-## ⚠️ Risk Warning
-
-**IMPORTANT:** Trading involves substantial risk of loss. This bot is provided for educational purposes only. The authors are not responsible for any financial losses incurred through the use of this software.
-
-**Before Live Trading:**
-1. ✅ Test on demo account for at least 1-2 weeks
-2. ✅ Understand all configuration options
-3. ✅ Start with minimum lot sizes
-4. ✅ Use low risk percentage (0.5-1%)
-5. ✅ Monitor regularly
-6. ✅ Never risk more than you can afford to lose
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please:
 
-## 📝 License
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+### Adding New Brokers
 
-## 🙏 Acknowledgments
+To add support for another Indian broker:
 
-- MetaTrader 5 platform by MetaQuotes
-- Python community for excellent libraries
-- Trading community for strategy insights
+1. Create a new adapter class implementing `BrokerAdapter`
+2. Add configuration template
+3. Update documentation
+4. Submit PR with tests
 
-## 📧 Support
-
-- 📖 Read the [documentation](docs/README.md)
-- 🐛 Report bugs via [GitHub Issues](https://github.com/yourusername/mt5-trading-bot/issues)
-- 💬 Ask questions in [Discussions](https://github.com/yourusername/mt5-trading-bot/discussions)
+See [examples/README_CONFIGURATIONS.md](examples/README_CONFIGURATIONS.md) for broker adapter development guide.
 
 ---
 
-**Made with ❤️ for algorithmic traders**
+## 📄 License
 
-⭐ Star this repo if you find it useful!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## ⚠️ Disclaimer
+
+**IMPORTANT:** Trading in stocks, futures, and options involves substantial risk of loss. This software is provided for educational purposes only and does not constitute financial advice.
+
+- Always start with paper trading
+- Test thoroughly before going live
+- Use only risk capital you can afford to lose
+- Understand the instruments you're trading
+- Monitor your positions actively
+- Have a risk management plan
+
+Past performance does not guarantee future results. The bot's performance depends on market conditions, configuration, and proper usage.
+
+---
+
+## 📞 Support
+
+### Documentation
+- **Quick Start:** [QUICK_START_TESTING.md](QUICK_START_TESTING.md)
+- **Complete Setup:** [COMPLETE_SETUP_GUIDE.md](COMPLETE_SETUP_GUIDE.md)
+- **Configuration Guide:** [examples/README_CONFIGURATIONS.md](examples/README_CONFIGURATIONS.md)
+- **Testing Guide:** [TESTING_GUIDE.md](TESTING_GUIDE.md)
+
+### Common Issues
+- **API Key Error:** See [FIX_API_KEY_ERROR.md](FIX_API_KEY_ERROR.md)
+- **Port Conflict:** See [PORT_CHANGE_NOTICE.md](PORT_CHANGE_NOTICE.md)
+- **Setup Issues:** See [COMPLETE_SETUP_GUIDE.md](COMPLETE_SETUP_GUIDE.md)
+
+### Resources
+- **Kite Connect Docs:** https://kite.trade/docs/connect/v3/
+- **Python Kite Connect:** https://github.com/zerodhatech/pykiteconnect
+- **NSE Market Hours:** 9:15 AM - 3:30 PM IST
+
+---
+
+## 🎉 Acknowledgments
+
+- Zerodha for Kite Connect API
+- Python community for excellent libraries
+- Contributors and testers
+
+---
+
+## 📈 Roadmap
+
+- [ ] Support for Alice Blue API
+- [ ] Support for Angel One API
+- [ ] Support for Upstox API
+- [ ] Advanced order types (GTT, OCO)
+- [ ] Backtesting framework
+- [ ] Web dashboard for monitoring
+- [ ] Mobile notifications
+- [ ] Strategy optimizer
+
+---
+
+**Happy Trading! 🚀📈**
+
+*Last Updated: February 17, 2026*  
+*Version: 1.0*

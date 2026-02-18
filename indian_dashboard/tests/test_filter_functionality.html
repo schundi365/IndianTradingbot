@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Functionality Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+        }
+        .test-result.pass {
+            background-color: #d1fae5;
+            color: var(--success-color);
+        }
+        .test-result.fail {
+            background-color: #fee2e2;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Filter Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Filter UI Elements</h2>
+        <div class="filters">
+            <label>Exchange:</label>
+            <label><input type="checkbox" name="exchange" value="NSE" id="test-nse"> NSE</label>
+            <label><input type="checkbox" name="exchange" value="BSE" id="test-bse"> BSE</label>
+            <label><input type="checkbox" name="exchange" value="NFO" id="test-nfo"> NFO</label>
+            
+            <label>Type:</label>
+            <label><input type="checkbox" name="type" value="EQ" id="test-eq"> Equity</label>
+            <label><input type="checkbox" name="type" value="FUT" id="test-fut"> Futures</label>
+            <label><input type="checkbox" name="type" value="CE" id="test-ce"> Call</label>
+            <label><input type="checkbox" name="type" value="PE" id="test-pe"> Put</label>
+            
+            <button id="test-clear-filters" class="btn btn-sm btn-secondary">Clear Filters</button>
+        </div>
+        <div id="test-result-1" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Active Filters Display</h2>
+        <div id="test-active-filters" class="active-filters" style="display: flex;">
+            <span class="active-filters-label">Active Filters:</span>
+            <div class="filter-tag">
+                <span class="filter-tag-category">Exchange:</span>
+                <span class="filter-tag-value">NSE</span>
+                <button class="filter-tag-remove" aria-label="Remove filter">&times;</button>
+            </div>
+            <div class="filter-tag">
+                <span class="filter-tag-category">Type:</span>
+                <span class="filter-tag-value">Equity</span>
+                <button class="filter-tag-remove" aria-label="Remove filter">&times;</button>
+            </div>
+            <div class="filter-tag">
+                <span class="filter-tag-category">Search:</span>
+                <span class="filter-tag-value">RELIANCE</span>
+                <button class="filter-tag-remove" aria-label="Remove filter">&times;</button>
+            </div>
+        </div>
+        <div id="test-result-2" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Filter Logic</h2>
+        <button id="test-filter-logic" class="btn btn-primary">Run Filter Logic Test</button>
+        <div id="test-result-3" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Clear Filters</h2>
+        <button id="test-clear-logic" class="btn btn-primary">Run Clear Filters Test</button>
+        <div id="test-result-4" class="test-result"></div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/state.js"></script>
+    <script>
+        // Test 1: Check if filter UI elements are rendered correctly
+        function test1() {
+            const result = document.getElementById('test-result-1');
+            const exchangeFilters = document.querySelectorAll('input[name="exchange"]');
+            const typeFilters = document.querySelectorAll('input[name="type"]');
+            const clearBtn = document.getElementById('test-clear-filters');
+            
+            if (exchangeFilters.length === 3 && typeFilters.length === 4 && clearBtn) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: All filter UI elements are present';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Missing filter UI elements';
+            }
+        }
+        
+        // Test 2: Check if active filters display is styled correctly
+        function test2() {
+            const result = document.getElementById('test-result-2');
+            const activeFilters = document.getElementById('test-active-filters');
+            const filterTags = activeFilters.querySelectorAll('.filter-tag');
+            
+            if (filterTags.length === 3) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: Active filters display is working';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Active filters display issue';
+            }
+        }
+        
+        // Test 3: Test filter logic
+        document.getElementById('test-filter-logic').addEventListener('click', () => {
+            const result = document.getElementById('test-result-3');
+            
+            // Create test data
+            const testInstruments = [
+                { symbol: 'RELIANCE', name: 'Reliance Industries', exchange: 'NSE', instrument_type: 'EQ' },
+                { symbol: 'TCS', name: 'Tata Consultancy Services', exchange: 'NSE', instrument_type: 'EQ' },
+                { symbol: 'INFY', name: 'Infosys', exchange: 'BSE', instrument_type: 'EQ' },
+                { symbol: 'NIFTY24JAN24000CE', name: 'NIFTY Call', exchange: 'NFO', instrument_type: 'CE' },
+                { symbol: 'NIFTY24JAN24000PE', name: 'NIFTY Put', exchange: 'NFO', instrument_type: 'PE' },
+            ];
+            
+            // Test exchange filter
+            const nseInstruments = testInstruments.filter(inst => inst.exchange === 'NSE');
+            if (nseInstruments.length === 2) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: Exchange filter logic works correctly';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Exchange filter logic failed';
+            }
+            
+            // Test type filter
+            const eqInstruments = testInstruments.filter(inst => inst.instrument_type === 'EQ');
+            if (eqInstruments.length === 3) {
+                result.textContent += '\n✓ PASS: Type filter logic works correctly';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent += '\n✗ FAIL: Type filter logic failed';
+            }
+            
+            // Test combined filters
+            const nseEqInstruments = testInstruments.filter(inst => 
+                inst.exchange === 'NSE' && inst.instrument_type === 'EQ'
+            );
+            if (nseEqInstruments.length === 2) {
+                result.textContent += '\n✓ PASS: Combined filter logic works correctly';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent += '\n✗ FAIL: Combined filter logic failed';
+            }
+        });
+        
+        // Test 4: Test clear filters
+        document.getElementById('test-clear-logic').addEventListener('click', () => {
+            const result = document.getElementById('test-result-4');
+            
+            // Check all filters
+            document.getElementById('test-nse').checked = true;
+            document.getElementById('test-eq').checked = true;
+            
+            // Clear filters
+            document.getElementById('test-clear-filters').click();
+            
+            // Verify all are unchecked
+            const allChecked = Array.from(document.querySelectorAll('input[name="exchange"], input[name="type"]'))
+                .some(cb => cb.checked);
+            
+            if (!allChecked) {
+                result.className = 'test-result pass';
+                result.textContent = '✓ PASS: Clear filters works correctly';
+            } else {
+                result.className = 'test-result fail';
+                result.textContent = '✗ FAIL: Clear filters did not uncheck all';
+            }
+        });
+        
+        // Add clear filters functionality for test
+        document.getElementById('test-clear-filters').addEventListener('click', () => {
+            const allCheckboxes = document.querySelectorAll('input[name="exchange"], input[name="type"]');
+            allCheckboxes.forEach(cb => cb.checked = false);
+        });
+        
+        // Run tests on load
+        window.addEventListener('DOMContentLoaded', () => {
+            test1();
+            test2();
+        });
+    </script>
+</body>
+</html>

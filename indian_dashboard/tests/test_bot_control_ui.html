@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Control Handlers Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .test-section h2 {
+            color: #555;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .test-case {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+        }
+        
+        .test-case h3 {
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .test-case p {
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status-display {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .status-value {
+            color: #333;
+        }
+        
+        .status-value.running {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-value.stopped {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .log {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .log-entry {
+            margin: 0.25rem 0;
+            padding: 0.25rem;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+        }
+        
+        .log-entry.info {
+            color: #007bff;
+        }
+        
+        .log-entry.warning {
+            color: #ffc107;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #007bff;
+        }
+        
+        .notification.warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Bot Control Handlers Test</h1>
+        <p style="color: #666; margin-bottom: 2rem;">
+            This page tests the bot control handlers (start, stop, restart) with confirmation dialogs.
+        </p>
+        
+        <!-- Current Status -->
+        <div class="test-section">
+            <h2>Current Bot Status</h2>
+            <div class="status-display" id="status-display">
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" id="bot-status">Loading...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Uptime:</span>
+                    <span class="status-value" id="bot-uptime">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Broker Connected:</span>
+                    <span class="status-value" id="broker-status">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Config Loaded:</span>
+                    <span class="status-value" id="config-status">--</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="refreshStatus()">🔄 Refresh Status</button>
+        </div>
+        
+        <!-- Test Case 1: Start Bot -->
+        <div class="test-section">
+            <div class="test-case">
+                <h3>Test 1: Start Bot</h3>
+                <p><strong>Expected:</strong> Shows confirmation dialog, starts bot, displays success notification</p>
+                <p><strong>Validation:</strong> Bot status changes to "Running", uptime starts counting</p>
+                <button class="btn btn-primary" id="start-bot-btn" onclick="testStartBot()">
+                    ▶️ Start Bot
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Case 2: Stop Bot -->
+        <div class="test-section">
+            <div class="test-case">
+                <h3>Test 2: Stop Bot</h3>
+                <p><strong>Expected:</strong> Shows confirmation dialog "Are you sure you want to stop the bot?"</p>
+                <p><strong>Validation:</strong> Bot status changes to "Stopped", uptime resets</p>
+                <button class="btn btn-danger" id="stop-bot-btn" onclick="testStopBot()" style="display: none;">
+                    ⏹️ Stop Bot
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Case 3: Restart Bot -->
+        <div class="test-section">
+            <div class="test-case">
+                <h3>Test 3: Restart Bot</h3>
+                <p><strong>Expected:</strong> Shows confirmation dialog "Are you sure you want to restart the bot?"</p>
+                <p><strong>Validation:</strong> Bot stops then starts again, uptime resets</p>
+                <button class="btn btn-warning" id="restart-bot-btn" onclick="testRestartBot()" style="display: none;">
+                    🔄 Restart Bot
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Case 4: Start Without Config -->
+        <div class="test-section">
+            <div class="test-case">
+                <h3>Test 4: Start Bot Without Configuration</h3>
+                <p><strong>Expected:</strong> Shows error notification "Please configure the bot and select instruments first"</p>
+                <p><strong>Validation:</strong> Bot does not start, error message displayed</p>
+                <button class="btn btn-primary" onclick="testStartWithoutConfig()">
+                    ▶️ Start Without Config
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Case 5: Stop When Not Running -->
+        <div class="test-section">
+            <div class="test-case">
+                <h3>Test 5: Stop Bot When Not Running</h3>
+                <p><strong>Expected:</strong> Shows error notification "Bot is not running"</p>
+                <p><strong>Validation:</strong> Error message displayed, no state change</p>
+                <button class="btn btn-danger" onclick="testStopWhenNotRunning()">
+                    ⏹️ Stop (Not Running)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Event Log -->
+        <div class="test-section">
+            <h2>Event Log</h2>
+            <div class="log" id="event-log">
+                <div class="log-entry info">Test page loaded. Ready to test bot control handlers.</div>
+            </div>
+            <button class="btn btn-primary" onclick="clearLog()" style="margin-top: 1rem;">Clear Log</button>
+        </div>
+    </div>
+    
+    <script>
+        // Mock API client
+        const api = {
+            async startBot(config) {
+                log('info', 'API: POST /api/bot/start');
+                
+                // Simulate API call
+                await sleep(500);
+                
+                if (!config || !config.instruments || config.instruments.length === 0) {
+                    throw new Error('Please configure the bot and select instruments first');
+                }
+                
+                return {
+                    success: true,
+                    message: 'Bot started successfully'
+                };
+            },
+            
+            async stopBot() {
+                log('info', 'API: POST /api/bot/stop');
+                
+                // Simulate API call
+                await sleep(500);
+                
+                const status = await this.getBotStatus();
+                if (!status.status.running) {
+                    throw new Error('Bot is not running');
+                }
+                
+                return {
+                    success: true,
+                    message: 'Bot stopped successfully'
+                };
+            },
+            
+            async restartBot() {
+                log('info', 'API: POST /api/bot/restart');
+                
+                // Simulate API call
+                await sleep(500);
+                
+                return {
+                    success: true,
+                    message: 'Bot restarted successfully'
+                };
+            },
+            
+            async getBotStatus() {
+                // Simulate API call
+                await sleep(100);
+                
+                const running = window.mockBotRunning || false;
+                const startTime = window.mockBotStartTime || null;
+                
+                let uptimeSeconds = 0;
+                if (running && startTime) {
+                    uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
+                }
+                
+                return {
+                    success: true,
+                    status: {
+                        running: running,
+                        start_time: startTime ? new Date(startTime).toISOString() : null,
+                        uptime_seconds: uptimeSeconds,
+                        config_loaded: window.mockConfigLoaded || false,
+                        broker_connected: window.mockBrokerConnected || false
+                    }
+                };
+            },
+            
+            async getBrokerStatus() {
+                return {
+                    status: {
+                        connected: window.mockBrokerConnected || false,
+                        broker: 'paper'
+                    }
+                };
+            }
+        };
+        
+        // Mock state
+        const appState = {
+            get(key) {
+                if (key === 'config.current') {
+                    return window.mockConfig || null;
+                }
+                return null;
+            }
+        };
+        
+        // Helper functions
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function log(type, message) {
+            const logEl = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function clearLog() {
+            const logEl = document.getElementById('event-log');
+            logEl.innerHTML = '<div class="log-entry info">Log cleared.</div>';
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+            
+            log(type, `Notification: ${message}`);
+        }
+        
+        function showLoading(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.disabled = true;
+                const loading = document.createElement('span');
+                loading.className = 'loading';
+                btn.appendChild(loading);
+            }
+        }
+        
+        function hideLoading(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.disabled = false;
+                const loading = btn.querySelector('.loading');
+                if (loading) {
+                    loading.remove();
+                }
+            }
+        }
+        
+        async function refreshStatus() {
+            try {
+                log('info', 'Refreshing bot status...');
+                const response = await api.getBotStatus();
+                const status = response.status;
+                
+                // Update status display
+                const statusEl = document.getElementById('bot-status');
+                statusEl.textContent = status.running ? 'Running' : 'Stopped';
+                statusEl.className = `status-value ${status.running ? 'running' : 'stopped'}`;
+                
+                // Update uptime
+                const uptimeEl = document.getElementById('bot-uptime');
+                if (status.running && status.uptime_seconds) {
+                    const hours = Math.floor(status.uptime_seconds / 3600);
+                    const minutes = Math.floor((status.uptime_seconds % 3600) / 60);
+                    const seconds = status.uptime_seconds % 60;
+                    uptimeEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                } else {
+                    uptimeEl.textContent = '--';
+                }
+                
+                // Update broker status
+                document.getElementById('broker-status').textContent = 
+                    status.broker_connected ? 'Yes' : 'No';
+                
+                // Update config status
+                document.getElementById('config-status').textContent = 
+                    status.config_loaded ? 'Yes' : 'No';
+                
+                // Show/hide buttons
+                if (status.running) {
+                    document.getElementById('start-bot-btn').style.display = 'none';
+                    document.getElementById('stop-bot-btn').style.display = 'inline-block';
+                    document.getElementById('restart-bot-btn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('start-bot-btn').style.display = 'inline-block';
+                    document.getElementById('stop-bot-btn').style.display = 'none';
+                    document.getElementById('restart-bot-btn').style.display = 'none';
+                }
+                
+                log('success', 'Status refreshed successfully');
+            } catch (error) {
+                log('error', `Failed to refresh status: ${error.message}`);
+            }
+        }
+        
+        async function testStartBot() {
+            log('info', 'Test: Start Bot');
+            
+            // Check config
+            const config = appState.get('config.current');
+            if (!config || !config.instruments || config.instruments.length === 0) {
+                showNotification('Please configure the bot and select instruments first', 'error');
+                log('error', 'Start failed: No configuration');
+                return;
+            }
+            
+            // Check broker
+            const brokerStatus = await api.getBrokerStatus();
+            if (!brokerStatus.status.connected) {
+                showNotification('Please connect to a broker first', 'error');
+                log('error', 'Start failed: Broker not connected');
+                return;
+            }
+            
+            try {
+                showLoading('start-bot-btn');
+                showNotification('Starting bot...', 'info');
+                
+                const response = await api.startBot(config);
+                
+                // Update mock state
+                window.mockBotRunning = true;
+                window.mockBotStartTime = Date.now();
+                
+                showNotification('Bot started successfully', 'success');
+                log('success', 'Bot started successfully');
+                
+                await refreshStatus();
+            } catch (error) {
+                showNotification(`Start failed: ${error.message}`, 'error');
+                log('error', `Start failed: ${error.message}`);
+            } finally {
+                hideLoading('start-bot-btn');
+            }
+        }
+        
+        async function testStopBot() {
+            log('info', 'Test: Stop Bot');
+            
+            // Show confirmation dialog
+            if (!confirm('Are you sure you want to stop the bot?')) {
+                log('info', 'Stop cancelled by user');
+                return;
+            }
+            
+            try {
+                showLoading('stop-bot-btn');
+                showNotification('Stopping bot...', 'info');
+                
+                const response = await api.stopBot();
+                
+                // Update mock state
+                window.mockBotRunning = false;
+                window.mockBotStartTime = null;
+                
+                showNotification('Bot stopped successfully', 'success');
+                log('success', 'Bot stopped successfully');
+                
+                await refreshStatus();
+            } catch (error) {
+                showNotification(`Stop failed: ${error.message}`, 'error');
+                log('error', `Stop failed: ${error.message}`);
+            } finally {
+                hideLoading('stop-bot-btn');
+            }
+        }
+        
+        async function testRestartBot() {
+            log('info', 'Test: Restart Bot');
+            
+            // Show confirmation dialog
+            if (!confirm('Are you sure you want to restart the bot?')) {
+                log('info', 'Restart cancelled by user');
+                return;
+            }
+            
+            try {
+                showLoading('restart-bot-btn');
+                showNotification('Restarting bot...', 'info');
+                
+                const response = await api.restartBot();
+                
+                // Update mock state
+                window.mockBotRunning = true;
+                window.mockBotStartTime = Date.now();
+                
+                showNotification('Bot restarted successfully', 'success');
+                log('success', 'Bot restarted successfully');
+                
+                await refreshStatus();
+            } catch (error) {
+                showNotification(`Restart failed: ${error.message}`, 'error');
+                log('error', `Restart failed: ${error.message}`);
+            } finally {
+                hideLoading('restart-bot-btn');
+            }
+        }
+        
+        async function testStartWithoutConfig() {
+            log('info', 'Test: Start Bot Without Config');
+            
+            // Clear config
+            window.mockConfig = null;
+            
+            const config = appState.get('config.current');
+            if (!config || !config.instruments || config.instruments.length === 0) {
+                showNotification('Please configure the bot and select instruments first', 'error');
+                log('error', 'Start failed: No configuration (expected)');
+                return;
+            }
+        }
+        
+        async function testStopWhenNotRunning() {
+            log('info', 'Test: Stop Bot When Not Running');
+            
+            // Ensure bot is not running
+            window.mockBotRunning = false;
+            
+            try {
+                await api.stopBot();
+            } catch (error) {
+                showNotification(`Stop failed: ${error.message}`, 'error');
+                log('error', `Stop failed: ${error.message} (expected)`);
+            }
+        }
+        
+        // Initialize mock state
+        window.mockBotRunning = false;
+        window.mockBotStartTime = null;
+        window.mockConfigLoaded = true;
+        window.mockBrokerConnected = true;
+        window.mockConfig = {
+            strategy: 'trend_following',
+            timeframe: '5min',
+            instruments: [
+                { symbol: 'NIFTY', exchange: 'NSE' }
+            ]
+        };
+        
+        // Load initial status
+        refreshStatus();
+        
+        // Auto-refresh status every 5 seconds
+        setInterval(refreshStatus, 5000);
+    </script>
+</body>
+</html>

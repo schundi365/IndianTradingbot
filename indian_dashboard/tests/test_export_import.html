@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export/Import Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: var(--success-color);
+        }
+        .error {
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Export/Import Functionality Test</h1>
+
+    <!-- Test Section 1: Export Configuration -->
+    <div class="test-section">
+        <h2>Test 1: Export Configuration</h2>
+        <p>Click the button to export a sample configuration to JSON file.</p>
+        <button id="test-export-btn" class="btn btn-primary">
+            <span class="btn-icon">📤</span> Test Export
+        </button>
+        <div id="test-export-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 2: Copy to Clipboard -->
+    <div class="test-section">
+        <h2>Test 2: Copy to Clipboard</h2>
+        <p>Click the button to copy configuration to clipboard.</p>
+        <button id="test-copy-btn" class="btn btn-secondary">
+            <span class="btn-icon">📋</span> Test Copy
+        </button>
+        <div id="test-copy-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 3: Import from File -->
+    <div class="test-section">
+        <h2>Test 3: Import from File</h2>
+        <p>Select a JSON configuration file to import.</p>
+        <input type="file" id="test-file-input" class="form-control" accept=".json">
+        <button id="test-import-file-btn" class="btn btn-primary" style="margin-top: 1rem;">
+            <span class="btn-icon">📥</span> Test Import from File
+        </button>
+        <div id="test-import-file-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 4: Import from JSON Text -->
+    <div class="test-section">
+        <h2>Test 4: Import from JSON Text</h2>
+        <p>Paste JSON configuration text below.</p>
+        <textarea id="test-json-input" class="form-control" rows="10" placeholder='{"broker": "kite", "strategy": "trend_following", ...}'></textarea>
+        <button id="test-import-json-btn" class="btn btn-primary" style="margin-top: 1rem;">
+            <span class="btn-icon">📥</span> Test Import from JSON
+        </button>
+        <div id="test-import-json-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Test Section 5: Validation -->
+    <div class="test-section">
+        <h2>Test 5: Configuration Validation</h2>
+        <p>Test validation with various configurations.</p>
+        <button id="test-valid-config-btn" class="btn btn-success">Test Valid Config</button>
+        <button id="test-invalid-config-btn" class="btn btn-danger">Test Invalid Config</button>
+        <div id="test-validation-result" class="test-result" style="display: none;"></div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/state.js"></script>
+    
+    <script>
+        // Mock ConfigForm for testing
+        const ConfigForm = {
+            getFormData() {
+                return {
+                    broker: 'kite',
+                    strategy: 'trend_following',
+                    timeframe: '5minute',
+                    instruments: [
+                        { symbol: 'NIFTY', exchange: 'NSE', instrument_token: '256265' },
+                        { symbol: 'RELIANCE', exchange: 'NSE', instrument_token: '738561' }
+                    ],
+                    risk_per_trade: 1.5,
+                    max_positions: 3,
+                    max_daily_loss: 3.0,
+                    position_sizing: 'fixed',
+                    base_position_size: 10000,
+                    take_profit: 2.0,
+                    stop_loss: 1.0,
+                    trading_start: '09:15',
+                    trading_end: '15:30',
+                    paper_trading: true,
+                    log_level: 'INFO'
+                };
+            },
+            setFormData(data) {
+                console.log('Setting form data:', data);
+                return true;
+            }
+        };
+
+        // Mock Validation for testing
+        const Validation = {
+            validateBeforeSave() {
+                return true;
+            }
+        };
+
+        // Mock API for testing
+        api.validateConfig = async function(config) {
+            // Simulate validation
+            const errors = [];
+            const warnings = [];
+
+            if (!config.broker) errors.push('Missing broker');
+            if (!config.strategy) errors.push('Missing strategy');
+            if (!config.instruments || config.instruments.length === 0) {
+                errors.push('At least one instrument required');
+            }
+            if (config.risk_per_trade > 5) {
+                warnings.push('Risk per trade above 5% is high');
+            }
+
+            return {
+                success: true,
+                valid: errors.length === 0,
+                errors,
+                warnings
+            };
+        };
+
+        // Test 1: Export Configuration
+        document.getElementById('test-export-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-export-result');
+            try {
+                const config = ConfigForm.getFormData();
+                const exportData = {
+                    ...config,
+                    exported_at: new Date().toISOString(),
+                    exported_by: 'Test Suite',
+                    version: '1.0'
+                };
+
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `test_config_${Date.now()}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                resultDiv.innerHTML = '<span class="success">✓ Export successful!</span>\n\nExported data:\n' + jsonString;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Export failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Test 2: Copy to Clipboard
+        document.getElementById('test-copy-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-copy-result');
+            try {
+                const config = ConfigForm.getFormData();
+                const jsonString = JSON.stringify(config, null, 2);
+                await navigator.clipboard.writeText(jsonString);
+
+                resultDiv.innerHTML = '<span class="success">✓ Copied to clipboard!</span>\n\nCopied data:\n' + jsonString;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Copy failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Test 3: Import from File
+        document.getElementById('test-import-file-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-import-file-result');
+            const fileInput = document.getElementById('test-file-input');
+            
+            try {
+                const file = fileInput.files[0];
+                if (!file) {
+                    throw new Error('Please select a file');
+                }
+
+                const text = await file.text();
+                const config = JSON.parse(text);
+                
+                const validation = await api.validateConfig(config);
+                
+                resultDiv.innerHTML = '<span class="success">✓ Import successful!</span>\n\n' +
+                    'Validation: ' + (validation.valid ? 'PASSED' : 'FAILED') + '\n' +
+                    'Errors: ' + (validation.errors.length || 'None') + '\n' +
+                    'Warnings: ' + (validation.warnings.length || 'None') + '\n\n' +
+                    'Imported data:\n' + JSON.stringify(config, null, 2);
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Import failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Test 4: Import from JSON Text
+        document.getElementById('test-import-json-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-import-json-result');
+            const jsonInput = document.getElementById('test-json-input');
+            
+            try {
+                const jsonText = jsonInput.value.trim();
+                if (!jsonText) {
+                    throw new Error('Please paste JSON configuration');
+                }
+
+                const config = JSON.parse(jsonText);
+                const validation = await api.validateConfig(config);
+                
+                resultDiv.innerHTML = '<span class="success">✓ Import successful!</span>\n\n' +
+                    'Validation: ' + (validation.valid ? 'PASSED' : 'FAILED') + '\n' +
+                    'Errors: ' + (validation.errors.length || 'None') + '\n' +
+                    'Warnings: ' + (validation.warnings.length || 'None') + '\n\n' +
+                    'Imported data:\n' + JSON.stringify(config, null, 2);
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Import failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Test 5: Validation
+        document.getElementById('test-valid-config-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-validation-result');
+            try {
+                const validConfig = ConfigForm.getFormData();
+                const validation = await api.validateConfig(validConfig);
+                
+                resultDiv.innerHTML = '<span class="success">✓ Valid configuration test</span>\n\n' +
+                    'Valid: ' + validation.valid + '\n' +
+                    'Errors: ' + JSON.stringify(validation.errors) + '\n' +
+                    'Warnings: ' + JSON.stringify(validation.warnings);
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Test failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        document.getElementById('test-invalid-config-btn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('test-validation-result');
+            try {
+                const invalidConfig = {
+                    // Missing required fields
+                    risk_per_trade: 15, // Too high
+                    instruments: [] // Empty
+                };
+                const validation = await api.validateConfig(invalidConfig);
+                
+                resultDiv.innerHTML = '<span class="success">✓ Invalid configuration test</span>\n\n' +
+                    'Valid: ' + validation.valid + '\n' +
+                    'Errors: ' + JSON.stringify(validation.errors, null, 2) + '\n' +
+                    'Warnings: ' + JSON.stringify(validation.warnings, null, 2);
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">✗ Test failed:</span>\n' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // Add sample JSON to textarea
+        document.getElementById('test-json-input').value = JSON.stringify({
+            broker: 'kite',
+            strategy: 'momentum',
+            timeframe: '15minute',
+            instruments: [
+                { symbol: 'BANKNIFTY', exchange: 'NFO', instrument_token: '260105' }
+            ],
+            risk_per_trade: 2.0,
+            max_positions: 5,
+            max_daily_loss: 5.0
+        }, null, 2);
+    </script>
+</body>
+</html>

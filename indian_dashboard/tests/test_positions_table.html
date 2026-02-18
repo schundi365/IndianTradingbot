@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Positions Table Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .test-status {
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Positions Table Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <button id="load-empty-btn" class="btn btn-secondary">Load Empty State</button>
+            <button id="load-single-btn" class="btn btn-secondary">Load Single Position</button>
+            <button id="load-multiple-btn" class="btn btn-primary">Load Multiple Positions</button>
+            <button id="load-mixed-pnl-btn" class="btn btn-secondary">Load Mixed P&L</button>
+            <button id="load-error-btn" class="btn btn-danger">Simulate Error</button>
+        </div>
+        <div id="test-status" class="test-status" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Positions Table</h2>
+        <div class="card">
+            <h3>Open Positions</h3>
+            <table id="positions-table" class="data-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Quantity</th>
+                        <th>Entry Price</th>
+                        <th>Current Price</th>
+                        <th>P&L</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="positions-tbody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Click a button above to load test data
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script>
+        // Mock API for testing
+        const mockAPI = {
+            getPositions: async (scenario) => {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+                
+                switch(scenario) {
+                    case 'empty':
+                        return { success: true, positions: [], count: 0 };
+                    
+                    case 'single':
+                        return {
+                            success: true,
+                            positions: [
+                                {
+                                    symbol: 'RELIANCE',
+                                    quantity: 10,
+                                    entry_price: 2450.50,
+                                    current_price: 2475.75,
+                                    pnl: 252.50
+                                }
+                            ],
+                            count: 1
+                        };
+                    
+                    case 'multiple':
+                        return {
+                            success: true,
+                            positions: [
+                                {
+                                    symbol: 'RELIANCE',
+                                    quantity: 10,
+                                    entry_price: 2450.50,
+                                    current_price: 2475.75,
+                                    pnl: 252.50
+                                },
+                                {
+                                    symbol: 'TCS',
+                                    quantity: 5,
+                                    entry_price: 3650.00,
+                                    current_price: 3680.25,
+                                    pnl: 151.25
+                                },
+                                {
+                                    symbol: 'INFY',
+                                    quantity: 15,
+                                    entry_price: 1450.75,
+                                    current_price: 1465.50,
+                                    pnl: 221.25
+                                }
+                            ],
+                            count: 3
+                        };
+                    
+                    case 'mixed':
+                        return {
+                            success: true,
+                            positions: [
+                                {
+                                    symbol: 'RELIANCE',
+                                    quantity: 10,
+                                    entry_price: 2450.50,
+                                    current_price: 2475.75,
+                                    pnl: 252.50
+                                },
+                                {
+                                    symbol: 'HDFC',
+                                    quantity: 8,
+                                    entry_price: 1650.00,
+                                    current_price: 1625.50,
+                                    pnl: -196.00
+                                },
+                                {
+                                    symbol: 'ICICIBANK',
+                                    quantity: 12,
+                                    entry_price: 950.25,
+                                    current_price: 965.75,
+                                    pnl: 186.00
+                                },
+                                {
+                                    symbol: 'SBIN',
+                                    quantity: 20,
+                                    entry_price: 575.50,
+                                    current_price: 568.25,
+                                    pnl: -145.00
+                                }
+                            ],
+                            count: 4
+                        };
+                    
+                    case 'error':
+                        throw new Error('Failed to fetch positions from broker');
+                    
+                    default:
+                        return { success: true, positions: [], count: 0 };
+                }
+            },
+            
+            closePosition: async (symbol) => {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return {
+                    success: true,
+                    message: `Position closed for ${symbol}`
+                };
+            }
+        };
+
+        // Positions table update function
+        async function updatePositions(scenario = 'empty') {
+            try {
+                showStatus('Loading positions...', 'info');
+                
+                const response = await mockAPI.getPositions(scenario);
+                const tbody = document.getElementById('positions-tbody');
+                
+                tbody.innerHTML = '';
+                
+                // Check if there are positions
+                if (!response.positions || response.positions.length === 0) {
+                    // Show empty state
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                                <div style="font-size: 1.1rem; margin-bottom: 0.5rem;">No Open Positions</div>
+                                <div style="font-size: 0.9rem;">Positions will appear here when the bot opens trades</div>
+                            </td>
+                        </tr>
+                    `;
+                    showStatus('No positions found', 'success');
+                    return;
+                }
+                
+                // Calculate total P&L
+                let totalPnL = 0;
+                
+                // Render each position
+                response.positions.forEach(pos => {
+                    const row = document.createElement('tr');
+                    
+                    // Calculate P&L if not provided
+                    let pnl = pos.pnl || 0;
+                    if (pnl === 0 && pos.entry_price && pos.current_price && pos.quantity) {
+                        pnl = (pos.current_price - pos.entry_price) * pos.quantity;
+                    }
+                    
+                    totalPnL += pnl;
+                    
+                    // Determine P&L class for styling
+                    const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+                    
+                    // Format quantity with sign
+                    const quantityDisplay = pos.quantity > 0 ? `+${pos.quantity}` : pos.quantity;
+                    
+                    row.innerHTML = `
+                        <td><strong>${pos.symbol || '--'}</strong></td>
+                        <td>${quantityDisplay || '--'}</td>
+                        <td>${formatters.currency(pos.entry_price || 0)}</td>
+                        <td>${formatters.currency(pos.current_price || 0)}</td>
+                        <td class="${pnlClass}">${formatters.currency(pnl)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="closePosition('${pos.symbol}')">
+                                Close
+                            </button>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+                
+                // Add total P&L row
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'total-row';
+                const totalPnLClass = totalPnL >= 0 ? 'positive' : 'negative';
+                
+                totalRow.innerHTML = `
+                    <td colspan="4" style="text-align: right; font-weight: bold;">Total P&L:</td>
+                    <td class="${totalPnLClass}" style="font-weight: bold; font-size: 1.1rem;">
+                        ${formatters.currency(totalPnL)}
+                    </td>
+                    <td></td>
+                `;
+                
+                tbody.appendChild(totalRow);
+                
+                showStatus(`Loaded ${response.positions.length} positions. Total P&L: ${formatters.currency(totalPnL)}`, 'success');
+                
+            } catch (error) {
+                console.error('Failed to update positions:', error);
+                
+                // Show error state
+                const tbody = document.getElementById('positions-tbody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--error-color);">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                            <div>Failed to load positions</div>
+                            <div style="font-size: 0.9rem; margin-top: 0.5rem;">${error.message}</div>
+                        </td>
+                    </tr>
+                `;
+                
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Close position function
+        async function closePosition(symbol) {
+            if (!confirm(`Are you sure you want to close the position for ${symbol}?`)) {
+                return;
+            }
+            
+            try {
+                showStatus(`Closing position for ${symbol}...`, 'info');
+                
+                const response = await mockAPI.closePosition(symbol);
+                
+                if (response.success) {
+                    showStatus(response.message, 'success');
+                    
+                    // Simulate removing the position from the table
+                    setTimeout(() => {
+                        showStatus('Position closed. Reloading positions...', 'info');
+                        // In real app, this would refresh from server
+                    }, 1000);
+                }
+            } catch (error) {
+                showStatus(`Failed to close position: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('test-status');
+            statusEl.style.display = 'block';
+            statusEl.textContent = message;
+            
+            // Update styling based on type
+            statusEl.style.backgroundColor = type === 'error' ? '#fee2e2' : 
+                                            type === 'success' ? '#dcfce7' : '#f0f9ff';
+            statusEl.style.borderColor = type === 'error' ? '#ef4444' : 
+                                         type === 'success' ? '#10b981' : '#0ea5e9';
+        }
+
+        // Event listeners
+        document.getElementById('load-empty-btn').addEventListener('click', () => {
+            updatePositions('empty');
+        });
+
+        document.getElementById('load-single-btn').addEventListener('click', () => {
+            updatePositions('single');
+        });
+
+        document.getElementById('load-multiple-btn').addEventListener('click', () => {
+            updatePositions('multiple');
+        });
+
+        document.getElementById('load-mixed-pnl-btn').addEventListener('click', () => {
+            updatePositions('mixed');
+        });
+
+        document.getElementById('load-error-btn').addEventListener('click', () => {
+            updatePositions('error');
+        });
+
+        // Load initial state
+        showStatus('Ready to test. Click a button to load test data.', 'info');
+    </script>
+</body>
+</html>

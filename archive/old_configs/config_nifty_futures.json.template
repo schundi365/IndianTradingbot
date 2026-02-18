@@ -1,0 +1,64 @@
+{
+  "_comment": "NIFTY 50 Futures Trading Configuration",
+  "_description": "Optimized for NIFTY futures with 30-minute timeframe and momentum-based strategy",
+  "broker": "kite",
+  "kite_api_key": "YOUR_KITE_API_KEY_HERE",
+  "kite_token_file": "kite_token.json",
+  "default_exchange": "NFO",
+  "symbols": [
+    "NIFTY24JANFUT",
+    "NIFTY24FEBFUT"
+  ],
+  "timeframe": 30,
+  "magic_number": 12345,
+  "risk_percent": 1.0,
+  "reward_ratio": 2.0,
+  "max_daily_loss_percent": 3.0,
+  "max_drawdown_percent": 8.0,
+  "fast_ma_period": 10,
+  "slow_ma_period": 21,
+  "atr_period": 14,
+  "atr_multiplier": 2.0,
+  "macd_fast": 12,
+  "macd_slow": 26,
+  "macd_signal": 9,
+  "rsi_period": 14,
+  "rsi_overbought": 70,
+  "rsi_oversold": 30,
+  "trail_activation": 1.5,
+  "trail_distance": 1.0,
+  "use_split_orders": true,
+  "num_positions": 3,
+  "tp_levels": [
+    1.0,
+    1.5,
+    2.5
+  ],
+  "partial_close_percent": [
+    40,
+    30,
+    30
+  ],
+  "trading_hours": {
+    "start": "09:15",
+    "end": "15:30"
+  },
+  "product_type": "MIS",
+  "use_adaptive_risk": true,
+  "ml_enabled": false,
+  "use_volume_filter": true,
+  "use_trend_detection": true,
+  "min_volume_ratio": 1.2,
+  "volume_ma_period": 20,
+  "adx_period": 14,
+  "adx_threshold": 25,
+  "max_positions": 2,
+  "max_trades_per_day": 5,
+  "_notes": [
+    "NIFTY futures have a lot size of 50",
+    "Update symbols monthly to current/next month contract",
+    "MIS product type provides intraday leverage",
+    "30-minute timeframe balances signal quality and frequency",
+    "Conservative risk settings suitable for index futures volatility"
+  ]
+}

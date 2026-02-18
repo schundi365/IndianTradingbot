@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimization Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        #test-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        #test-table th,
+        #test-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        #test-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>Performance Optimization Tests</h1>
+    <p>Test suite for caching, debouncing, and rendering optimizations</p>
+
+    <!-- Cache Manager Tests -->
+    <div class="test-section">
+        <h2>1. Cache Manager Tests</h2>
+        <button onclick="testCacheManager()">Run Cache Tests</button>
+        <button onclick="clearCacheTests()">Clear Results</button>
+        <div id="cache-results"></div>
+    </div>
+
+    <!-- Request Deduplication Tests -->
+    <div class="test-section">
+        <h2>2. Request Deduplication Tests</h2>
+        <button onclick="testRequestDeduplication()">Run Deduplication Tests</button>
+        <div id="dedup-results"></div>
+    </div>
+
+    <!-- Debouncing Tests -->
+    <div class="test-section">
+        <h2>3. Debouncing Tests</h2>
+        <button onclick="testDebouncing()">Run Debouncing Tests</button>
+        <div id="debounce-results"></div>
+    </div>
+
+    <!-- Throttling Tests -->
+    <div class="test-section">
+        <h2>4. Throttling Tests</h2>
+        <button onclick="testThrottling()">Run Throttling Tests</button>
+        <div id="throttle-results"></div>
+    </div>
+
+    <!-- Table Rendering Tests -->
+    <div class="test-section">
+        <h2>5. Table Rendering Performance</h2>
+        <button onclick="testTableRendering()">Test Large Table (1000 rows)</button>
+        <button onclick="testTableRendering(5000)">Test Very Large Table (5000 rows)</button>
+        <div id="table-results"></div>
+        <div id="table-container" style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+            <table id="test-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Name</th>
+                        <th>Exchange</th>
+                        <th>Type</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody id="test-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Performance Statistics -->
+    <div class="test-section">
+        <h2>6. Performance Statistics</h2>
+        <button onclick="updatePerformanceStats()">Refresh Stats</button>
+        <button onclick="resetPerformanceStats()">Reset Stats</button>
+        <div id="performance-stats" class="stats-grid"></div>
+    </div>
+
+    <!-- Memoization Tests -->
+    <div class="test-section">
+        <h2>7. Memoization Tests</h2>
+        <button onclick="testMemoization()">Run Memoization Tests</button>
+        <div id="memo-results"></div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="/static/js/cache-manager.js"></script>
+    <script src="/static/js/performance-utils.js"></script>
+    <script src="/static/js/table-optimizer.js"></script>
+
+    <script>
+        // Helper function to add test result
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const result = document.createElement('div');
+            result.className = `test-result ${type}`;
+            result.textContent = message;
+            container.appendChild(result);
+        }
+
+        // Test 1: Cache Manager
+        function testCacheManager() {
+            const container = document.getElementById('cache-results');
+            container.innerHTML = '';
+
+            try {
+                // Test basic set/get
+                cacheManager.set('test-key', { data: 'test-value' }, 5000);
+                const value = cacheManager.get('test-key');
+                
+                if (value && value.data === 'test-value') {
+                    addResult('cache-results', '✓ Basic set/get works', 'success');
+                } else {
+                    addResult('cache-results', '✗ Basic set/get failed', 'error');
+                }
+
+                // Test cache expiry
+                cacheManager.set('expire-test', { data: 'expire' }, 100);
+                setTimeout(() => {
+                    const expired = cacheManager.get('expire-test');
+                    if (expired === null) {
+                        addResult('cache-results', '✓ Cache expiry works', 'success');
+                    } else {
+                        addResult('cache-results', '✗ Cache expiry failed', 'error');
+                    }
+                }, 150);
+
+                // Test LRU eviction
+                cacheManager.maxSize = 3;
+                cacheManager.set('key1', 'value1');
+                cacheManager.set('key2', 'value2');
+                cacheManager.set('key3', 'value3');
+                cacheManager.set('key4', 'value4'); // Should evict key1
+
+                if (cacheManager.get('key1') === null && cacheManager.get('key4') !== null) {
+                    addResult('cache-results', '✓ LRU eviction works', 'success');
+                } else {
+                    addResult('cache-results', '✗ LRU eviction failed', 'error');
+                }
+
+                // Test pattern invalidation
+                cacheManager.set('api/test/1', 'data1');
+                cacheManager.set('api/test/2', 'data2');
+                cacheManager.set('api/other/1', 'data3');
+                cacheManager.invalidatePattern('api/test');
+
+                if (cacheManager.get('api/test/1') === null && cacheManager.get('api/other/1') !== null) {
+                    addResult('cache-results', '✓ Pattern invalidation works', 'success');
+                } else {
+                    addResult('cache-results', '✗ Pattern invalidation failed', 'error');
+                }
+
+                // Show stats
+                const stats = cacheManager.getStats();
+                addResult('cache-results', `Cache stats: ${JSON.stringify(stats)}`, 'info');
+
+            } catch (error) {
+                addResult('cache-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearCacheTests() {
+            document.getElementById('cache-results').innerHTML = '';
+            cacheManager.clear();
+        }
+
+        // Test 2: Request Deduplication
+        async function testRequestDeduplication() {
+            const container = document.getElementById('dedup-results');
+            container.innerHTML = '';
+
+            try {
+                let callCount = 0;
+                const mockRequest = () => {
+                    callCount++;
+                    return new Promise(resolve => {
+                        setTimeout(() => resolve({ data: 'result' }), 100);
+                    });
+                };
+
+                // Make 5 simultaneous requests
+                const promises = [];
+                for (let i = 0; i < 5; i++) {
+                    promises.push(requestDeduplicator.execute('test-key', mockRequest));
+                }
+
+                await Promise.all(promises);
+
+                if (callCount === 1) {
+                    addResult('dedup-results', `✓ Request deduplication works (1 call for 5 requests)`, 'success');
+                } else {
+                    addResult('dedup-results', `✗ Request deduplication failed (${callCount} calls for 5 requests)`, 'error');
+                }
+
+            } catch (error) {
+                addResult('dedup-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 3: Debouncing
+        function testDebouncing() {
+            const container = document.getElementById('debounce-results');
+            container.innerHTML = '';
+
+            try {
+                let callCount = 0;
+                const testFunction = () => {
+                    callCount++;
+                };
+
+                const debounced = debounceAdvanced(testFunction, 100);
+
+                // Call multiple times rapidly
+                for (let i = 0; i < 10; i++) {
+                    debounced();
+                }
+
+                setTimeout(() => {
+                    if (callCount === 1) {
+                        addResult('debounce-results', `✓ Debouncing works (1 call for 10 rapid calls)`, 'success');
+                    } else {
+                        addResult('debounce-results', `✗ Debouncing failed (${callCount} calls for 10 rapid calls)`, 'error');
+                    }
+                }, 200);
+
+                addResult('debounce-results', 'Testing debouncing... (wait 200ms)', 'info');
+
+            } catch (error) {
+                addResult('debounce-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 4: Throttling
+        function testThrottling() {
+            const container = document.getElementById('throttle-results');
+            container.innerHTML = '';
+
+            try {
+                let callCount = 0;
+                const testFunction = () => {
+                    callCount++;
+                };
+
+                const throttled = throttleAdvanced(testFunction, 100);
+
+                // Call multiple times rapidly
+                const interval = setInterval(() => {
+                    throttled();
+                }, 10);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    
+                    // Should be called approximately 3 times in 300ms with 100ms throttle
+                    if (callCount >= 2 && callCount <= 4) {
+                        addResult('throttle-results', `✓ Throttling works (${callCount} calls in 300ms)`, 'success');
+                    } else {
+                        addResult('throttle-results', `✗ Throttling unexpected (${callCount} calls in 300ms)`, 'error');
+                    }
+                }, 300);
+
+                addResult('throttle-results', 'Testing throttling... (wait 300ms)', 'info');
+
+            } catch (error) {
+                addResult('throttle-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 5: Table Rendering
+        function testTableRendering(rowCount = 1000) {
+            const container = document.getElementById('table-results');
+            container.innerHTML = '';
+
+            try {
+                // Generate test data
+                const data = [];
+                for (let i = 0; i < rowCount; i++) {
+                    data.push({
+                        symbol: `SYM${i}`,
+                        name: `Company ${i}`,
+                        exchange: ['NSE', 'BSE', 'NFO'][i % 3],
+                        type: ['EQ', 'FUT', 'CE', 'PE'][i % 4],
+                        price: (Math.random() * 1000).toFixed(2)
+                    });
+                }
+
+                // Test standard rendering
+                const tbody = document.getElementById('test-table-body');
+                const startTime = performance.now();
+
+                tbody.innerHTML = '';
+                const fragment = document.createDocumentFragment();
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.symbol}</td>
+                        <td>${item.name}</td>
+                        <td>${item.exchange}</td>
+                        <td>${item.type}</td>
+                        <td>₹${item.price}</td>
+                    `;
+                    fragment.appendChild(row);
+                });
+
+                tbody.appendChild(fragment);
+                const duration = performance.now() - startTime;
+
+                addResult('table-results', `✓ Rendered ${rowCount} rows in ${duration.toFixed(2)}ms`, 'success');
+                
+                if (duration < 100) {
+                    addResult('table-results', '✓ Excellent performance (< 100ms)', 'success');
+                } else if (duration < 500) {
+                    addResult('table-results', '✓ Good performance (< 500ms)', 'success');
+                } else {
+                    addResult('table-results', '⚠ Slow performance (> 500ms)', 'error');
+                }
+
+                performanceMonitor.recordRenderTime(duration);
+
+            } catch (error) {
+                addResult('table-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 6: Performance Statistics
+        function updatePerformanceStats() {
+            const container = document.getElementById('performance-stats');
+            container.innerHTML = '';
+
+            try {
+                const stats = performanceMonitor.getStats();
+                const cacheStats = cacheManager.getStats();
+
+                const statsData = [
+                    { label: 'Total API Calls', value: stats.totalAPICalls },
+                    { label: 'Cache Hits', value: stats.cacheHits },
+                    { label: 'Cache Misses', value: stats.cacheMisses },
+                    { label: 'Cache Hit Rate', value: stats.cacheHitRate },
+                    { label: 'Avg Render Time', value: stats.avgRenderTime },
+                    { label: 'Avg API Time', value: stats.avgAPITime },
+                    { label: 'Cache Size', value: cacheStats.size },
+                    { label: 'Cache Max Size', value: cacheStats.maxSize }
+                ];
+
+                statsData.forEach(stat => {
+                    const card = document.createElement('div');
+                    card.className = 'stat-card';
+                    card.innerHTML = `
+                        <div class="stat-label">${stat.label}</div>
+                        <div class="stat-value">${stat.value}</div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                container.innerHTML = `<div class="test-result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function resetPerformanceStats() {
+            performanceMonitor.reset();
+            cacheManager.clear();
+            updatePerformanceStats();
+        }
+
+        // Test 7: Memoization
+        function testMemoization() {
+            const container = document.getElementById('memo-results');
+            container.innerHTML = '';
+
+            try {
+                // Expensive function
+                let callCount = 0;
+                const expensiveFunction = (n) => {
+                    callCount++;
+                    let result = 0;
+                    for (let i = 0; i < n; i++) {
+                        result += i;
+                    }
+                    return result;
+                };
+
+                const memoized = memoize(expensiveFunction);
+
+                // First call
+                const start1 = performance.now();
+                const result1 = memoized(1000000);
+                const duration1 = performance.now() - start1;
+
+                // Second call (should be cached)
+                const start2 = performance.now();
+                const result2 = memoized(1000000);
+                const duration2 = performance.now() - start2;
+
+                if (result1 === result2 && callCount === 1) {
+                    addResult('memo-results', `✓ Memoization works (1 call for 2 invocations)`, 'success');
+                    addResult('memo-results', `First call: ${duration1.toFixed(2)}ms, Second call: ${duration2.toFixed(2)}ms`, 'info');
+                    
+                    if (duration2 < duration1 / 10) {
+                        addResult('memo-results', `✓ Significant speedup (${(duration1 / duration2).toFixed(0)}x faster)`, 'success');
+                    }
+                } else {
+                    addResult('memo-results', `✗ Memoization failed (${callCount} calls)`, 'error');
+                }
+
+            } catch (error) {
+                addResult('memo-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Performance test page loaded');
+            updatePerformanceStats();
+        });
+    </script>
+</body>
+</html>

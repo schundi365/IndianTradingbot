@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helpful Features Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <link rel="stylesheet" href="../static/css/helpful-features.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 0.375rem;
+            color: #15803d;
+        }
+        .test-result.fail {
+            background-color: #fef2f2;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <h1>Helpful Features Test Suite</h1>
+    <p>This page tests all helpful features: tooltips, contextual help, quick start guide, and example values.</p>
+
+    <!-- Test 1: Tooltips -->
+    <div class="test-section">
+        <h2>Test 1: Tooltips</h2>
+        <p>Hover over the question mark icons to see tooltips:</p>
+        
+        <div class="form-group">
+            <label>
+                Risk Per Trade
+                <span class="tooltip-wrapper">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-content">Maximum percentage of total capital to risk on a single trade</span>
+                </span>
+            </label>
+            <input type="number" class="form-control" value="1.0">
+        </div>
+
+        <div class="form-group">
+            <label>
+                Timeframe
+                <span class="tooltip-wrapper">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-content">The time interval for each candlestick in your trading strategy</span>
+                </span>
+            </label>
+            <select class="form-control">
+                <option>5 Minutes</option>
+                <option>15 Minutes</option>
+                <option>1 Hour</option>
+            </select>
+        </div>
+
+        <div class="test-result">
+            ✓ Tooltips should appear on hover with smooth animation
+        </div>
+    </div>
+
+    <!-- Test 2: Contextual Help Panel -->
+    <div class="test-section">
+        <h2>Test 2: Contextual Help Panel</h2>
+        
+        <div class="contextual-help-panel">
+            <div class="help-panel-header">
+                <span class="help-icon">💡</span>
+                <h4>Tips for Risk Management</h4>
+                <button class="help-toggle-btn" onclick="this.parentElement.parentElement.classList.toggle('collapsed')">
+                    <span class="toggle-icon"></span>
+                </button>
+            </div>
+            <div class="help-panel-content">
+                <ul class="help-list">
+                    <li><strong>Risk Per Trade:</strong> Never risk more than 1-2% of your capital per trade</li>
+                    <li><strong>Max Positions:</strong> Start with 2-3 positions to manage risk</li>
+                    <li><strong>Daily Loss Limit:</strong> Set to 3-5% to protect your capital on bad days</li>
+                    <li><strong>Important:</strong> These limits will automatically stop the bot to protect you</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-result">
+            ✓ Help panel should be collapsible by clicking the toggle button
+        </div>
+    </div>
+
+    <!-- Test 3: Tab Help Banner -->
+    <div class="test-section">
+        <h2>Test 3: Tab Help Banner</h2>
+        
+        <div class="tab-help-panel">
+            <div class="help-banner">
+                <span class="help-icon">💡</span>
+                <div class="help-text">
+                    <strong>Tip:</strong> Use filters to narrow down instruments. 
+                    For NIFTY futures, select NFO exchange and FUT type. 
+                    You can select multiple instruments for diversification.
+                </div>
+                <button class="help-close-btn" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </div>
+        </div>
+
+        <div class="test-result">
+            ✓ Help banner should be dismissible by clicking the × button
+        </div>
+    </div>
+
+    <!-- Test 4: Example Values in Form Help -->
+    <div class="test-section">
+        <h2>Test 4: Example Values</h2>
+        
+        <div class="form-group">
+            <label for="test-indicator-period">Indicator Period</label>
+            <input type="number" id="test-indicator-period" class="form-control" value="20">
+            <small class="form-help">
+                Number of periods for indicator calculation. 
+                Examples: 20 for short-term signals
+            </small>
+        </div>
+
+        <div class="form-group">
+            <label for="test-take-profit">Take Profit (%)</label>
+            <input type="number" id="test-take-profit" class="form-control" value="2.0">
+            <small class="form-help">
+                Percentage gain at which to close positions. 
+                Examples: 1-2% for intraday
+            </small>
+        </div>
+
+        <div class="test-result">
+            ✓ Example values should be shown in help text below inputs
+        </div>
+    </div>
+
+    <!-- Test 5: Quick Start Guide Button -->
+    <div class="test-section">
+        <h2>Test 5: Quick Start Guide</h2>
+        
+        <button class="btn btn-primary" onclick="showQuickStartGuide()">
+            <span class="btn-icon">📖</span> Show Quick Start Guide
+        </button>
+
+        <div class="test-result">
+            ✓ Clicking the button should show the quick start guide modal
+        </div>
+    </div>
+
+    <!-- Test 6: Parameter Help Modal -->
+    <div class="test-section">
+        <h2>Test 6: Parameter Help Modal</h2>
+        
+        <button class="btn btn-secondary" onclick="showParameterHelp()">
+            Show Parameter Help Example
+        </button>
+
+        <div class="test-result">
+            ✓ Should show detailed help modal for a parameter
+        </div>
+    </div>
+
+    <!-- Test Results Summary -->
+    <div class="test-section">
+        <h2>Test Summary</h2>
+        <div id="test-summary">
+            <p><strong>Manual Testing Checklist:</strong></p>
+            <ul>
+                <li>✓ Tooltips appear on hover with proper positioning</li>
+                <li>✓ Contextual help panels can be collapsed/expanded</li>
+                <li>✓ Tab help banners can be dismissed</li>
+                <li>✓ Example values are shown in form help text</li>
+                <li>✓ Quick start guide modal opens and closes properly</li>
+                <li>✓ Parameter help modal displays detailed information</li>
+                <li>✓ All styles are applied correctly</li>
+                <li>✓ Responsive design works on mobile devices</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Mock quick start guide function
+        function showQuickStartGuide() {
+            const overlay = document.createElement('div');
+            overlay.className = 'quick-start-overlay';
+            overlay.innerHTML = `
+                <div class="quick-start-modal">
+                    <div class="quick-start-header">
+                        <h2>✈️ Start Here</h2>
+                        <button class="close-btn" onclick="this.closest('.quick-start-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="quick-start-content">
+                        <p class="quick-start-intro">
+                            Welcome to the Indian Market Trading Dashboard! Follow these steps to get started:
+                        </p>
+                        <div class="quick-start-steps">
+                            <div class="quick-start-step">
+                                <div class="step-number">1</div>
+                                <div class="step-icon">🔗</div>
+                                <div class="step-content">
+                                    <h3>Connect to Broker</h3>
+                                    <p>Select your broker and enter credentials to connect your trading account</p>
+                                    <button class="btn btn-sm btn-primary">Go to Broker</button>
+                                </div>
+                            </div>
+                            <div class="quick-start-step">
+                                <div class="step-number">2</div>
+                                <div class="step-icon">📊</div>
+                                <div class="step-content">
+                                    <h3>Select Instruments</h3>
+                                    <p>Choose which stocks or instruments you want to trade</p>
+                                    <button class="btn btn-sm btn-primary">Go to Instruments</button>
+                                </div>
+                            </div>
+                            <div class="quick-start-step">
+                                <div class="step-number">3</div>
+                                <div class="step-icon">⚙️</div>
+                                <div class="step-content">
+                                    <h3>Configure Strategy</h3>
+                                    <p>Set up your trading parameters, risk management, and strategy settings</p>
+                                    <button class="btn btn-sm btn-primary">Go to Configuration</button>
+                                </div>
+                            </div>
+                            <div class="quick-start-step">
+                                <div class="step-number">4</div>
+                                <div class="step-icon">▶️</div>
+                                <div class="step-content">
+                                    <h3>Start Trading</h3>
+                                    <p>Review your settings and start the bot to begin automated trading</p>
+                                    <button class="btn btn-sm btn-primary">Go to Monitor</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quick-start-footer">
+                            <label>
+                                <input type="checkbox"> Don't show this again
+                            </label>
+                            <button class="btn btn-primary" onclick="this.closest('.quick-start-overlay').remove()">
+                                Get Started
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Close on click outside
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+        }
+
+        // Mock parameter help function
+        function showParameterHelp() {
+            const modal = document.createElement('div');
+            modal.className = 'parameter-help-modal-overlay';
+            modal.innerHTML = `
+                <div class="parameter-help-modal">
+                    <div class="modal-header">
+                        <h3>Risk Per Trade</h3>
+                        <button class="close-btn" onclick="this.closest('.parameter-help-modal-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="modal-content">
+                        <div class="help-section">
+                            <h4>What is this?</h4>
+                            <p>Maximum percentage of total capital to risk on a single trade</p>
+                        </div>
+                        <div class="help-section">
+                            <h4>How to use it</h4>
+                            <p>Professional traders typically risk 0.5-2% per trade. Never risk more than 5%</p>
+                        </div>
+                        <div class="help-section">
+                            <h4>Examples</h4>
+                            <ul>
+                                <li>0.5% for conservative trading</li>
+                                <li>1% for balanced approach</li>
+                                <li>2% for aggressive trading</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close on click outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Run tests on load
+        window.addEventListener('load', () => {
+            console.log('Helpful Features Test Page Loaded');
+            console.log('All visual tests should be manually verified');
+        });
+    </script>
+</body>
+</html>

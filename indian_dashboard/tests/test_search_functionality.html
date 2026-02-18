@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Search Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .search-highlight {
+            background-color: #fef08a;
+            color: #854d0e;
+            font-weight: 600;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .status.pass {
+            background-color: #d1fae5;
+            color: #10b981;
+        }
+        .status.fail {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        .info {
+            background-color: #e0f2fe;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Functionality Test</h1>
+    
+    <div class="info">
+        <strong>Test Instructions:</strong>
+        <ol>
+            <li>Type in the search box below</li>
+            <li>Observe the debouncing (300ms delay)</li>
+            <li>Check that matching text is highlighted</li>
+            <li>Verify that search is case-insensitive</li>
+            <li>Press Escape to clear search</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Interactive Search Test</h2>
+        <input type="text" id="test-search" class="search-input" placeholder="Search instruments (e.g., 'RELIANCE', 'BANK', 'NIFTY')...">
+        
+        <div id="search-status" style="margin-bottom: 10px; color: #666;">
+            <strong>Search Status:</strong> <span id="status-text">Ready</span><br>
+            <strong>Last Search:</strong> <span id="last-search">None</span><br>
+            <strong>Results Found:</strong> <span id="results-count">0</span>
+        </div>
+        
+        <table id="test-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Exchange</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody id="test-tbody">
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Case</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="test-results">
+                <tr>
+                    <td>Search Input Present</td>
+                    <td><span class="status" id="test-input-status">-</span></td>
+                    <td id="test-input-details">-</td>
+                </tr>
+                <tr>
+                    <td>Debouncing Works</td>
+                    <td><span class="status" id="test-debounce-status">-</span></td>
+                    <td id="test-debounce-details">-</td>
+                </tr>
+                <tr>
+                    <td>Search Filtering</td>
+                    <td><span class="status" id="test-filter-status">-</span></td>
+                    <td id="test-filter-details">-</td>
+                </tr>
+                <tr>
+                    <td>Highlight Function</td>
+                    <td><span class="status" id="test-highlight-status">-</span></td>
+                    <td id="test-highlight-details">-</td>
+                </tr>
+                <tr>
+                    <td>Case Insensitive</td>
+                    <td><span class="status" id="test-case-status">-</span></td>
+                    <td id="test-case-details">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Sample instrument data
+        const sampleInstruments = [
+            { symbol: 'RELIANCE', name: 'Reliance Industries Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'TCS', name: 'Tata Consultancy Services Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'HDFCBANK', name: 'HDFC Bank Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'INFY', name: 'Infosys Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'ICICIBANK', name: 'ICICI Bank Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'NIFTY', name: 'Nifty 50 Index', exchange: 'NSE', type: 'INDEX' },
+            { symbol: 'BANKNIFTY', name: 'Bank Nifty Index', exchange: 'NSE', type: 'INDEX' },
+            { symbol: 'SBIN', name: 'State Bank of India', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'BHARTIARTL', name: 'Bharti Airtel Ltd', exchange: 'NSE', type: 'EQ' },
+            { symbol: 'KOTAKBANK', name: 'Kotak Mahindra Bank Ltd', exchange: 'NSE', type: 'EQ' }
+        ];
+
+        let allInstruments = [...sampleInstruments];
+        let filteredInstruments = [...sampleInstruments];
+        let searchDebounceTimer = null;
+        let debounceTestStartTime = null;
+
+        // Highlight function (copied from app.js)
+        function highlightSearchMatch(text, searchTerm) {
+            if (!searchTerm || !text) {
+                return text || '';
+            }
+            
+            const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedTerm})`, 'gi');
+            return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        }
+
+        // Search function
+        function performSearch(searchTerm) {
+            document.getElementById('status-text').textContent = 'Searching...';
+            document.getElementById('last-search').textContent = searchTerm || 'None';
+            
+            if (!searchTerm) {
+                filteredInstruments = [...allInstruments];
+            } else {
+                const searchLower = searchTerm.toLowerCase();
+                filteredInstruments = allInstruments.filter(inst => {
+                    const symbol = (inst.symbol || '').toLowerCase();
+                    const name = (inst.name || '').toLowerCase();
+                    return symbol.includes(searchLower) || name.includes(searchLower);
+                });
+            }
+            
+            document.getElementById('results-count').textContent = filteredInstruments.length;
+            renderTable(searchTerm);
+            
+            setTimeout(() => {
+                document.getElementById('status-text').textContent = 'Ready';
+            }, 100);
+        }
+
+        // Render table
+        function renderTable(searchTerm) {
+            const tbody = document.getElementById('test-tbody');
+            tbody.innerHTML = '';
+            
+            if (filteredInstruments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No instruments found</td></tr>';
+                return;
+            }
+            
+            filteredInstruments.forEach(inst => {
+                const row = document.createElement('tr');
+                const highlightedSymbol = highlightSearchMatch(inst.symbol, searchTerm);
+                const highlightedName = highlightSearchMatch(inst.name, searchTerm);
+                
+                row.innerHTML = `
+                    <td>${highlightedSymbol}</td>
+                    <td>${highlightedName}</td>
+                    <td>${inst.exchange}</td>
+                    <td>${inst.type}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Initialize search
+        function initSearch() {
+            const searchInput = document.getElementById('test-search');
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim();
+                
+                // Record start time for debounce test
+                if (!debounceTestStartTime) {
+                    debounceTestStartTime = Date.now();
+                }
+                
+                if (searchDebounceTimer) {
+                    clearTimeout(searchDebounceTimer);
+                }
+                
+                searchDebounceTimer = setTimeout(() => {
+                    // Calculate debounce time
+                    const debounceTime = Date.now() - debounceTestStartTime;
+                    debounceTestStartTime = null;
+                    
+                    performSearch(searchTerm);
+                    
+                    // Update debounce test
+                    if (debounceTime >= 250 && debounceTime <= 350) {
+                        updateTestStatus('test-debounce', 'pass', `Debounced correctly (${debounceTime}ms)`);
+                    }
+                }, 300);
+            });
+            
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    performSearch('');
+                }
+            });
+        }
+
+        // Update test status
+        function updateTestStatus(testId, status, details) {
+            const statusEl = document.getElementById(`${testId}-status`);
+            const detailsEl = document.getElementById(`${testId}-details`);
+            
+            statusEl.textContent = status === 'pass' ? 'PASS' : 'FAIL';
+            statusEl.className = `status ${status}`;
+            detailsEl.textContent = details;
+        }
+
+        // Run tests
+        function runTests() {
+            // Test 1: Search input present
+            const searchInput = document.getElementById('test-search');
+            if (searchInput) {
+                updateTestStatus('test-input', 'pass', 'Search input element found');
+            } else {
+                updateTestStatus('test-input', 'fail', 'Search input element not found');
+            }
+            
+            // Test 2: Highlight function
+            const testText = 'RELIANCE Industries';
+            const highlighted = highlightSearchMatch(testText, 'RELIANCE');
+            if (highlighted.includes('<mark class="search-highlight">')) {
+                updateTestStatus('test-highlight', 'pass', 'Highlight function works correctly');
+            } else {
+                updateTestStatus('test-highlight', 'fail', 'Highlight function not working');
+            }
+            
+            // Test 3: Case insensitive
+            const lowerHighlight = highlightSearchMatch('Reliance Industries', 'reliance');
+            if (lowerHighlight.includes('<mark class="search-highlight">')) {
+                updateTestStatus('test-case', 'pass', 'Search is case-insensitive');
+            } else {
+                updateTestStatus('test-case', 'fail', 'Search is case-sensitive');
+            }
+            
+            // Test 4: Filtering
+            performSearch('BANK');
+            setTimeout(() => {
+                if (filteredInstruments.length === 4) { // HDFCBANK, ICICIBANK, BANKNIFTY, KOTAKBANK
+                    updateTestStatus('test-filter', 'pass', `Found ${filteredInstruments.length} matching instruments`);
+                } else {
+                    updateTestStatus('test-filter', 'fail', `Expected 4 results, got ${filteredInstruments.length}`);
+                }
+            }, 100);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable('');
+            initSearch();
+            runTests();
+        });
+    </script>
+</body>
+</html>

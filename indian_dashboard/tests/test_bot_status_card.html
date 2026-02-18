@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Status Card Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            background-color: var(--bg-color);
+        }
+        .test-controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        .test-controls h3 {
+            margin-top: 0;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bot Status Card Test</h1>
+        
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <div class="test-buttons">
+                <button onclick="setRunningState()" class="btn btn-primary">Set Running State</button>
+                <button onclick="setStoppedState()" class="btn btn-secondary">Set Stopped State</button>
+                <button onclick="setBrokerConnected()" class="btn btn-success">Set Broker Connected</button>
+                <button onclick="setBrokerDisconnected()" class="btn btn-danger">Set Broker Disconnected</button>
+                <button onclick="updateUptime()" class="btn btn-secondary">Update Uptime</button>
+                <button onclick="updatePositions()" class="btn btn-secondary">Update Positions</button>
+            </div>
+        </div>
+
+        <!-- Bot Status Card -->
+        <div class="card bot-status-card">
+            <div class="bot-status-header">
+                <h3>Bot Status</h3>
+                <div class="bot-status-indicator" id="bot-status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Stopped</span>
+                </div>
+            </div>
+            
+            <div class="bot-status-grid">
+                <div class="bot-status-item">
+                    <div class="status-item-icon">🤖</div>
+                    <div class="status-item-content">
+                        <div class="status-item-label">Bot Status</div>
+                        <div class="status-item-value stopped" id="bot-running-status">Stopped</div>
+                    </div>
+                </div>
+                
+                <div class="bot-status-item">
+                    <div class="status-item-icon">⏱️</div>
+                    <div class="status-item-content">
+                        <div class="status-item-label">Uptime</div>
+                        <div class="status-item-value" id="bot-uptime">--</div>
+                    </div>
+                </div>
+                
+                <div class="bot-status-item">
+                    <div class="status-item-icon">🔗</div>
+                    <div class="status-item-content">
+                        <div class="status-item-label">Broker Connection</div>
+                        <div class="status-item-value disconnected" id="bot-broker-status">Not Connected</div>
+                    </div>
+                </div>
+                
+                <div class="bot-status-item">
+                    <div class="status-item-icon">📊</div>
+                    <div class="status-item-content">
+                        <div class="status-item-label">Open Positions</div>
+                        <div class="status-item-value" id="bot-positions-count">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bot-control-actions">
+                <button id="start-bot-btn" class="btn btn-success">
+                    <span class="btn-icon">▶️</span> Start Bot
+                </button>
+                <button id="stop-bot-btn" class="btn btn-danger" style="display: none;">
+                    <span class="btn-icon">⏹️</span> Stop Bot
+                </button>
+                <button id="restart-bot-btn" class="btn btn-warning" style="display: none;">
+                    <span class="btn-icon">🔄</span> Restart Bot
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uptimeSeconds = 0;
+        let uptimeInterval = null;
+
+        function setRunningState() {
+            const indicator = document.getElementById('bot-status-indicator');
+            const statusText = document.getElementById('bot-running-status');
+            
+            indicator.className = 'bot-status-indicator running';
+            indicator.querySelector('.status-text').textContent = 'Running';
+            
+            statusText.textContent = 'Running';
+            statusText.className = 'status-item-value running';
+            
+            document.getElementById('start-bot-btn').style.display = 'none';
+            document.getElementById('stop-bot-btn').style.display = 'block';
+            document.getElementById('restart-bot-btn').style.display = 'block';
+            
+            // Start uptime counter
+            uptimeSeconds = 0;
+            if (uptimeInterval) clearInterval(uptimeInterval);
+            uptimeInterval = setInterval(() => {
+                uptimeSeconds++;
+                updateUptimeDisplay();
+            }, 1000);
+        }
+
+        function setStoppedState() {
+            const indicator = document.getElementById('bot-status-indicator');
+            const statusText = document.getElementById('bot-running-status');
+            
+            indicator.className = 'bot-status-indicator';
+            indicator.querySelector('.status-text').textContent = 'Stopped';
+            
+            statusText.textContent = 'Stopped';
+            statusText.className = 'status-item-value stopped';
+            
+            document.getElementById('start-bot-btn').style.display = 'block';
+            document.getElementById('stop-bot-btn').style.display = 'none';
+            document.getElementById('restart-bot-btn').style.display = 'none';
+            
+            document.getElementById('bot-uptime').textContent = '--';
+            
+            // Stop uptime counter
+            if (uptimeInterval) {
+                clearInterval(uptimeInterval);
+                uptimeInterval = null;
+            }
+        }
+
+        function setBrokerConnected() {
+            const brokerStatus = document.getElementById('bot-broker-status');
+            brokerStatus.textContent = 'Connected (Kite)';
+            brokerStatus.className = 'status-item-value connected';
+        }
+
+        function setBrokerDisconnected() {
+            const brokerStatus = document.getElementById('bot-broker-status');
+            brokerStatus.textContent = 'Not Connected';
+            brokerStatus.className = 'status-item-value disconnected';
+        }
+
+        function updateUptime() {
+            uptimeSeconds = Math.floor(Math.random() * 7200); // Random uptime up to 2 hours
+            updateUptimeDisplay();
+        }
+
+        function updateUptimeDisplay() {
+            const hours = Math.floor(uptimeSeconds / 3600);
+            const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+            const seconds = uptimeSeconds % 60;
+            
+            let uptimeText = '';
+            if (hours > 0) {
+                uptimeText = `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                uptimeText = `${minutes}m ${seconds}s`;
+            } else {
+                uptimeText = `${seconds}s`;
+            }
+            
+            document.getElementById('bot-uptime').textContent = uptimeText;
+        }
+
+        function updatePositions() {
+            const count = Math.floor(Math.random() * 10);
+            document.getElementById('bot-positions-count').textContent = count;
+        }
+
+        // Button click handlers
+        document.getElementById('start-bot-btn').addEventListener('click', () => {
+            alert('Start Bot clicked');
+            setRunningState();
+        });
+
+        document.getElementById('stop-bot-btn').addEventListener('click', () => {
+            alert('Stop Bot clicked');
+            setStoppedState();
+        });
+
+        document.getElementById('restart-bot-btn').addEventListener('click', () => {
+            alert('Restart Bot clicked');
+            setStoppedState();
+            setTimeout(() => setRunningState(), 1000);
+        });
+    </script>
+</body>
+</html>

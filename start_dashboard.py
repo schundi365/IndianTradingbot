@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Cross-Platform Dashboard Launcher
-Works on Windows, macOS, and Linux
+Indian Market Dashboard Launcher
+Cross-platform launcher for the Indian Market Trading Dashboard
 """
 
 import os
 import sys
 import platform
-import subprocess
 import webbrowser
 import time
 
@@ -23,7 +22,7 @@ def check_python_version():
 
 def check_dependencies():
     """Check if required packages are installed"""
-    required = ['flask', 'MetaTrader5', 'pandas', 'numpy']
+    required = ['flask', 'kiteconnect', 'pandas', 'numpy', 'cryptography']
     missing = []
     
     for package in required:
@@ -56,7 +55,7 @@ def get_local_ip():
 def main():
     """Main launcher function"""
     print("=" * 70)
-    print("GEM TRADING DASHBOARD - CROSS-PLATFORM LAUNCHER")
+    print("INDIAN MARKET TRADING DASHBOARD - LAUNCHER")
     print("=" * 70)
     print()
     
@@ -86,10 +85,10 @@ def main():
     local_ip = get_local_ip()
     
     print("🌐 Dashboard will be available at:")
-    print(f"   • http://localhost:5000")
-    print(f"   • http://127.0.0.1:5000")
+    print(f"   • http://localhost:8080")
+    print(f"   • http://127.0.0.1:8080")
     if local_ip != "localhost":
-        print(f"   • http://{local_ip}:5000 (network access)")
+        print(f"   • http://{local_ip}:8080 (network access)")
     print()
     
     print("⚙️  Starting server...")
@@ -98,13 +97,16 @@ def main():
     
     # Start the dashboard
     try:
-        # Import here to avoid issues if dependencies missing
-        import web_dashboard
+        # Add indian_dashboard to path
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'indian_dashboard'))
+        
+        # Import the dashboard
+        from indian_dashboard import app
         
         # Open browser after short delay
         def open_browser():
             time.sleep(2)
-            webbrowser.open('http://localhost:5000')
+            webbrowser.open('http://localhost:8080')
         
         import threading
         browser_thread = threading.Thread(target=open_browser)
@@ -120,7 +122,7 @@ def main():
         print()
         
         # Run the Flask app
-        web_dashboard.app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+        app.run(debug=False, host='0.0.0.0', port=8080, use_reloader=False)
         
     except KeyboardInterrupt:
         print("\n\n" + "=" * 70)
@@ -131,10 +133,12 @@ def main():
     except Exception as e:
         print(f"\n❌ Error starting dashboard: {str(e)}")
         print("\n📋 Troubleshooting:")
-        print("   1. Make sure MT5 is installed")
-        print("   2. Check that port 5000 is not in use")
-        print("   3. Verify all dependencies are installed")
-        print("   4. Check trading_bot.log for details")
+        print("   1. Check that port 8080 is not in use")
+        print("   2. Verify all dependencies are installed")
+        print("   3. Check dashboard.log for details")
+        print(f"\n   Error details: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         input("\nPress Enter to exit...")
         sys.exit(1)
 

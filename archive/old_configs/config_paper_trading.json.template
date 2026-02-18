@@ -1,0 +1,37 @@
+{
+  "broker": "kite",
+  "kite_api_key": "YOUR_KITE_API_KEY_HERE",
+  "kite_token_file": "kite_token.json",
+  "default_exchange": "NSE",
+  "paper_trading": true,
+  "paper_trading_initial_balance": 100000.0,
+  "symbols": [
+    "RELIANCE",
+    "TCS",
+    "INFY"
+  ],
+  "timeframe": 30,
+  "magic_number": 12345,
+  "risk_percent": 1.0,
+  "reward_ratio": 2.0,
+  "max_daily_loss_percent": 5.0,
+  "max_drawdown_percent": 10.0,
+  "fast_ma_period": 10,
+  "slow_ma_period": 21,
+  "atr_period": 14,
+  "atr_multiplier": 2.0,
+  "macd_fast": 12,
+  "macd_slow": 26,
+  "macd_signal": 9,
+  "trading_hours": {
+    "start": "09:15",
+    "end": "15:30"
+  },
+  "product_type": "MIS",
+  "use_split_orders": false,
+  "use_adaptive_risk": false,
+  "ml_enabled": false,
+  "use_volume_filter": false,
+  "use_trend_detection": false,
+  "decision_log_file": "paper_trading_decisions.log"
+}
