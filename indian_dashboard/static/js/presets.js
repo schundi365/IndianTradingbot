@@ -199,7 +199,18 @@ const Presets = {
         
         // Update instruments if provided
         if (config.instruments && Array.isArray(config.instruments)) {
-            AppState.instruments.selected = config.instruments;
+            // Remove duplicates based on token or symbol+exchange
+            const seen = new Set();
+            const uniqueInstruments = config.instruments.filter(inst => {
+                const key = inst.token || `${inst.symbol}_${inst.exchange}`;
+                if (seen.has(key)) {
+                    return false;
+                }
+                seen.add(key);
+                return true;
+            });
+            
+            appState.set('instruments.selected', uniqueInstruments);
             if (typeof ConfigForm !== 'undefined' && ConfigForm.refreshSelectedInstruments) {
                 ConfigForm.refreshSelectedInstruments();
             }
@@ -216,9 +227,7 @@ const Presets = {
         }
         
         // Mark config as dirty
-        if (AppState.config) {
-            AppState.config.isDirty = true;
-        }
+        appState.set('config.isDirty', true);
     },
     
     /**

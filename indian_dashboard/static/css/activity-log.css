@@ -1,0 +1,252 @@
+/**
+ * Activity Log Styles
+ * Binance-inspired dark theme
+ */
+
+.activity-log-card {
+    background: #1E2329;
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.activity-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #2B3139;
+}
+
+.activity-log-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #EAECEF;
+}
+
+.activity-count {
+    background: #2B3139;
+    color: #FCD535;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.activity-log-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.clear-activities-btn {
+    background: #2B3139;
+    color: #EAECEF;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-activities-btn:hover {
+    background: #F6465D;
+    color: #FFFFFF;
+}
+
+.activity-filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: #2B3139;
+    color: #B7BDC6;
+    border: 1px solid #2B3139;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    background: #2B3139;
+    border-color: #FCD535;
+    color: #FCD535;
+}
+
+.filter-btn.active {
+    background: #FCD535;
+    border-color: #FCD535;
+    color: #181A20;
+    font-weight: 600;
+}
+
+.activity-log-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+/* Custom scrollbar */
+.activity-log-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-log-content::-webkit-scrollbar-track {
+    background: #1E2329;
+}
+
+.activity-log-content::-webkit-scrollbar-thumb {
+    background: #2B3139;
+    border-radius: 3px;
+}
+
+.activity-log-content::-webkit-scrollbar-thumb:hover {
+    background: #474D57;
+}
+
+.no-activities {
+    text-align: center;
+    padding: 40px 20px;
+    color: #848E9C;
+    font-size: 14px;
+}
+
+.activity-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #181A20;
+    border-radius: 4px;
+    border-left: 3px solid #2B3139;
+    transition: all 0.2s;
+}
+
+.activity-item:hover {
+    background: #1E2329;
+}
+
+/* Level-based colors */
+.activity-level-info {
+    border-left-color: #2196F3;
+}
+
+.activity-level-success {
+    border-left-color: #0ECB81;
+}
+
+.activity-level-warning {
+    border-left-color: #F0B90B;
+}
+
+.activity-level-error {
+    border-left-color: #F6465D;
+}
+
+.activity-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.activity-time {
+    color: #848E9C;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+}
+
+.activity-symbol {
+    background: #000000;
+    color: #FFFFFF;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.activity-type-badge {
+    background: #2B3139;
+    color: #B7BDC6;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.activity-message {
+    color: #EAECEF;
+    font-size: 13px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* Type-specific styling */
+.activity-item[data-type="signal"] .activity-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.activity-item[data-type="error"] .activity-message {
+    color: #F6465D;
+}
+
+.activity-item[data-type="warning"] .activity-message {
+    color: #F0B90B;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activity-log-card {
+        padding: 12px;
+    }
+
+    .activity-log-content {
+        max-height: 300px;
+    }
+
+    .activity-item {
+        padding: 10px;
+    }
+
+    .activity-filter-bar {
+        gap: 6px;
+    }
+
+    .filter-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+}

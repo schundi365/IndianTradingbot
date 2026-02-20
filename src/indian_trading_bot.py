@@ -23,6 +23,9 @@ else:
 # Log file path
 LOG_FILE = BASE_DIR / 'indian_trading_bot.log'
 
+# Import logging utilities for Windows console compatibility
+from src.logging_utils import configure_safe_logging
+
 # Import broker adapter and validator
 from src.broker_adapter import BrokerAdapter
 from src.instrument_validator import InstrumentValidator
@@ -57,15 +60,31 @@ except ImportError:
     TREND_DETECTION_AVAILABLE = False
     logging.warning("Trend Detection Engine not available")
 
-# Setup logging
+# Setup logging with UTF-8 encoding for console output
+# Create stream handler with UTF-8 encoding for Windows console
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setLevel(logging.INFO)
+
+# Set UTF-8 encoding for the stream
+if hasattr(sys.stdout, 'reconfigure'):
+    # Python 3.7+ - reconfigure stdout to use UTF-8
+    sys.stdout.reconfigure(encoding='utf-8')
+elif hasattr(sys.stdout, 'buffer'):
+    # Fallback for older Python - wrap the buffer with UTF-8 encoding
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(LOG_FILE, encoding='utf-8'),
-        logging.StreamHandler()
+        stream_handler
     ]
 )
+
+# Configure safe logging to strip emojis for Windows console
+configure_safe_logging()
 
 
 class IndianTradingBot:
@@ -147,6 +166,9 @@ class IndianTradingBot:
         decision_log_file = config.get('decision_log_file', 'trading_decisions.log')
         self.decision_logger = TradingDecisionLogger(logger=logging.getLogger(), log_file=decision_log_file)
         
+        # Activity logger (for dashboard)
+        self.activity_logger = None
+        
         logging.info("="*80)
         logging.info("Indian Trading Bot Initialized")
         logging.info(f"Symbols: {self.symbols}")
@@ -157,8 +179,18 @@ class IndianTradingBot:
         if self.paper_trading:
             logging.info(f"🧪 PAPER TRADING MODE ENABLED")
             initial_balance = config.get('paper_trading_initial_balance', 100000.0)
-            logging.info(f"   Initial Balance: ₹{initial_balance:,.2f}")
+            logging.info(f"   Initial Balance: Rs.{initial_balance:,.2f}")
         logging.info("="*80)
+    def set_activity_logger(self, activity_logger):
+        """Set activity logger for dashboard integration"""
+        self.activity_logger = activity_logger
+        if activity_logger:
+            activity_logger.log_analysis(
+                symbol=None,
+                message="Activity logger connected to bot",
+                data={}
+            )
+
     
     def _init_components(self):
         """Initialize adaptive risk, ML, volume analyzer, etc. (same as MT5)"""
@@ -1367,6 +1399,12 @@ class IndianTradingBot:
                 success=False,
                 error_message="Broker returned no order ID"
             )
+            # Activity log
+            if self.activity_logger:
+                self.activity_logger.log_error(
+                    message=f"Failed to place order for {symbol}",
+                    symbol=symbol
+                )
             return False
 
         # Log successful order placement (Requirement 12.5)
@@ -1380,6 +1418,22 @@ class IndianTradingBot:
             order_id=order_id,
             success=True
         )
+        
+        # Activity log
+        order_type_str = "BUY" if direction == 1 else "SELL"
+        if self.activity_logger:
+            self.activity_logger.log_order(
+                symbol=symbol,
+                order_type=order_type_str,
+                message=f"Order placed: {order_type_str} {quantity} {symbol} @ Rs.{entry_price:.2f}",
+                data={
+                    'order_id': order_id,
+                    'quantity': quantity,
+                    'entry_price': entry_price,
+                    'stop_loss': stop_loss,
+                    'take_profit': take_profit
+                }
+            )
 
         # Store position info for tracking (Requirement 5.1)
         self.positions[order_id] = {
@@ -1667,29 +1721,104 @@ class IndianTradingBot:
         Args:
             symbol (str): Trading symbol to analyze
         """
+        # Log analysis start with header
+        if self.activity_logger:
+            self.activity_logger.log_symbol_analysis_start(symbol)
+            
+            # Log position check
+            positions = self.broker.get_positions(symbol)
+            current_positions = len(positions) if positions else 0
+            self.activity_logger.log_position_check(
+                symbol=symbol,
+                current=current_positions,
+                max_allowed=self.max_positions
+            )
+        
         # Check if market is open
         if not self.is_market_open():
             return
         
         # Get historical data
+        if self.activity_logger:
+            self.activity_logger.log_analysis(
+                symbol=symbol,
+                message=f"📈 Fetching historical data for {symbol} (Timeframe: {self.timeframe})",
+                data={'bars_requested': self.analysis_bars}
+            )
+        
         df = self.get_historical_data(symbol, self.timeframe, self.analysis_bars)
         if df is None or len(df) < 50:
             logging.error(f"Insufficient data for {symbol}")
+            if self.activity_logger:
+                self.activity_logger.log_error(
+                    message=f"❌ Insufficient data for {symbol}",
+                    symbol=symbol
+                )
             return
         
+        # Log data fetch success
+        if self.activity_logger:
+            self.activity_logger.log_data_fetch(
+                symbol=symbol,
+                bars_requested=self.analysis_bars,
+                bars_received=len(df)
+            )
+        
         # Calculate indicators
+        if self.activity_logger:
+            self.activity_logger.log_analysis(
+                symbol=symbol,
+                message=f"📊 Calculating technical indicators...",
+                data={}
+            )
+        
         df = self.calculate_indicators(df)
+        
+        # Log key indicators
+        if self.activity_logger and len(df) > 0:
+            latest = df.iloc[-1]
+            indicators = {
+                'Current Price': latest.get('close', 0),
+                'RSI': latest.get('rsi', 0),
+                'MACD': latest.get('macd', 0),
+                'ATR': latest.get('atr', 0),
+                'Fast MA': latest.get('fast_ma', 0),
+                'Slow MA': latest.get('slow_ma', 0)
+            }
+            self.activity_logger.log_indicator_calculation(symbol, indicators)
         
         # Check for entry signal
         signal = self.check_entry_signal(df, symbol)
         
         if signal == 0:
+            if self.activity_logger:
+                self.activity_logger.log_trade_decision(
+                    symbol=symbol,
+                    decision="NO SIGNAL",
+                    reason="Market conditions not favorable for entry"
+                )
             return
+        
+        # Log signal generation
+        signal_type = "BUY" if signal == 1 else "SELL"
+        if self.activity_logger:
+            self.activity_logger.log_signal(
+                symbol=symbol,
+                signal_type=signal_type,
+                message=f"🎯 {signal_type} signal detected",
+                data={'signal': signal}
+            )
         
         # Check price level protection
         can_trade, limit_price, reason = self.check_existing_position_prices(symbol, signal)
         if not can_trade:
             logging.info(f"Trade blocked for {symbol}: {reason}")
+            if self.activity_logger:
+                self.activity_logger.log_trade_decision(
+                    symbol=symbol,
+                    decision="SIGNAL REJECTED",
+                    reason=f"Price level protection: {reason}"
+                )
             return
         
         # Calculate position parameters
@@ -1707,6 +1836,19 @@ class IndianTradingBot:
         # Calculate position size
         quantity = self.calculate_position_size(symbol, current_price, stop_loss)
         
+        # Log risk calculation
+        if self.activity_logger:
+            risk_amount = abs(current_price - stop_loss) * quantity
+            risk_data = {
+                'Entry Price': f"Rs.{current_price:.2f}",
+                'Stop Loss': f"Rs.{stop_loss:.2f}",
+                'Take Profit': f"Rs.{take_profit:.2f}",
+                'Quantity': quantity,
+                'Risk Amount': f"Rs.{risk_amount:.2f}",
+                'Risk %': f"{self.risk_per_trade}%"
+            }
+            self.activity_logger.log_risk_calculation(symbol, risk_data)
+        
         # Open position
         success = self.open_position(
             symbol=symbol,
@@ -1720,8 +1862,24 @@ class IndianTradingBot:
         if success:
             direction_str = "BUY" if signal == 1 else "SELL"
             logging.info(f"🎯 Trade executed: {symbol} {direction_str}")
+            if self.activity_logger:
+                self.activity_logger.log_trade_decision(
+                    symbol=symbol,
+                    decision="TRADE EXECUTED",
+                    reason=f"{direction_str} order placed successfully"
+                )
         else:
             logging.error(f"❌ Trade failed: {symbol}")
+            if self.activity_logger:
+                self.activity_logger.log_trade_decision(
+                    symbol=symbol,
+                    decision="TRADE FAILED",
+                    reason="Order placement failed"
+                )
+        
+        # Log completion
+        if self.activity_logger:
+            self.activity_logger.log_separator()
     
     def update_trailing_stop(self, position_dict, symbol, direction):
         """
@@ -1984,6 +2142,21 @@ class IndianTradingBot:
                     exit_reason="TIME_EXIT",
                     hold_time=hold_time
                 )
+                
+                # Activity log
+                if self.activity_logger:
+                    pnl_sign = "+" if pnl >= 0 else ""
+                    self.activity_logger.log_position(
+                        symbol=symbol,
+                        message=f"Position closed: {symbol} P&L: {pnl_sign}Rs.{pnl:.2f} ({pnl_sign}{pnl_percent:.2f}%)",
+                        data={
+                            'pnl': pnl,
+                            'pnl_percent': pnl_percent,
+                            'entry_price': entry_price,
+                            'exit_price': current_price,
+                            'hold_time': hold_time
+                        }
+                    )
                 
                 logging.info(f"✅ Position closed successfully | Symbol: {symbol} | P&L: {pnl:.2f}")
                 

@@ -17,7 +17,8 @@ from validators import (
     validate_risk_percentage,
     validate_integer,
     validate_strategy,
-    validate_timeframe
+    validate_timeframe,
+    validate_broker_type
 )
 from rate_limiter import (
     READ_RATE_LIMIT,
@@ -117,9 +118,13 @@ def save_current_config():
         config = data['config']
         name = data.get('name')
         
+        # Log the config being saved for debugging
+        logger.info(f"Saving configuration: {json.dumps(config, indent=2)}")
+        
         # Validate config structure
         errors = validate_configuration(config)
         if errors:
+            logger.error(f"Configuration validation failed: {errors}")
             return jsonify({
                 'success': False,
                 'error': 'Invalid configuration',
@@ -397,7 +402,7 @@ def validate_configuration(config: dict) -> list:
         return errors  # Can't continue without required fields
     
     # Validate broker
-    is_valid, error = validate_strategy(config.get('broker', ''))
+    is_valid, error = validate_broker_type(config.get('broker', ''))
     if not is_valid:
         errors.append(f"broker: {error}")
     

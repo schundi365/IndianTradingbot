@@ -1,5 +1,6 @@
 {
   "broker": "kite",
   "strategy": "trend_following",
+  "timeframe": "15min",
   "instruments": []
 }

@@ -2,6 +2,7 @@
   "description": "Test description",
   "broker": "kite",
   "strategy": "momentum",
+  "timeframe": "15min",
   "instruments": [
     {
       "symbol": "NIFTY",

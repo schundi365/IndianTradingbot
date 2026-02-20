@@ -302,7 +302,7 @@ const Validation = {
         });
 
         // Validate instruments selection
-        const selectedInstruments = AppState.instruments.selected || [];
+        const selectedInstruments = appState.get('instruments.selected') || [];
         if (selectedInstruments.length === 0) {
             this.errors['instruments'] = 'At least one instrument must be selected';
             allValid = false;

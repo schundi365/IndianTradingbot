@@ -123,7 +123,7 @@ class PaperTradingAdapter(BrokerAdapter):
         try:
             self.engine = PaperTradingEngine(self.initial_balance)
             self.connected = True
-            self.logger.info(f"Paper Trading connected with balance: ₹{self.initial_balance:,.2f}")
+            self.logger.info(f"Paper Trading connected with balance: Rs.{self.initial_balance:,.2f}")
             return True
         except Exception as e:
             self.logger.error(f"Failed to initialize paper trading: {e}")
@@ -142,10 +142,10 @@ class PaperTradingAdapter(BrokerAdapter):
             self.logger.info("🧪 PAPER TRADING SESSION SUMMARY")
             self.logger.info(f"Total Trades: {stats['total_trades']}")
             self.logger.info(f"Win Rate: {stats['win_rate']:.2f}%")
-            self.logger.info(f"Total P&L: ₹{stats['total_pnl']:,.2f}")
+            self.logger.info(f"Total P&L: Rs.{stats['total_pnl']:,.2f}")
             self.logger.info(f"Return: {stats.get('return_percent', 0):.2f}%")
-            self.logger.info(f"Final Balance: ₹{self.engine.balance:,.2f}")
-            self.logger.info(f"Final Equity: ₹{self.engine.equity:,.2f}")
+            self.logger.info(f"Final Balance: Rs.{self.engine.balance:,.2f}")
+            self.logger.info(f"Final Equity: Rs.{self.engine.equity:,.2f}")
             self.logger.info("="*80)
         
         self.engine = None

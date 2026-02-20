@@ -4,12 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEM Trading Bot - ₹</title>
+    
+    <!-- CRITICAL: Strategy Recommendations Script - Load FIRST -->
+    <script>
+    window.STRATEGY_REC_DEBUG = true;
+    console.log('%c=== STRATEGY RECOMMENDATIONS SCRIPT LOADING (HEAD) ===', 'background: #FCD535; color: #000; font-size: 16px; font-weight: bold; padding: 5px;');
+    </script>
+    
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/error-handler.css">
     <link rel="stylesheet" href="/static/css/loading-states.css">
     <link rel="stylesheet" href="/static/css/ui-enhancements.css">
     <link rel="stylesheet" href="/static/css/helpful-features.css">
+    <link rel="stylesheet" href="/static/css/strategy-recommendations.css">
+    <link rel="stylesheet" href="/static/css/activity-log.css">
+    <link rel="stylesheet" href="/static/css/analytics.css">
+    <link rel="stylesheet" href="/static/css/charts.css">
     <link rel="stylesheet" href="/static/css/gem-theme.css">
+    
+    <!-- Inline critical styles for tips box and instrument tags to override cache -->
+    <style>
+        /* Tips/Alert Box - BLACK text on existing yellow background */
+        .alert-info,
+        div.alert-info,
+        .alert.alert-info,
+        [class*="alert"][class*="info"] {
+            background: #FFF3CD !important;
+            color: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            border-left: 4px solid #FCD535 !important;
+        }
+        
+        .alert-info *,
+        div.alert-info *,
+        .alert.alert-info *,
+        [class*="alert"][class*="info"] * {
+            color: #000000 !important;
+        }
+        
+        /* Selected Instrument Tags - BLACK background with WHITE text */
+        .selected-instrument-tag,
+        #selected-instruments .selected-instrument-tag,
+        #config-selected-instruments .selected-instrument-tag,
+        .instrument-chip,
+        .instrument-tag {
+            background: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            color: #FFFFFF !important;
+        }
+        
+        .selected-instrument-tag *,
+        .instrument-chip *,
+        .instrument-tag * {
+            color: #FFFFFF !important;
+        }
+        
+        .selected-instrument-tag .instrument-symbol,
+        .selected-instrument-tag .instrument-info .instrument-symbol,
+        .instrument-chip .symbol {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+        
+        .selected-instrument-tag .instrument-exchange,
+        .selected-instrument-tag .instrument-info .instrument-exchange,
+        .instrument-chip .exchange {
+            color: #FCD535 !important;
+            font-weight: 500 !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -35,6 +98,8 @@
             <button class="tab-button" data-tab="configuration">Configuration</button>
             <button class="tab-button" data-tab="monitor">Monitor</button>
             <button class="tab-button" data-tab="trades">Trades</button>
+            <button class="tab-button" data-tab="analytics">Analytics</button>
+            <button class="tab-button" data-tab="charts">Charts</button>
         </div>
     </nav>
 
@@ -216,10 +281,10 @@
                             <div class="form-group">
                                 <label for="config-timeframe">Timeframe</label>
                                 <select id="config-timeframe" name="timeframe" class="form-control">
-                                    <option value="1minute">1 Minute</option>
-                                    <option value="5minute" selected>5 Minutes</option>
-                                    <option value="15minute">15 Minutes</option>
-                                    <option value="30minute">30 Minutes</option>
+                                    <option value="1min">1 Minute</option>
+                                    <option value="5min">5 Minutes</option>
+                                    <option value="15min" selected>15 Minutes</option>
+                                    <option value="30min">30 Minutes</option>
                                     <option value="1hour">1 Hour</option>
                                     <option value="1day">1 Day</option>
                                 </select>
@@ -232,6 +297,7 @@
                                     <option value="momentum">Momentum</option>
                                     <option value="mean_reversion">Mean Reversion</option>
                                     <option value="breakout">Breakout</option>
+                                    <option value="scalping">Scalping</option>
                                 </select>
                             </div>
 
@@ -248,7 +314,7 @@
                         </div>
 
                         <!-- Strategy Parameters Section -->
-                        <div class="config-section" data-config-section="strategy">
+                        <div class="config-section" id="strategy-parameters-section" data-config-section="strategy">
                             <h3 class="section-title">Strategy Parameters</h3>
                             
                             <div class="form-group">
@@ -528,6 +594,33 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Activity Log Card -->
+                <div class="activity-log-card" id="activity-log-container">
+                    <div class="activity-log-header">
+                        <div class="activity-log-title">
+                            <span>📋</span>
+                            <span>Live Activity Log</span>
+                            <span class="activity-count">0</span>
+                        </div>
+                        <div class="activity-log-controls">
+                            <button class="clear-activities-btn">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-filter-bar">
+                        <button class="filter-btn" data-type="analysis">📊 Analysis</button>
+                        <button class="filter-btn" data-type="signal">⚡ Signals</button>
+                        <button class="filter-btn" data-type="order">✅ Orders</button>
+                        <button class="filter-btn" data-type="position">📈 Positions</button>
+                        <button class="filter-btn" data-type="warning">⚠️ Warnings</button>
+                        <button class="filter-btn" data-type="error">❌ Errors</button>
+                    </div>
+                    
+                    <div class="activity-log-content">
+                        <div class="no-activities">No activities yet. Start the bot to see live updates.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Trades Tab -->
@@ -605,6 +698,219 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Charts Tab -->
+            <div id="charts-tab" class="tab-content">
+        <!-- Chart Controls Bar -->
+        <div class="chart-controls-bar">
+            <!-- Symbol Selector -->
+            <div class="chart-control-group">
+                <label class="chart-control-label">Symbol:</label>
+                <select id="chart-symbol-selector">
+                    <option value="">-- Select Symbol --</option>
+                </select>
+            </div>
+
+            <!-- Timeframe Selector -->
+            <div class="chart-control-group">
+                <label class="chart-control-label">Timeframe:</label>
+                <div class="timeframe-buttons">
+                    <button class="timeframe-btn" data-timeframe="1min">1m</button>
+                    <button class="timeframe-btn" data-timeframe="5min">5m</button>
+                    <button class="timeframe-btn" data-timeframe="15min">15m</button>
+                    <button class="timeframe-btn" data-timeframe="30min">30m</button>
+                    <button class="timeframe-btn" data-timeframe="1hour">1h</button>
+                    <button class="timeframe-btn" data-timeframe="1day">1D</button>
+                </div>
+            </div>
+
+            <!-- Indicator Toggles -->
+            <div class="chart-control-group">
+                <label class="chart-control-label">Indicators:</label>
+                <div id="indicator-toggles" class="indicator-toggles">
+                    <!-- Indicator buttons will be added here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Refresh Button -->
+            <button id="chart-refresh-btn">
+                <span>🔄</span>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        <!-- Main Chart Container -->
+        <div class="chart-main-container">
+            <!-- Price Chart -->
+            <div class="price-chart-wrapper">
+                <div id="price-chart-container">
+                    <!-- Chart will be rendered here -->
+                    <div class="chart-empty-state">
+                        <div class="chart-empty-state-icon">📊</div>
+                        <div class="chart-empty-state-text">Select a symbol to view chart</div>
+                        <div class="chart-empty-state-subtext">Choose from your selected instruments above</div>
+                    </div>
+                </div>
+                
+                <!-- Loading Indicator -->
+                <div id="chart-loading">
+                    <div class="spinner"></div>
+                </div>
+
+                <!-- Trade Markers Legend -->
+                <div class="trade-markers-legend">
+                    <div class="trade-marker-item">
+                        <span class="trade-marker-icon trade-marker-buy">▲</span>
+                        <span>Buy Entry</span>
+                    </div>
+                    <div class="trade-marker-item">
+                        <span class="trade-marker-icon trade-marker-sell">▼</span>
+                        <span>Sell Entry</span>
+                    </div>
+                    <div class="trade-marker-item">
+                        <span class="trade-marker-icon trade-marker-exit">●</span>
+                        <span>Exit</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicator Panels (MACD, RSI, ATR) -->
+            <div id="indicator-panels" class="indicator-panels">
+                <!-- Indicator panels will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analytics-tab" class="tab-content">
+        <!-- Loading Indicator -->
+        <div id="analytics-loading" class="analytics-loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Date Range Controls -->
+        <div class="analytics-controls">
+            <label>From:</label>
+            <input type="date" id="analytics-from-date">
+            
+            <label>To:</label>
+            <input type="date" id="analytics-to-date">
+            
+            <button id="analytics-apply-date" class="primary">Apply</button>
+            <button id="analytics-reset-date">Reset</button>
+            
+            <div class="quick-filters">
+                <button id="analytics-filter-today">Today</button>
+                <button id="analytics-filter-week">Last 7 Days</button>
+                <button id="analytics-filter-month">Last 30 Days</button>
+            </div>
+        </div>
+        
+        <!-- Performance Metrics -->
+        <div class="performance-metrics">
+            <div class="metric-card">
+                <div class="metric-label">Total Trades</div>
+                <div class="metric-value" id="metric-total-trades">0</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value" id="metric-win-rate">0%</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Total P&L</div>
+                <div class="metric-value" id="metric-total-pnl">₹0.00</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Avg Trade</div>
+                <div class="metric-value" id="metric-avg-trade">₹0.00</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Profit Factor</div>
+                <div class="metric-value" id="metric-profit-factor">0.00</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Largest Win</div>
+                <div class="metric-value" id="metric-largest-win">₹0.00</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Largest Loss</div>
+                <div class="metric-value" id="metric-largest-loss">₹0.00</div>
+            </div>
+        </div>
+        
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- Profit by Symbol Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Profit by Symbol</div>
+                        <div class="chart-subtitle">P&L breakdown by trading symbol</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="profit-by-symbol-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Win/Loss by Symbol Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Win/Loss by Symbol</div>
+                        <div class="chart-subtitle">Winning and losing trades per symbol</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="win-loss-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Daily Profit Chart -->
+            <div class="chart-card full-width">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Daily Profit Trend</div>
+                        <div class="chart-subtitle">Cumulative P&L over time</div>
+                    </div>
+                </div>
+                <div class="chart-container tall">
+                    <canvas id="daily-profit-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Hourly Performance Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Hourly Performance</div>
+                        <div class="chart-subtitle">P&L by hour of day</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hourly-performance-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Trade Distribution Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title">Trade Distribution</div>
+                        <div class="chart-subtitle">Trade count by symbol</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trade-distribution-chart"></canvas>
+                </div>
+            </div>
+        </div>
         </div>
     </main>
 
@@ -623,13 +929,8 @@
     <script src="/static/js/loading-states.js"></script>
     <script src="/static/js/error-handler.js"></script>
     <script src="/static/js/session-manager.js"></script>
-    <!-- Performance Optimization Scripts -->
-    <script src="/static/js/cache-manager.js"></script>
-    <script src="/static/js/performance-utils.js"></script>
-    <script src="/static/js/table-optimizer.js"></script>
-    <!-- API Client (must load after cache-manager) -->
+    <!-- API Client -->
     <script src="/static/js/api-client.js"></script>
-    <script src="/static/js/api-client-cached.js"></script>
     <script src="/static/js/state.js"></script>
     <script src="/static/js/credentials-form.js"></script>
     <script src="/static/js/validation.js"></script>
@@ -638,12 +939,26 @@
     <script src="/static/js/config-manager.js"></script>
     <script src="/static/js/export-import.js"></script>
     <script src="/static/js/strategy-parameters.js"></script>
+    <script src="/static/js/strategy-recommendations.js"></script>
+    <script src="/static/js/activity-log.js"></script>
     <script src="/static/js/risk-management.js"></script>
     <script src="/static/js/trades.js"></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- TradingView Lightweight Charts for Price Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Analytics -->
+    <script src="/static/js/analytics-charts.js"></script>
+    <script src="/static/js/analytics.js"></script>
+    <!-- Charts -->
+    <script src="/static/js/price-chart.js"></script>
+    <script src="/static/js/chart-controls.js"></script>
     <script src="/static/js/app.js"></script>
     <!-- UI/UX Enhancements -->
     <script src="/static/js/ui-enhancements.js"></script>
     <!-- Helpful Features -->
     <script src="/static/js/helpful-features.js"></script>
+    
+
 </body>
 </html>

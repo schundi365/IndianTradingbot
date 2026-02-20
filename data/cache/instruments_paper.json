@@ -1,0 +1,62 @@
+[
+  {
+    "token": "MOCK_RELIANCE",
+    "symbol": "RELIANCE",
+    "name": "Reliance Industries Ltd",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "segment": "",
+    "expiry": "",
+    "strike": 0,
+    "lot_size": 1,
+    "tick_size": 0.05
+  },
+  {
+    "token": "MOCK_TCS",
+    "symbol": "TCS",
+    "name": "Tata Consultancy Services Ltd",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "segment": "",
+    "expiry": "",
+    "strike": 0,
+    "lot_size": 1,
+    "tick_size": 0.05
+  },
+  {
+    "token": "MOCK_INFY",
+    "symbol": "INFY",
+    "name": "Infosys Ltd",
+    "exchange": "NSE",
+    "instrument_type": "EQ",
+    "segment": "",
+    "expiry": "",
+    "strike": 0,
+    "lot_size": 1,
+    "tick_size": 0.05
+  },
+  {
+    "token": "MOCK_NIFTY50",
+    "symbol": "NIFTY 50",
+    "name": "Nifty 50 Index",
+    "exchange": "NSE",
+    "instrument_type": "INDEX",
+    "segment": "",
+    "expiry": "",
+    "strike": 0,
+    "lot_size": 50,
+    "tick_size": 0.05
+  },
+  {
+    "token": "MOCK_BANKNIFTY",
+    "symbol": "BANKNIFTY",
+    "name": "Bank Nifty Index",
+    "exchange": "NSE",
+    "instrument_type": "INDEX",
+    "segment": "",
+    "expiry": "",
+    "strike": 0,
+    "lot_size": 25,
+    "tick_size": 0.05
+  }
+]

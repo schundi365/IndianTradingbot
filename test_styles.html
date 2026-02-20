@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Test - Tips Box and Instrument Tags</title>
+    <style>
+        body {
+            background: #181A20;
+            color: #FFFFFF;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 40px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #FCD535;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #1E2329;
+            border-radius: 8px;
+        }
+        
+        .test-section h2 {
+            color: #FFFFFF;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        /* Tips Box Styles */
+        .alert-info {
+            background: #FFF3CD !important;
+            color: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            border-left: 4px solid #FCD535 !important;
+            padding: 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .alert-info * {
+            color: #000000 !important;
+        }
+        
+        /* Instrument Tags Styles */
+        .selected-instrument-tag {
+            background: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            color: #FFFFFF !important;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 5px;
+        }
+        
+        .selected-instrument-tag .instrument-symbol {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+        
+        .selected-instrument-tag .instrument-exchange {
+            color: #FCD535 !important;
+            font-weight: 500 !important;
+            font-size: 12px;
+        }
+        
+        .remove-instrument {
+            color: #F6465D !important;
+            background: transparent !important;
+            border: none;
+            cursor: pointer;
+            padding: 0 4px;
+            font-size: 16px;
+        }
+        
+        .remove-instrument:hover {
+            background: #F6465D !important;
+            color: #FFFFFF !important;
+            border-radius: 3px;
+        }
+        
+        .expected {
+            background: #0ECB81;
+            color: #FFFFFF;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .code {
+            background: #0B0E11;
+            color: #FCD535;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Style Test - Tips Box and Instrument Tags</h1>
+    
+    <div class="test-section">
+        <h2>1. Tips Box (Alert Info)</h2>
+        <div class="alert-info">
+            <strong>💡 Trading Tips:</strong> This is a sample tips box. The text should be BLACK (#000000) on a light yellow background (#FFF3CD). This ensures maximum readability. The left border should be thick and yellow (#FCD535).
+        </div>
+        <div class="expected">
+            ✓ Expected: Light yellow background, BLACK text, yellow left border
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Instrument Tags</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+            <div class="selected-instrument-tag">
+                <div>
+                    <div class="instrument-symbol">RELIANCE</div>
+                    <div class="instrument-exchange">NSE</div>
+                </div>
+                <button class="remove-instrument">×</button>
+            </div>
+            
+            <div class="selected-instrument-tag">
+                <div>
+                    <div class="instrument-symbol">TCS</div>
+                    <div class="instrument-exchange">NSE</div>
+                </div>
+                <button class="remove-instrument">×</button>
+            </div>
+            
+            <div class="selected-instrument-tag">
+                <div>
+                    <div class="instrument-symbol">INFY</div>
+                    <div class="instrument-exchange">NSE</div>
+                </div>
+                <button class="remove-instrument">×</button>
+            </div>
+            
+            <div class="selected-instrument-tag">
+                <div>
+                    <div class="instrument-symbol">HDFCBANK</div>
+                    <div class="instrument-exchange">NSE</div>
+                </div>
+                <button class="remove-instrument">×</button>
+            </div>
+        </div>
+        <div class="expected">
+            ✓ Expected: BLACK background, WHITE symbol text, YELLOW exchange text, yellow border
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Multiple Tips Boxes</h2>
+        <div class="alert-info">
+            <strong>⚠️ Risk Warning:</strong> Trading involves risk. Make sure you understand the risks before trading.
+        </div>
+        <div class="alert-info">
+            <strong>📊 Market Status:</strong> Markets are open. Current time: 10:30 AM IST.
+        </div>
+        <div class="alert-info">
+            <strong>🔔 Notification:</strong> New configuration preset available: "M15_GOLD_SILVER_OPTIMAL"
+        </div>
+        <div class="expected">
+            ✓ Expected: All boxes should have BLACK text on light yellow background
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Color Reference</h2>
+        <p>If the styles are working correctly, you should see:</p>
+        <ul>
+            <li><span class="code">Tips Box Background:</span> #FFF3CD (light yellow)</li>
+            <li><span class="code">Tips Box Text:</span> #000000 (black)</li>
+            <li><span class="code">Tips Box Border:</span> #FCD535 (yellow)</li>
+            <li><span class="code">Tag Background:</span> #000000 (black)</li>
+            <li><span class="code">Tag Symbol:</span> #FFFFFF (white)</li>
+            <li><span class="code">Tag Exchange:</span> #FCD535 (yellow)</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Instructions</h2>
+        <p>If you can read all the text clearly:</p>
+        <ul>
+            <li>✓ Tips boxes have BLACK text on light yellow background</li>
+            <li>✓ Instrument tags have WHITE text on BLACK background</li>
+            <li>✓ Exchange names are YELLOW</li>
+        </ul>
+        <p style="margin-top: 20px;">Then the styles are working correctly! 🎉</p>
+        <p style="margin-top: 10px;">If not, follow the <span class="code">CACHE_CLEARING_GUIDE.md</span> to clear your browser cache.</p>
+    </div>
+</body>
+</html>

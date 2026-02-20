@@ -1,406 +1,2370 @@
-/* GEM Trading Bot - Vibrant Color Theme */
+/* GEM Trading Bot - Binance-Inspired Professional Theme */
 
+/* Color Palette - Binance Dark Theme */
 :root {
-    /* Primary Colors - Vibrant and Modern */
-    --gem-primary: #FF6B35;        /* Vibrant Orange */
-    --gem-secondary: #004E89;      /* Deep Blue */
-    --gem-accent: #F7B801;         /* Golden Yellow */
-    --gem-success: #06D6A0;        /* Turquoise Green */
-    --gem-danger: #EF476F;         /* Vibrant Pink/Red */
-    --gem-warning: #FFD23F;        /* Bright Yellow */
-    --gem-info: #118AB2;           /* Ocean Blue */
+    /* Primary Colors - Binance Style */
+    --gem-primary: #FCD535;      /* Binance Yellow */
+    --gem-secondary: #848E9C;    /* Binance Gray */
+    --gem-accent: #F0B90B;       /* Darker Yellow */
+    
+    /* Action Colors - Binance Trading Colors */
+    --gem-success: #0ECB81;      /* Binance Green - Buy/Profit */
+    --gem-danger: #F6465D;       /* Binance Red - Sell/Loss */
+    --gem-warning: #F0B90B;      /* Binance Orange - Warning */
+    --gem-info: #3861FB;         /* Binance Blue - Info */
+    
+    /* Background Colors - Binance Dark Theme */
+    --gem-bg-primary: #181A20;   /* Binance Dark Background */
+    --gem-bg-secondary: #1E2329; /* Binance Card Background */
+    --gem-bg-tertiary: #2B3139;  /* Binance Hover Background */
+    --gem-bg-input: #2B3139;     /* Input Background */
+    --gem-bg-hover: #2B3139;     /* Hover State */
+    
+    /* Text Colors - Binance Typography */
+    --gem-text-primary: #EAECEF;    /* Primary Text */
+    --gem-text-secondary: #B7BDC6;  /* Secondary Text */
+    --gem-text-muted: #848E9C;      /* Muted Text */
+    --gem-text-white: #FFFFFF;      /* Pure White */
+    
+    /* Border Colors */
+    --gem-border: #2B3139;       /* Subtle Border */
+    --gem-border-light: #474D57; /* Lighter Border */
     
     /* Gradient Backgrounds */
-    --gem-gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7B801 100%);
-    --gem-gradient-secondary: linear-gradient(135deg, #004E89 0%, #118AB2 100%);
-    --gem-gradient-success: linear-gradient(135deg, #06D6A0 0%, #1B9AAA 100%);
-    --gem-gradient-header: linear-gradient(135deg, #FF6B35 0%, #F7B801 50%, #06D6A0 100%);
+    --gem-gradient-main: linear-gradient(180deg, #181A20 0%, #1E2329 100%);
+    --gem-gradient-header: linear-gradient(90deg, #181A20 0%, #1E2329 100%);
+    --gem-gradient-card: linear-gradient(180deg, #1E2329 0%, #181A20 100%);
+    --gem-gradient-button: linear-gradient(180deg, #FCD535 0%, #F0B90B 100%);
     
-    /* Background Colors */
-    --gem-bg-primary: #FFFFFF;
-    --gem-bg-secondary: #F8F9FA;
-    --gem-bg-dark: #1A1A2E;
-    --gem-bg-card: #FFFFFF;
-    
-    /* Text Colors */
-    --gem-text-primary: #2D3142;
-    --gem-text-secondary: #6C757D;
-    --gem-text-light: #FFFFFF;
-    --gem-text-muted: #9CA3AF;
-    
-    /* Border and Shadow */
-    --gem-border: #E5E7EB;
-    --gem-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --gem-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --gem-shadow-colored: 0 10px 25px -5px rgba(255, 107, 53, 0.3);
+    /* Override dashboard.css light theme variables */
+    --primary-color: #FCD535;
+    --secondary-color: #848E9C;
+    --success-color: #0ECB81;
+    --danger-color: #F6465D;
+    --warning-color: #F0B90B;
+    --bg-color: #181A20;
+    --card-bg: #1E2329;
+    --text-color: #EAECEF;
+    --text-muted: #848E9C;
+    --border-color: #2B3139;
 }
 
-/* Header Styling */
-.dashboard-header {
-    background: var(--gem-gradient-header) !important;
-    box-shadow: var(--gem-shadow-lg);
-    padding: 1.5rem 0;
-}
-
-.logo {
-    color: var(--gem-text-light) !important;
-    font-weight: 700;
-    font-size: 1.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.gem-icon {
-    font-size: 2rem;
-    animation: sparkle 2s ease-in-out infinite;
-}
-
-.rupee-symbol {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--gem-accent);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-@keyframes sparkle {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.1) rotate(5deg); }
-}
-
-/* Tab Navigation */
-.tab-navigation {
-    background: var(--gem-bg-secondary);
-    border-bottom: 3px solid var(--gem-primary);
-    box-shadow: var(--gem-shadow);
-}
-
-.tab-button {
-    color: var(--gem-text-secondary);
-    font-weight: 600;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.tab-button:hover {
-    color: var(--gem-primary);
-    transform: translateY(-2px);
-}
-
-.tab-button.active {
-    color: var(--gem-primary);
+/* Body and Container */
+body {
     background: var(--gem-bg-primary);
-    border-bottom: 3px solid var(--gem-primary);
+    color: var(--gem-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-.tab-button.active::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--gem-gradient-primary);
+/* Header Styling - Binance Minimal Style */
+.dashboard-header {
+    background: var(--gem-bg-secondary);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--gem-border);
+    margin-bottom: 0;
+    box-shadow: none;
 }
 
-/* Cards */
+.dashboard-header h1 {
+    font-size: 20px;
+    margin-bottom: 0;
+    text-shadow: none;
+    font-weight: 600;
+    color: var(--gem-text-white);
+}
+
+.dashboard-header .subtitle {
+    opacity: 0.7;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--gem-text-secondary);
+}
+
+/* Card Styling - Binance Flat Design */
 .card {
-    background: var(--gem-bg-card);
-    border: 2px solid var(--gem-border);
-    border-radius: 12px;
-    box-shadow: var(--gem-shadow);
-    transition: all 0.3s ease;
+    background: var(--gem-bg-secondary);
+    border: 1px solid var(--gem-border);
+    border-radius: 4px;
+    box-shadow: none;
+    transition: none;
 }
 
 .card:hover {
-    box-shadow: var(--gem-shadow-lg);
-    transform: translateY(-2px);
-    border-color: var(--gem-primary);
+    transform: none;
+    box-shadow: none;
+    border-color: var(--gem-border);
 }
 
-.card h3 {
-    color: var(--gem-secondary);
-    border-bottom: 2px solid var(--gem-accent);
-    padding-bottom: 0.75rem;
-    margin-bottom: 1.5rem;
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--gem-border);
+    padding: 16px 20px;
+    border-radius: 0;
 }
 
-/* Buttons */
+.card-header h2,
+.card-header h3 {
+    color: var(--gem-text-white);
+    margin: 0;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Button Styling - Binance Flat Style */
 .btn {
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    box-shadow: var(--gem-shadow);
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    box-shadow: none;
 }
 
+.btn:hover {
+    transform: none;
+    box-shadow: none;
+    opacity: 0.9;
+}
+
+.btn:active {
+    transform: none;
+    opacity: 0.8;
+}
+
+.btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Primary Button - Binance Yellow */
 .btn-primary {
-    background: var(--gem-gradient-primary) !important;
-    border: none;
-    color: var(--gem-text-light);
+    background: var(--gem-primary);
+    color: #181A20;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--gem-shadow-colored);
+    background: var(--gem-accent);
+    color: #181A20;
 }
 
+/* Success Button - Binance Green (Buy) */
 .btn-success {
-    background: var(--gem-gradient-success) !important;
-    border: none;
-    color: var(--gem-text-light);
+    background: var(--gem-success);
+    color: white;
 }
 
 .btn-success:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(6, 214, 160, 0.3);
+    background: #0BB871;
 }
 
+/* Danger Button - Binance Red (Sell) */
 .btn-danger {
-    background: var(--gem-danger) !important;
-    border: none;
-    color: var(--gem-text-light);
+    background: var(--gem-danger);
+    color: white;
 }
 
 .btn-danger:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(239, 71, 111, 0.3);
+    background: #E5394D;
 }
 
-.btn-secondary {
-    background: var(--gem-gradient-secondary) !important;
+/* Warning Button - Binance Orange */
+.btn-warning {
+    background: var(--gem-warning);
+    color: #181A20;
+}
+
+.btn-warning:hover {
+    background: #D9A409;
+}
+
+/* Secondary/Info Button - Binance Gray */
+.btn-secondary,
+.btn-info {
+    background: var(--gem-bg-tertiary);
+    color: var(--gem-text-primary);
+}
+
+.btn-secondary:hover,
+.btn-info:hover {
+    background: var(--gem-border-light);
+}
+
+/* Button Groups - Compact Layout */
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.controls .btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.controls button {
+    flex: 1;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+/* Form Controls - Binance Input Style with Better Visibility */
+input, select, textarea {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--gem-bg-input) !important;
+    background-color: #2B3139 !important;
+    border: 1px solid var(--gem-border) !important;
+    border-radius: 4px;
+    color: #FFFFFF !important;  /* Pure white for maximum visibility */
+    font-size: 14px !important;
+    font-weight: 400;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none !important;
+    border-color: var(--gem-primary) !important;
+    box-shadow: 0 0 0 1px var(--gem-primary) !important;
+    background: var(--gem-bg-input) !important;
+    background-color: #2B3139 !important;
+    color: #FFFFFF !important;
+}
+
+input::placeholder {
+    color: var(--gem-text-muted) !important;
+    opacity: 0.6;
+}
+
+/* Specific input types */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="time"],
+input[type="date"],
+textarea {
+    color: #FFFFFF !important;
+}
+
+/* Select elements - explicit color */
+select {
+    color: #FFFFFF !important;
+}
+
+/* Select dropdown styling */
+select {
+    color: var(--gem-text-white) !important;
+    background: var(--gem-bg-input) !important;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px !important;
+}
+
+/* Windows-specific select fix */
+select::-ms-expand {
+    display: none;
+}
+
+/* Select dropdown options - CRITICAL VISIBILITY FIX */
+select option {
+    background: var(--gem-bg-secondary) !important;
+    background-color: #1E2329 !important;
+    color: var(--gem-text-white) !important;
+    color: #FFFFFF !important;
+    padding: 8px 12px;
+    font-weight: 400;
+    font-size: 14px !important;
+}
+
+/* Selected option */
+select option:checked {
+    background: var(--gem-bg-tertiary) !important;
+    background-color: #2B3139 !important;
+    color: var(--gem-primary) !important;
+    color: #FCD535 !important;
+    font-weight: 500;
+}
+
+/* Hover state for options (browser support varies) */
+select option:hover {
+    background: var(--gem-bg-hover) !important;
+    background-color: #2B3139 !important;
+}
+
+/* Disabled select */
+select:disabled option {
+    color: var(--gem-text-muted) !important;
+}
+
+/* Disabled inputs */
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--gem-text-muted) !important;
+}
+
+/* Number input buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 30px;
+}
+
+/* Time input */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Tables - Binance Compact Style */
+.table {
+    background: var(--gem-bg-secondary);
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: var(--gem-bg-secondary);
+    color: var(--gem-text-muted);
+    font-weight: 500;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--gem-border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gem-border);
+    color: var(--gem-text-primary);
+    font-size: 14px;
+}
+
+.table tbody tr:hover {
+    background: var(--gem-bg-hover);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Selected Row Highlight - Binance Style - HIGHLY VISIBLE YELLOW TINT */
+.table tbody tr.selected-row,
+.data-table tbody tr.selected-row {
+    background: rgba(252, 213, 53, 0.25) !important;
+    border-left: 4px solid #FCD535 !important;
+    box-shadow: inset 0 0 0 2px rgba(252, 213, 53, 0.4);
+}
+
+.table tbody tr.selected-row:hover,
+.data-table tbody tr.selected-row:hover {
+    background: rgba(252, 213, 53, 0.35) !important;
+}
+
+/* Search Highlight - Binance Style - WHITE TEXT ON YELLOW BACKGROUND */
+mark,
+.search-highlight {
+    background: #FCD535 !important;
+    color: #181A20 !important;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(252, 213, 53, 0.4);
+    border: 1px solid #F0B90B;
+}
+
+/* Tabs - Binance Tab Design */
+.nav-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--gem-border);
+    padding-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+    padding: 12px 20px;
+    cursor: pointer;
     border: none;
-    color: var(--gem-text-light);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    color: var(--gem-text-muted);
+    background: transparent;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-/* Status Badges */
-.status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    box-shadow: var(--gem-shadow);
-    transition: all 0.3s ease;
+.nav-tabs .nav-link:hover {
+    color: var(--gem-text-primary);
+    background: transparent;
 }
 
-.status-badge.connected {
-    background: var(--gem-gradient-success);
-    color: var(--gem-text-light);
+.nav-tabs .nav-link.active {
+    color: var(--gem-primary);
+    background: transparent;
+    border-bottom-color: var(--gem-primary);
 }
 
-.status-badge.running {
-    background: var(--gem-gradient-primary);
-    color: var(--gem-text-light);
-    animation: pulse 2s ease-in-out infinite;
+.tab-content {
+    display: none;
 }
 
-.status-badge.stopped {
-    background: #6C757D;
-    color: var(--gem-text-light);
+.tab-content.active {
+    display: block;
+}
+
+/* Status Indicators - Binance Style */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-indicator.running {
+    background: var(--gem-success);
+    box-shadow: 0 0 6px var(--gem-success);
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.stopped {
+    background: var(--gem-danger);
+    box-shadow: none;
+}
+
+.status-indicator.warning {
+    background: var(--gem-warning);
+    box-shadow: none;
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
 }
 
-/* Broker Cards */
-.broker-card {
+/* Badges - Binance Style - WHITE TEXT ON COLORED BACKGROUNDS */
+.badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+    color: #FFFFFF !important;
+}
+
+.badge-success {
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #0BB871;
+    box-shadow: 0 2px 4px rgba(14, 203, 129, 0.3);
+}
+
+.badge-danger {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #E5394D;
+    box-shadow: 0 2px 4px rgba(246, 70, 93, 0.3);
+}
+
+.badge-warning {
+    background: #F0B90B !important;
+    color: #181A20 !important;
+    border: 1px solid #D9A409;
+    box-shadow: 0 2px 4px rgba(240, 185, 11, 0.3);
+}
+
+.badge-info {
+    background: #3861FB !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2651EB;
+    box-shadow: 0 2px 4px rgba(56, 97, 251, 0.3);
+}
+
+.badge-primary {
+    background: #FCD535 !important;
+    color: #181A20 !important;
+    border: 1px solid #F0B90B;
+    box-shadow: 0 2px 4px rgba(252, 213, 53, 0.3);
+}
+
+/* Stat Values - Binance Display */
+.stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gem-border);
+}
+
+.stat:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: var(--gem-text-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gem-text-white);
+}
+
+.stat-value.positive {
+    color: var(--gem-success);
+}
+
+.stat-value.negative {
+    color: var(--gem-danger);
+}
+
+/* Alerts - Binance Style - WHITE TEXT ON COLORED BACKGROUNDS */
+.alert {
+    border-radius: 4px;
+    border-left: 4px solid;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    backdrop-filter: none;
+    font-size: 14px;
+    color: #FFFFFF !important;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.alert-success {
+    background: rgba(14, 203, 129, 0.9) !important;
+    border-left-color: #0BB871;
+    border: 1px solid #0BB871;
+    border-left: 4px solid #0BB871;
+}
+
+.alert-danger {
+    background: rgba(246, 70, 93, 0.9) !important;
+    border-left-color: #E5394D;
+    border: 1px solid #E5394D;
+    border-left: 4px solid #E5394D;
+}
+
+.alert-warning {
+    background: rgba(240, 185, 11, 0.9) !important;
+    border-left-color: #D9A409;
+    border: 1px solid #D9A409;
+    border-left: 4px solid #D9A409;
+    color: #181A20 !important;
+}
+
+.alert-info {
+    background: rgba(56, 97, 251, 0.9) !important;
+    border-left-color: #2651EB;
+    border: 1px solid #2651EB;
+    border-left: 4px solid #2651EB;
+}
+
+/* Loading Spinner - Binance Style */
+.spinner {
     border: 2px solid var(--gem-border);
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    border-top: 2px solid var(--gem-primary);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Toast Notifications - Binance Style - WHITE TEXT ON COLORED BACKGROUNDS */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--gem-bg-secondary);
+    color: #FFFFFF !important;
+    padding: 16px 20px;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    z-index: 1000;
+    min-width: 320px;
+    animation: slideIn 0.2s ease-out;
+    border-left: 4px solid var(--gem-info);
+    backdrop-filter: none;
+    font-size: 14px;
+    border: 1px solid var(--gem-border);
+    font-weight: 500;
+}
+
+.toast.success {
+    border-left-color: #0BB871;
+    background: rgba(14, 203, 129, 0.95) !important;
+    border-color: #0BB871;
+}
+
+.toast.error {
+    border-left-color: #E5394D;
+    background: rgba(246, 70, 93, 0.95) !important;
+    border-color: #E5394D;
+}
+
+.toast.warning {
+    border-left-color: #D9A409;
+    background: rgba(240, 185, 11, 0.95) !important;
+    border-color: #D9A409;
+    color: #181A20 !important;
+}
+
+.toast.info {
+    border-left-color: #2651EB;
+    background: rgba(56, 97, 251, 0.95) !important;
+    border-color: #2651EB;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Modal - Binance Modal Design */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: none;
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--gem-bg-secondary);
+    padding: 24px;
+    border-radius: 4px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 1px solid var(--gem-border);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--gem-border);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    color: var(--gem-text-white);
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--gem-border);
+    padding-top: 12px;
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Responsive Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--gem-text-secondary);
+    font-weight: 400;
+    font-size: 12px;
+}
+
+/* Hover Effects - Minimal */
+.hover-lift {
+    transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+    opacity: 0.9;
+}
+
+/* Scrollbar Styling - Binance Style */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gem-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gem-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gem-border-light);
+}
+
+
+/* Selected Instruments Display - Binance Style */
+.selected-instrument-tag {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border-light) !important;
+    border-radius: 4px !important;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.selected-instrument-tag:hover {
+    background: rgba(252, 213, 53, 0.1) !important;
+    border-color: var(--gem-primary) !important;
+}
+
+.selected-instrument-tag .instrument-symbol {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+}
+
+.selected-instrument-tag .instrument-exchange {
+    color: var(--gem-text-muted) !important;
+    font-size: 12px !important;
+}
+
+.remove-instrument {
+    color: var(--gem-danger) !important;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.remove-instrument:hover {
+    background-color: var(--gem-danger) !important;
+    color: white !important;
+}
+
+/* Data Table Styling - Binance Override */
+.data-table {
+    background: var(--gem-bg-secondary) !important;
+}
+
+.data-table thead th {
+    background: var(--gem-bg-secondary) !important;
+    color: var(--gem-text-muted) !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    border-bottom: 1px solid var(--gem-border) !important;
+}
+
+.data-table tbody td {
+    color: var(--gem-text-primary) !important;
+    border-bottom: 1px solid var(--gem-border) !important;
+}
+
+.data-table tbody tr:hover {
+    background: var(--gem-bg-hover) !important;
+}
+
+.data-table tbody tr.selected-row {
+    background: rgba(252, 213, 53, 0.08) !important;
+    border-left: 2px solid var(--gem-primary) !important;
+}
+
+.data-table tbody tr.selected-row:hover {
+    background: rgba(252, 213, 53, 0.12) !important;
+}
+
+/* Selected Instruments Panel Text */
+#selected-instruments p {
+    color: var(--gem-text-muted) !important;
+}
+
+/* Pagination Styling */
+.pagination #page-info {
+    color: var(--gem-text-primary) !important;
+}
+
+/* Filter Tags - Binance Style with Better Visibility */
+.filter-tag {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border-light) !important;
+    color: #FFFFFF !important;
+    padding: 6px 12px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-tag-category {
+    color: var(--gem-primary) !important;
+    font-weight: 500;
+}
+
+.filter-tag-value {
+    color: #EAECEF !important;
+}
+
+.filter-tag-remove {
+    color: var(--gem-text-muted) !important;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.filter-tag-remove:hover {
+    background-color: var(--gem-danger) !important;
+    color: white !important;
+}
+
+/* Active Filters Display */
+.active-filters {
+    background-color: var(--gem-bg-secondary) !important;
+    border: 1px solid var(--gem-border) !important;
+}
+
+.active-filters-label {
+    color: var(--gem-text-muted) !important;
+}
+
+
+/* Headings - Binance Style - CRITICAL OVERRIDES */
+h1, h2, h3, h4, h5, h6,
+.tab-content h2,
+.tab-content h3,
+.tab-content h4,
+.card h3,
+.card h2,
+.card h4,
+.section-title,
+.config-section h3,
+.bot-status-header h3,
+.account-info-header h3,
+.metrics-title,
+.card-header h2,
+.card-header h3,
+.risk-metrics-panel h4,
+.risk-metrics-panel .metrics-title {
+    color: var(--gem-text-white) !important;
+    color: #FFFFFF !important;
+}
+
+.tab-content h2 {
+    font-size: 20px !important;
+    font-weight: 500 !important;
+    margin-bottom: 20px !important;
+}
+
+.card h3 {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}
+
+.section-title {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}
+
+/* Risk Metrics Panel Title */
+.risk-metrics-panel h4,
+.risk-metrics-panel .metrics-title,
+.metrics-title {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin-bottom: 12px !important;
+}
+
+/* All paragraph text */
+p {
+    color: var(--gem-text-secondary) !important;
+}
+
+/* Text muted class */
+.text-muted {
+    color: var(--gem-text-muted) !important;
+}
+
+/* Risk Metrics Panel - Comprehensive Styling */
+.risk-metrics-panel {
+    background: var(--gem-bg-secondary) !important;
+    border: 1px solid var(--gem-border) !important;
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Bot Status Grid */
+.bot-status-grid,
+.account-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.bot-status-item,
+.account-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--gem-bg-tertiary);
+    border-radius: 4px;
+}
+
+/* Status and Account Item Icons */
+.status-item-icon,
+.account-item-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+/* Ensure all grid item labels are visible */
+.bot-status-item .status-item-label,
+.account-info-item .account-item-label,
+.metric-item .metric-label {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Ensure all grid item values are visible */
+.bot-status-item .status-item-value,
+.account-info-item .account-item-value,
+.metric-item .metric-value {
+    color: #FFFFFF !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}
+
+
+/* Form Labels - Binance Style - CRITICAL OVERRIDES */
+label,
+.form-group label,
+.form-row .form-group label,
+#config-form label,
+.slider-input-group label,
+.filters label,
+.config-section label,
+.card label,
+.tab-content label {
+    color: var(--gem-text-secondary) !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+}
+
+/* Checkbox Labels */
+input[type="checkbox"] + label,
+label input[type="checkbox"] {
+    color: var(--gem-text-secondary) !important;
+}
+
+/* Form Help Text */
+.form-help,
+small.form-help {
+    color: var(--gem-text-muted) !important;
+    font-size: 11px !important;
+}
+
+/* Metric Labels - CRITICAL VISIBILITY FIX */
+.metric-label,
+.account-item-label,
+.status-item-label,
+.risk-metrics-panel .metric-label,
+.metrics-grid .metric-label,
+.bot-status-grid .status-item-label,
+.account-info-grid .account-item-label {
+    color: var(--gem-text-secondary) !important;
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+}
+
+/* Metric Values */
+.metric-value,
+.account-item-value,
+.status-item-value,
+.risk-metrics-panel .metric-value,
+.metrics-grid .metric-value,
+.bot-status-grid .status-item-value,
+.account-info-grid .account-item-value {
+    color: var(--gem-text-white) !important;
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+
+/* Trade Tables and Data Display - Comprehensive Visibility */
+.trades-table,
+.positions-table,
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trades-table thead th,
+.positions-table thead th,
+.data-table thead th {
+    background: var(--gem-bg-secondary) !important;
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--gem-border) !important;
+}
+
+.trades-table tbody td,
+.positions-table tbody td,
+.data-table tbody td {
+    color: #EAECEF !important;
+    font-size: 14px !important;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gem-border) !important;
+}
+
+.trades-table tbody tr:hover,
+.positions-table tbody tr:hover,
+.data-table tbody tr:hover {
+    background: var(--gem-bg-hover) !important;
+}
+
+/* Trade Statistics and Summary Cards */
+.trade-stats,
+.summary-card,
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.stat-card,
+.summary-item {
+    background: var(--gem-bg-secondary);
+    border: 1px solid var(--gem-border);
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.stat-card .stat-label,
+.summary-item .label {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-card .stat-value,
+.summary-item .value {
+    color: #FFFFFF !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+/* Positive/Negative Values */
+.positive,
+.profit,
+.gain {
+    color: var(--gem-success) !important;
+}
+
+.negative,
+.loss {
+    color: var(--gem-danger) !important;
+}
+
+/* Broker Status Display Elements */
+.broker-status-display,
+.connection-info,
+.status-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gem-border);
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+.status-item-label {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+}
+
+.status-item-value {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+/* Instrument Chips and Tags */
+.instrument-chip,
+.tag,
+.chip {
+    background: var(--gem-bg-tertiary);
+    border: 1px solid var(--gem-border-light);
+    border-radius: 4px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px;
+}
+
+.instrument-chip .symbol,
+.chip .label {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+.instrument-chip .exchange,
+.chip .sublabel {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+}
+
+/* Selected Instruments Display */
+.selected-instruments-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: var(--gem-bg-tertiary);
+    border-radius: 4px;
+    min-height: 60px;
+}
+
+/* Configuration Actions Bar */
+.config-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.config-actions-left,
+.config-actions-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Configuration Tabs */
+.config-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--gem-border);
+    margin-bottom: 20px;
+}
+
+.config-tab-button {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--gem-text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-tab-button:hover {
+    color: var(--gem-text-primary);
+}
+
+.config-tab-button.active {
+    color: var(--gem-primary);
+    border-bottom-color: var(--gem-primary);
+}
+
+.tab-icon {
+    font-size: 16px;
+}
+
+/* Form Sections */
+.config-section {
+    display: none;
+    padding: 20px;
+}
+
+.config-section.active {
+    display: block;
+}
+
+/* Form Rows */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* Slider Input Groups */
+.slider-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.form-slider {
+    flex: 1;
+}
+
+.slider-number-input {
+    width: 80px !important;
+    flex-shrink: 0;
+}
+
+/* Validation Styling */
+.form-error {
+    color: var(--gem-danger) !important;
+    font-size: 12px !important;
+    margin-top: 4px;
+}
+
+.form-warning {
+    color: var(--gem-warning) !important;
+    font-size: 12px !important;
+    margin-top: 4px;
+}
+
+input.invalid,
+select.invalid {
+    border-color: var(--gem-danger) !important;
+}
+
+input.valid,
+select.valid {
+    border-color: var(--gem-success) !important;
+}
+
+/* Validation Summary */
+.validation-summary {
+    background: rgba(246, 70, 93, 0.1);
+    border: 1px solid var(--gem-danger);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.validation-summary-title {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin-bottom: 12px;
+}
+
+.validation-summary-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.validation-error-item,
+.validation-warning-item {
+    color: #EAECEF !important;
+    font-size: 13px !important;
+    padding: 4px 0;
+}
+
+/* Ensure all text in cards is visible */
+.card p,
+.card span,
+.card div {
+    color: var(--gem-text-primary) !important;
+}
+
+.card .text-muted {
+    color: var(--gem-text-muted) !important;
+}
+
+/* Pagination Controls */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.pagination button {
+    min-width: 80px;
+}
+
+.pagination span {
+    color: #EAECEF !important;
+    font-size: 14px !important;
+}
+
+/* Filters Section */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    background: var(--gem-bg-tertiary);
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.filters label {
+    color: #B7BDC6 !important;
+    font-size: 13px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.filters input[type="checkbox"] {
+    width: auto !important;
+    cursor: pointer;
+}
+
+/* Toolbar Elements */
+.instruments-toolbar,
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    flex: 1;
+    max-width: 400px;
+}
+
+/* Loading Indicators */
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #B7BDC6 !important;
+}
+
+.loading-indicator p {
+    color: #B7BDC6 !important;
+    margin-top: 12px;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #B7BDC6 !important;
+}
+
+.empty-state p {
+    color: #B7BDC6 !important;
+    font-size: 14px !important;
+}
+
+
+/* Comprehensive Notification and Highlight Styling - Binance Theme */
+
+/* Status Badges - Header - WHITE TEXT ON COLORED BACKGROUNDS */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--gem-bg-tertiary);
+    color: #B7BDC6;
+    border: 1px solid var(--gem-border);
+}
+
+.status-badge.connected {
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    border-color: #0BB871;
+    box-shadow: 0 2px 6px rgba(14, 203, 129, 0.4);
+}
+
+.status-badge.running {
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    border-color: #0BB871;
+    box-shadow: 0 2px 6px rgba(14, 203, 129, 0.4);
+}
+
+.status-badge.stopped {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+    border-color: #E5394D;
+    box-shadow: 0 2px 6px rgba(246, 70, 93, 0.4);
+}
+
+/* Connection Indicator - WHITE TEXT ON GREEN BACKGROUND */
+.connection-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(14, 203, 129, 0.4);
+}
+
+.connection-indicator::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    animation: pulse 2s infinite;
+}
+
+/* Broker Card States */
+.broker-card {
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
 .broker-card:hover {
-    border-color: var(--gem-primary);
-    box-shadow: var(--gem-shadow-colored);
-    transform: translateY(-4px);
+    background: rgba(252, 213, 53, 0.08) !important;
+    border-color: var(--gem-primary) !important;
 }
 
 .broker-card.selected {
-    border-color: var(--gem-primary);
-    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 184, 1, 0.1) 100%);
-    box-shadow: var(--gem-shadow-colored);
+    background: rgba(252, 213, 53, 0.12) !important;
+    border: 2px solid var(--gem-primary) !important;
 }
 
-/* Input Fields */
-input[type="text"],
-input[type="password"],
-input[type="number"],
-select,
-textarea {
-    border: 2px solid var(--gem-border);
-    border-radius: 8px;
-    transition: all 0.3s ease;
+.broker-card.connected {
+    background: rgba(14, 203, 129, 0.08) !important;
+    border: 2px solid var(--gem-success) !important;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-    border-color: var(--gem-primary);
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-    outline: none;
+.broker-card.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
-/* Tables */
-table {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--gem-shadow);
+.broker-status-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gem-text-muted);
 }
 
-thead {
-    background: var(--gem-gradient-secondary);
-    color: var(--gem-text-light);
+.broker-status-indicator.connected {
+    background: var(--gem-success);
+    box-shadow: 0 0 8px var(--gem-success);
+    animation: pulse 2s infinite;
 }
 
-tbody tr:hover {
-    background: rgba(255, 107, 53, 0.05);
+/* OAuth Badge - WHITE TEXT ON BLUE BACKGROUND */
+.broker-oauth-badge {
+    background: #3861FB !important;
+    color: #FFFFFF !important;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #2651EB;
+    box-shadow: 0 2px 4px rgba(56, 97, 251, 0.3);
 }
 
-tbody tr:nth-child(even) {
+/* Active Filters Display */
+.active-filters {
+    background-color: var(--gem-bg-secondary) !important;
+    border: 1px solid var(--gem-border) !important;
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.active-filters-label {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Cache Timestamp Display */
+.cache-timestamp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--gem-bg-tertiary);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.cache-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #B7BDC6;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.cache-status.valid {
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 4px rgba(14, 203, 129, 0.3);
+}
+
+.cache-status.expired {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 4px rgba(246, 70, 93, 0.3);
+}
+
+.cache-icon {
+    font-size: 14px;
+}
+
+.cache-tooltip {
+    display: none;
+    position: absolute;
     background: var(--gem-bg-secondary);
+    border: 1px solid var(--gem-border);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #EAECEF;
+    white-space: nowrap;
+    z-index: 1000;
 }
 
-/* Alerts */
-.alert {
-    border-radius: 8px;
-    border-left: 4px solid;
-    box-shadow: var(--gem-shadow);
+.cache-status:hover .cache-tooltip {
+    display: block;
 }
 
-.alert-success {
-    background: rgba(6, 214, 160, 0.1);
-    border-left-color: var(--gem-success);
-    color: #047857;
+/* Last Updated Display */
+.last-updated-text {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
 }
 
-.alert-danger {
-    background: rgba(239, 71, 111, 0.1);
-    border-left-color: var(--gem-danger);
-    color: #B91C1C;
+/* Bot Status Indicator */
+.bot-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.alert-warning {
-    background: rgba(255, 210, 63, 0.1);
-    border-left-color: var(--gem-warning);
-    color: #92400E;
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gem-text-muted);
 }
 
-.alert-info {
-    background: rgba(17, 138, 178, 0.1);
-    border-left-color: var(--gem-info);
-    color: #075985;
+.bot-status-indicator.running .status-dot {
+    background: var(--gem-success);
+    box-shadow: 0 0 8px var(--gem-success);
+    animation: pulse 2s infinite;
 }
 
-/* Loading Spinner */
-.spinner {
-    border: 4px solid rgba(255, 107, 53, 0.1);
-    border-top-color: var(--gem-primary);
-    animation: spin 1s linear infinite;
+.bot-status-indicator.stopped .status-dot {
+    background: var(--gem-danger);
 }
 
-@keyframes spin {
+.status-text {
+    color: #EAECEF;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Account Refresh Indicator */
+.account-refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #B7BDC6;
+    font-size: 12px;
+}
+
+.refresh-icon {
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
 
-/* Progress Bars */
-.progress-bar {
-    background: var(--gem-gradient-primary);
-    border-radius: 8px;
-    transition: width 0.3s ease;
+/* Token Expiry Warning - COLORED BACKGROUNDS WITH WHITE TEXT */
+.token-expiry {
+    color: #EAECEF;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
-/* Tooltips */
-.tooltip {
-    background: var(--gem-secondary);
-    color: var(--gem-text-light);
-    border-radius: 6px;
-    box-shadow: var(--gem-shadow-lg);
+.token-expiry.warning {
+    background: #F0B90B !important;
+    color: #181A20 !important;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(240, 185, 11, 0.3);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+.token-expiry.expired {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(246, 70, 93, 0.3);
 }
 
-::-webkit-scrollbar-track {
-    background: var(--gem-bg-secondary);
+/* Validation Summary - Enhanced - WHITE TEXT ON COLORED BACKGROUNDS */
+.validation-summary {
+    background: rgba(246, 70, 93, 0.95) !important;
+    border: 1px solid #E5394D;
+    border-left: 4px solid #E5394D;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(246, 70, 93, 0.3);
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--gem-gradient-primary);
-    border-radius: 5px;
+.validation-summary-warnings {
+    background: rgba(240, 185, 11, 0.95) !important;
+    border: 1px solid #D9A409;
+    border-left: 4px solid #D9A409;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 12px;
+    box-shadow: 0 4px 12px rgba(240, 185, 11, 0.3);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gem-primary);
+.validation-summary-title {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .logo {
-        font-size: 1.25rem;
-    }
-    
-    .gem-icon {
-        font-size: 1.5rem;
-    }
-    
-    .rupee-symbol {
-        font-size: 1.25rem;
-    }
+.validation-summary-title.error {
+    color: #FFFFFF !important;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.validation-summary-title.warning {
+    color: #181A20 !important;
 }
 
-.fade-in {
-    animation: fadeIn 0.5s ease-out;
+.validation-summary-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-/* Metric Cards */
-.metric-card {
-    background: var(--gem-bg-card);
-    border-left: 4px solid var(--gem-primary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: var(--gem-shadow);
-    transition: all 0.3s ease;
+.validation-error-item,
+.validation-warning-item {
+    color: #FFFFFF !important;
+    font-size: 13px !important;
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
 }
 
-.metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--gem-shadow-lg);
+.validation-error-item::before {
+    content: '•';
+    position: absolute;
+    left: 8px;
+    color: #FFFFFF;
+    font-size: 16px;
 }
 
-.metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    background: var(--gem-gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.validation-warning-item {
+    color: #181A20 !important;
 }
 
-/* Position Cards */
-.position-profit {
-    color: var(--gem-success);
+.validation-warning-item::before {
+    content: '•';
+    position: absolute;
+    left: 8px;
+    color: #181A20;
+    font-size: 16px;
+}
+
+/* Form Validation States - WHITE TEXT ON COLORED BACKGROUNDS */
+.form-error {
+    color: #FFFFFF !important;
+    background: rgba(246, 70, 93, 0.9) !important;
+    font-size: 12px !important;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.form-error::before {
+    content: '⚠';
+    font-size: 14px;
+}
+
+.form-warning {
+    color: #181A20 !important;
+    background: rgba(240, 185, 11, 0.9) !important;
+    font-size: 12px !important;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+input.invalid,
+select.invalid {
+    border-color: var(--gem-danger) !important;
+    background: rgba(246, 70, 93, 0.05) !important;
+}
+
+input.valid,
+select.valid {
+    border-color: var(--gem-success) !important;
+}
+
+/* Account Status Message - WHITE TEXT ON BLUE BACKGROUND */
+.account-status-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(56, 97, 251, 0.9) !important;
+    border-radius: 4px;
+    color: #FFFFFF !important;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(56, 97, 251, 0.3);
+}
+
+.status-icon {
+    font-size: 16px;
+}
+
+/* Broker Name Highlight */
+.broker-name {
+    color: #FCD535 !important;
     font-weight: 600;
 }
 
-.position-loss {
-    color: var(--gem-danger);
+/* Status Header - WHITE TEXT ON GREEN BACKGROUND */
+.status-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(14, 203, 129, 0.9) !important;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(14, 203, 129, 0.3);
+}
+
+.status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #FFFFFF;
+}
+
+.status-title h4 {
+    color: #FFFFFF !important;
+    margin: 0;
+    font-size: 16px;
     font-weight: 600;
+}
+
+.status-title p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin: 4px 0 0 0;
+    font-size: 12px;
+}
+
+/* Instrument Chip Enhanced */
+.instrument-chip {
+    background: var(--gem-bg-tertiary);
+    border: 1px solid var(--gem-border-light);
+    border-radius: 4px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px;
+    transition: all 0.2s ease;
+}
+
+.instrument-chip:hover {
+    background: rgba(252, 213, 53, 0.1);
+    border-color: var(--gem-primary);
+}
+
+.instrument-chip .symbol {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+.instrument-chip .exchange {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+}
+
+
+/* ============================================ */
+/* CRITICAL VISIBILITY FIXES - BINANCE STYLE */
+/* All notifications, badges, and highlights */
+/* WHITE TEXT ON COLORED BACKGROUNDS */
+/* ============================================ */
+
+/* Notification Container Overrides */
+#notification-container .notification {
+    background: var(--gem-bg-secondary) !important;
+    color: #FFFFFF !important;
+    border-left: 4px solid;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6) !important;
+    font-weight: 500 !important;
+}
+
+#notification-container .notification.success {
+    background: #0ECB81 !important;
+    color: #FFFFFF !important;
+    border-left-color: #0BB871 !important;
+    border: 1px solid #0BB871 !important;
+    border-left: 4px solid #0BB871 !important;
+}
+
+#notification-container .notification.error {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+    border-left-color: #E5394D !important;
+    border: 1px solid #E5394D !important;
+    border-left: 4px solid #E5394D !important;
+}
+
+#notification-container .notification.warning {
+    background: #F0B90B !important;
+    color: #181A20 !important;
+    border-left-color: #D9A409 !important;
+    border: 1px solid #D9A409 !important;
+    border-left: 4px solid #D9A409 !important;
+}
+
+#notification-container .notification.info {
+    background: #3861FB !important;
+    color: #FFFFFF !important;
+    border-left-color: #2651EB !important;
+    border: 1px solid #2651EB !important;
+    border-left: 4px solid #2651EB !important;
+}
+
+/* Selected Instrument Tags - CRITICAL FIX */
+.selected-instrument-tag,
+#selected-instruments .selected-instrument-tag,
+#config-selected-instruments .selected-instrument-tag {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border-light) !important;
+    border-radius: 4px !important;
+    padding: 8px 12px !important;
+}
+
+.selected-instrument-tag .instrument-symbol,
+.selected-instrument-tag .instrument-info .instrument-symbol {
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+.selected-instrument-tag .instrument-exchange,
+.selected-instrument-tag .instrument-info .instrument-exchange {
+    color: #B7BDC6 !important;
+    font-size: 12px !important;
+}
+
+/* Instrument Info Container */
+.instrument-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Filter Tags - Enhanced Visibility */
+.filter-tag,
+#active-filters .filter-tag {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border-light) !important;
+    color: #FFFFFF !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+}
+
+.filter-tag .filter-tag-category {
+    color: #FCD535 !important;
+    font-weight: 600 !important;
+}
+
+.filter-tag .filter-tag-value {
+    color: #EAECEF !important;
+}
+
+/* Broker Card Selected State */
+.broker-card.selected {
+    background: rgba(252, 213, 53, 0.15) !important;
+    border: 2px solid #FCD535 !important;
+    box-shadow: 0 0 0 3px rgba(252, 213, 53, 0.2) !important;
+}
+
+.broker-card.connected {
+    background: rgba(14, 203, 129, 0.15) !important;
+    border: 2px solid #0ECB81 !important;
+    box-shadow: 0 0 0 3px rgba(14, 203, 129, 0.2) !important;
+}
+
+/* Broker Name Text */
+.broker-name {
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+}
+
+/* Connection Progress Indicator */
+.connection-progress {
+    background: rgba(56, 97, 251, 0.9) !important;
+    border: 1px solid #2651EB !important;
+    color: #FFFFFF !important;
+    padding: 12px 16px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(56, 97, 251, 0.3) !important;
+}
+
+.connection-progress .message {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+}
+
+/* Connection Success Display */
+.connection-success {
+    background: #0ECB81 !important;
+    border: 1px solid #0BB871 !important;
+    color: #FFFFFF !important;
+    padding: 12px 16px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(14, 203, 129, 0.3) !important;
+}
+
+.connection-success .success-icon {
+    color: #FFFFFF !important;
+}
+
+/* Connection Error Display */
+.connection-error {
+    background: #F6465D !important;
+    border: 1px solid #E5394D !important;
+    color: #FFFFFF !important;
+    padding: 12px 16px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(246, 70, 93, 0.3) !important;
+}
+
+.connection-error .error-title,
+.connection-error .error-message {
+    color: #FFFFFF !important;
+}
+
+/* User Info Display */
+.user-info-display {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border) !important;
+}
+
+.user-info-display p {
+    color: #EAECEF !important;
+}
+
+.user-info-display strong {
+    color: #FFFFFF !important;
+}
+
+/* Token Display */
+.token-display {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border) !important;
+}
+
+.token-label {
+    color: #B7BDC6 !important;
+}
+
+.token-value {
+    background: var(--gem-bg-input) !important;
+    color: #FFFFFF !important;
+    border: 1px solid var(--gem-border) !important;
+}
+
+/* Bot Control Actions */
+.bot-control-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+/* Account Info Footer */
+.account-info-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gem-border);
+}
+
+/* Empty State Messages */
+.empty-state,
+#selected-instruments p {
+    color: #B7BDC6 !important;
+}
+
+/* Broker Status Display - Enhanced */
+.broker-status-display {
+    background: rgba(14, 203, 129, 0.15) !important;
+    border: 2px solid #0ECB81 !important;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.broker-status-display .status-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(14, 203, 129, 0.3);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+}
+
+.broker-status-display .status-icon {
+    background: rgba(14, 203, 129, 0.3) !important;
+    color: #0ECB81 !important;
+}
+
+.broker-status-display .status-title h4 {
+    color: #0ECB81 !important;
+}
+
+.broker-status-display .status-title p {
+    color: #B7BDC6 !important;
+}
+
+.broker-status-display .status-item {
+    background: var(--gem-bg-tertiary) !important;
+    border: 1px solid var(--gem-border) !important;
+}
+
+.broker-status-display .status-item-label {
+    color: #B7BDC6 !important;
+}
+
+.broker-status-display .status-item-value {
+    color: #FFFFFF !important;
+}
+
+.broker-status-display .status-item-value.broker-name {
+    color: #FCD535 !important;
+}
+
+/* Loading Indicator Text */
+.loading-indicator,
+.loading-indicator p {
+    color: #B7BDC6 !important;
+}
+
+/* Pagination Info */
+.pagination span,
+.pagination #page-info {
+    color: #EAECEF !important;
+}
+
+/* Quick Filters */
+.quick-filters label {
+    color: #B7BDC6 !important;
+}
+
+/* Cache Timestamp */
+.cache-timestamp {
+    background: var(--gem-bg-tertiary) !important;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+/* Last Updated Text */
+.last-updated-text,
+#last-updated-display {
+    color: #B7BDC6 !important;
+}
+
+/* Refresh Text */
+.refresh-text {
+    color: #B7BDC6 !important;
+}
+
+/* Account Refresh Indicator */
+.account-refresh-indicator {
+    color: #B7BDC6 !important;
+}
+
+/* Bot Status Header */
+.bot-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.bot-status-header h3 {
+    color: #FFFFFF !important;
+}
+
+/* Account Info Header */
+.account-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.account-info-header h3 {
+    color: #FFFFFF !important;
+}
+
+/* Ensure all card titles are visible */
+.card h3,
+.card-header h3 {
+    color: #FFFFFF !important;
+}
+
+/* Ensure all section titles are visible */
+.section-title,
+h3.section-title {
+    color: #FFFFFF !important;
+}
+
+
+/* ============================================ */
+/* CRITICAL FIX: Tips Box and Instrument Tags */
+/* Tips Box: DARK GREY background, Tags: BLACK background */
+/* ============================================ */
+
+/* Tips/Alert Box at Top - DARK GREY BACKGROUND */
+.alert,
+.alert-info,
+.alert-warning,
+.alert-success,
+.alert-danger,
+div[class*="alert"] {
+    background: #1E2329 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FCD535 !important;
+    border-left: 4px solid #FCD535 !important;
+}
+
+/* All text inside alerts */
+.alert *,
+.alert-info *,
+.alert-warning *,
+.alert-success *,
+.alert-danger * {
+    color: #FFFFFF !important;
+}
+
+/* Selected Instrument Tags - BLACK BACKGROUND */
+.selected-instrument-tag,
+#selected-instruments .selected-instrument-tag,
+#config-selected-instruments .selected-instrument-tag,
+.instrument-chip,
+.instrument-tag {
+    background: #000000 !important;
+    border: 1px solid #FCD535 !important;
+    color: #FFFFFF !important;
+}
+
+/* All text inside instrument tags */
+.selected-instrument-tag *,
+.instrument-chip *,
+.instrument-tag * {
+    color: #FFFFFF !important;
+}
+
+.selected-instrument-tag .instrument-symbol,
+.selected-instrument-tag .instrument-info .instrument-symbol,
+.instrument-chip .symbol {
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+}
+
+.selected-instrument-tag .instrument-exchange,
+.selected-instrument-tag .instrument-info .instrument-exchange,
+.instrument-chip .exchange {
+    color: #FCD535 !important;
+    font-weight: 500 !important;
+}
+
+/* Selected Instruments Display Container */
+.selected-instruments-display,
+#selected-instruments,
+#config-selected-instruments {
+    background: var(--gem-bg-secondary) !important;
+}
+
+/* Remove instrument button */
+.remove-instrument {
+    color: #F6465D !important;
+    background: transparent !important;
+}
+
+.remove-instrument:hover {
+    background: #F6465D !important;
+    color: #FFFFFF !important;
+}
+
+
+/* ============================================ */
+/* FINAL OVERRIDE: Tips Box Styling */
+/* MUST be at end of file for highest priority */
+/* ============================================ */
+
+/* Tips/Alert boxes - Keep yellow background but make text BLACK for visibility */
+.alert-info,
+div.alert-info,
+.alert.alert-info,
+[class*="alert"][class*="info"] {
+    color: #000000 !important;
+    border: 1px solid #FCD535 !important;
+    border-left: 4px solid #FCD535 !important;
+}
+
+/* All text and elements inside alert-info boxes - BLACK text */
+.alert-info *,
+div.alert-info *,
+.alert.alert-info *,
+[class*="alert"][class*="info"] * {
+    color: #000000 !important;
 }

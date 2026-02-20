@@ -1,0 +1,230 @@
+/**
+ * Strategy Recommendations Styling
+ * Binance-inspired dark theme for strategy recommendations panel
+ */
+
+.strategy-recommendations {
+    margin: 20px 0;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.recommendations-card {
+    background: #1E2329;
+    border: 1px solid #2B3139;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.recommendations-header {
+    background: linear-gradient(135deg, #FCD535 0%, #F0B90B 100%);
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.recommendations-icon {
+    font-size: 32px;
+    line-height: 1;
+}
+
+.recommendations-header h4 {
+    color: #000000 !important;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.recommendations-header p {
+    color: #2B3139 !important;
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.recommendations-content {
+    padding: 24px;
+}
+
+.recommendations-section {
+    margin-bottom: 24px;
+}
+
+.recommendations-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.recommendations-section h5 {
+    color: #FFFFFF !important;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2B3139;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.recommendation-item {
+    background: #181A20;
+    border: 1px solid #2B3139;
+    border-radius: 6px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.recommendation-item:hover {
+    border-color: #FCD535;
+    box-shadow: 0 2px 8px rgba(252, 213, 53, 0.2);
+    transform: translateY(-2px);
+}
+
+.recommendation-label {
+    color: #B7BDC6;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.recommendation-value {
+    color: #FCD535;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.recommendation-range {
+    color: #848E9C;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.recommendation-desc {
+    color: #EAECEF;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.recommendations-tips {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recommendations-tips li {
+    background: #181A20;
+    border-left: 3px solid #FCD535;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    color: #EAECEF;
+    font-size: 14px;
+    line-height: 1.6;
+    border-radius: 4px;
+}
+
+.recommendations-tips li:last-child {
+    margin-bottom: 0;
+}
+
+.recommendations-tips li::before {
+    content: "→";
+    color: #FCD535;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.recommendations-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #2B3139;
+}
+
+.recommendations-actions .btn {
+    flex: 1;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.recommendations-actions .btn-primary {
+    background: #FCD535;
+    color: #000000;
+    border: none;
+}
+
+.recommendations-actions .btn-primary:hover {
+    background: #F0B90B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(252, 213, 53, 0.4);
+}
+
+.recommendations-actions .btn-secondary {
+    background: transparent;
+    color: #EAECEF;
+    border: 1px solid #2B3139;
+}
+
+.recommendations-actions .btn-secondary:hover {
+    background: #2B3139;
+    border-color: #474D57;
+}
+
+.recommendations-actions .btn-icon {
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .recommendations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recommendations-actions {
+        flex-direction: column;
+    }
+
+    .recommendations-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Animation for value changes */
+@keyframes valueHighlight {
+    0%, 100% {
+        background: #181A20;
+    }
+    50% {
+        background: rgba(252, 213, 53, 0.1);
+    }
+}
+
+.recommendation-item.updated {
+    animation: valueHighlight 0.6s ease;
+}

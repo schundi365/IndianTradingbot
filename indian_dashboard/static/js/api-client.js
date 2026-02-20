@@ -169,6 +169,10 @@ class APIClient {
         return this.request('/config/presets');
     }
 
+    async getPreset(presetName) {
+        return this.request(`/config/presets/${presetName}`);
+    }
+
     async validateConfig(config) {
         return this.request('/config/validate', {
             method: 'POST',

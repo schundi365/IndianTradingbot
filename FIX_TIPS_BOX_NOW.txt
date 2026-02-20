@@ -1,0 +1,49 @@
+========================================
+FIX TIPS BOX - 30 SECOND SOLUTION
+========================================
+
+The tips box text is unreadable because your browser cached old CSS files.
+
+SOLUTION (Choose ONE):
+
+1. FASTEST - Use Incognito Mode:
+   - Press Ctrl+Shift+N (opens Incognito window)
+   - Go to http://127.0.0.1:8080
+   - Done! Tips box will have BLACK text on yellow background
+
+2. AUTOMATED - Run Script:
+   - Double-click: restart_dashboard.bat
+   - Wait 5 seconds
+   - Press Ctrl+Shift+N (Incognito mode)
+   - Go to http://127.0.0.1:8080
+
+3. MANUAL - Clear Browser Cache:
+   - Press Ctrl+Shift+Delete
+   - Select "All time"
+   - Check "Cached images and files"
+   - Click "Clear data"
+   - Reload page with Ctrl+F5
+
+========================================
+WHY INCOGNITO MODE?
+========================================
+
+Incognito mode bypasses ALL browser cache automatically.
+No need to manually clear anything.
+It's the fastest and most reliable solution.
+
+========================================
+WHAT YOU SHOULD SEE:
+========================================
+
+Tips Box:
+- Light yellow background
+- BLACK text (clearly readable)
+- Yellow left border
+
+Instrument Tags:
+- BLACK background
+- WHITE symbol text
+- YELLOW exchange text
+
+========================================

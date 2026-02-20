@@ -387,31 +387,15 @@ const CredentialsForm = {
             }
             
             try {
+                // Show loading state
+                notifications.info('Redirecting to Kite authentication...');
+                
                 // Initiate OAuth flow
                 const response = await api.initiateOAuth(broker, apiKey, apiSecret);
                 
                 if (response.success && response.oauth_url) {
-                    // Open OAuth URL in popup window
-                    const width = 600;
-                    const height = 700;
-                    const left = (screen.width - width) / 2;
-                    const top = (screen.height - height) / 2;
-                    
-                    const popup = window.open(
-                        response.oauth_url,
-                        'KiteOAuth',
-                        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-                    );
-                    
-                    if (!popup) {
-                        notifications.error('Popup blocked. Please allow popups for this site.');
-                        return;
-                    }
-                    
-                    notifications.info('Please complete authentication in the popup window');
-                    
-                    // Listen for OAuth callback
-                    window.addEventListener('message', this._handleOAuthCallback.bind(this), { once: true });
+                    // Directly redirect to Kite authentication page
+                    window.location.href = response.oauth_url;
                 } else {
                     notifications.error('Failed to initiate OAuth: ' + (response.error || 'Unknown error'));
                 }

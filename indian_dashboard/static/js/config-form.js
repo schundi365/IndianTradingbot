@@ -54,15 +54,7 @@ const ConfigForm = {
             loadBtn.addEventListener('click', () => this.loadConfiguration());
         }
 
-        // Preset selector
-        const presetSelector = document.getElementById('preset-selector');
-        if (presetSelector) {
-            presetSelector.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    this.loadPreset(e.target.value);
-                }
-            });
-        }
+        // Note: Preset selector is handled by presets.js module
 
         // Real-time validation
         this.setupValidation();
@@ -87,7 +79,23 @@ const ConfigForm = {
         const container = document.getElementById('config-selected-instruments');
         if (!container) return;
 
-        const selectedInstruments = appState.get('instruments.selected') || [];
+        let selectedInstruments = appState.get('instruments.selected') || [];
+        
+        // Remove duplicates based on token or symbol+exchange
+        const seen = new Set();
+        selectedInstruments = selectedInstruments.filter(inst => {
+            const key = inst.token || `${inst.symbol}_${inst.exchange}`;
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+        
+        // Update state with deduplicated list
+        if (selectedInstruments.length !== (appState.get('instruments.selected') || []).length) {
+            appState.set('instruments.selected', selectedInstruments);
+        }
         
         if (selectedInstruments.length === 0) {
             container.innerHTML = '<p class="text-muted">No instruments selected. Go to Instruments tab to select.</p>';
@@ -124,6 +132,15 @@ const ConfigForm = {
             } else {
                 data[key] = value;
             }
+        }
+
+        // Add broker from app state (required field)
+        const brokerType = appState.get('broker.type');
+        if (brokerType) {
+            data.broker = brokerType;
+        } else {
+            // Default to 'paper' if no broker is connected
+            data.broker = 'paper';
         }
 
         // Add selected instruments
@@ -163,7 +180,18 @@ const ConfigForm = {
 
         // Update selected instruments display
         if (data.instruments) {
-            appState.set('instruments.selected', data.instruments);
+            // Remove duplicates based on token or symbol+exchange
+            const seen = new Set();
+            const uniqueInstruments = data.instruments.filter(inst => {
+                const key = inst.token || `${inst.symbol}_${inst.exchange}`;
+                if (seen.has(key)) {
+                    return false;
+                }
+                seen.add(key);
+                return true;
+            });
+            
+            appState.set('instruments.selected', uniqueInstruments);
             this.loadSelectedInstruments();
         }
 
@@ -196,6 +224,9 @@ const ConfigForm = {
             return;
         }
 
+        // Log the data being sent for debugging
+        console.log('Saving configuration:', data);
+
         try {
             const response = await api.saveConfig(data);
             if (response.success) {
@@ -203,11 +234,26 @@ const ConfigForm = {
                 appState.setConfig(data);
                 appState.set('config.isDirty', false);
             } else {
-                showNotification('Failed to save configuration: ' + (response.error || 'Unknown error'), 'error');
+                console.error('Save failed:', response);
+                const errorMsg = response.error || 'Unknown error';
+                const details = response.details ? '\n' + response.details.join('\n') : '';
+                showNotification('Failed to save configuration: ' + errorMsg + details, 'error');
             }
         } catch (error) {
             console.error('Save configuration error:', error);
-            showNotification('Error saving configuration: ' + error.message, 'error');
+            // Extract error details from the error object
+            let errorMsg = 'Unknown error';
+            if (error.response && error.response.data) {
+                const errorData = error.response.data;
+                console.error('Server error details:', errorData);
+                errorMsg = errorData.error || errorMsg;
+                if (errorData.details && Array.isArray(errorData.details)) {
+                    errorMsg += ':\n• ' + errorData.details.join('\n• ');
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+            showNotification('Error saving configuration: ' + errorMsg, 'error');
         }
     },
 
@@ -218,7 +264,7 @@ const ConfigForm = {
         try {
             // Show dialog to select configuration
             // For now, load the current configuration
-            const response = await APIClient.getConfig();
+            const response = await api.getConfig('_current');
             if (response) {
                 this.setFormData(response);
                 showNotification('Configuration loaded successfully', 'success');
@@ -232,24 +278,8 @@ const ConfigForm = {
     },
 
     /**
-     * Load preset configuration
-     */
-    async loadPreset(presetName) {
-        try {
-            const response = await APIClient.getPreset(presetName);
-            if (response) {
-                this.setFormData(response);
-                showNotification(`Preset "${presetName}" loaded successfully`, 'success');
-            } else {
-                showNotification('Preset not found', 'error');
-            }
-        } catch (error) {
-            console.error('Load preset error:', error);
-            showNotification('Error loading preset: ' + error.message, 'error');
-        }
-    },
-
-    /**
+     * Set form data from configuration object
+     */    /**
      * Refresh selected instruments display
      */
     refreshSelectedInstruments() {

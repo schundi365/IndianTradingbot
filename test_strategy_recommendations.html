@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Strategy Recommendations</title>
+    <link rel="stylesheet" href="indian_dashboard/static/css/dashboard.css">
+    <link rel="stylesheet" href="indian_dashboard/static/css/strategy-recommendations.css">
+    <link rel="stylesheet" href="indian_dashboard/static/css/gem-theme.css">
+</head>
+<body style="padding: 2rem; background: #181A20;">
+    <h1 style="color: white;">Strategy Recommendations Test</h1>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <h2>Basic Settings</h2>
+        
+        <div class="form-group">
+            <label for="config-strategy">Strategy</label>
+            <select id="config-strategy" name="strategy" class="form-control">
+                <option value="">-- Select Strategy --</option>
+                <option value="trend_following">Trend Following</option>
+                <option value="momentum">Momentum</option>
+                <option value="mean_reversion">Mean Reversion</option>
+                <option value="breakout">Breakout</option>
+                <option value="scalping">Scalping</option>
+            </select>
+        </div>
+        
+        <!-- Recommendations will be inserted here -->
+    </div>
+
+    <div id="console-output" style="background: #000; color: #0f0; padding: 1rem; margin: 2rem auto; max-width: 800px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+        <strong>Console Output:</strong><br>
+    </div>
+
+    <script>
+        // Capture console logs
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleOutput.innerHTML += '\n[LOG] ' + args.join(' ');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleOutput.innerHTML += '\n[ERROR] ' + args.join(' ');
+        };
+        
+        // Global notification function
+        function showNotification(message, type) {
+            console.log('Notification:', type, '-', message);
+        }
+    </script>
+    
+    <script src="indian_dashboard/static/js/strategy-recommendations.js"></script>
+    
+    <script>
+        console.log('Test page loaded');
+        console.log('StrategyRecommendations object:', typeof StrategyRecommendations);
+        
+        // Wait a bit then check if panel was created
+        setTimeout(() => {
+            const panel = document.getElementById('strategy-recommendations');
+            console.log('Panel element found:', panel !== null);
+            if (panel) {
+                console.log('Panel display:', panel.style.display);
+            }
+            
+            // Try selecting a strategy
+            const strategySelect = document.getElementById('config-strategy');
+            console.log('Strategy select found:', strategySelect !== null);
+            
+            // Manually trigger change
+            strategySelect.value = 'breakout';
+            strategySelect.dispatchEvent(new Event('change'));
+            console.log('Triggered change to breakout strategy');
+            
+            setTimeout(() => {
+                if (panel) {
+                    console.log('Panel display after change:', panel.style.display);
+                    console.log('Panel innerHTML length:', panel.innerHTML.length);
+                }
+            }, 500);
+        }, 1000);
+    </script>
+</body>
+</html>

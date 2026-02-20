@@ -1,0 +1,402 @@
+/**
+ * Charts Tab Styling
+ * Professional trading platform look with Binance-inspired dark theme
+ */
+
+/* Charts Tab Container */
+#charts-tab {
+    padding: 0;
+    background: #181A20;
+}
+
+/* Chart Controls Bar */
+.chart-controls-bar {
+    background: #1E2329;
+    border-bottom: 1px solid #2B3139;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.chart-control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-control-label {
+    color: #848E9C;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Symbol Selector */
+#chart-symbol-selector {
+    background: #2B3139;
+    border: 1px solid #2B3139;
+    color: #EAECEF;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+#chart-symbol-selector:hover {
+    border-color: #FCD535;
+}
+
+#chart-symbol-selector:focus {
+    outline: none;
+    border-color: #FCD535;
+}
+
+/* Timeframe Buttons */
+.timeframe-buttons {
+    display: flex;
+    gap: 0.25rem;
+    background: #2B3139;
+    padding: 0.25rem;
+    border-radius: 4px;
+}
+
+.timeframe-btn {
+    background: transparent;
+    border: none;
+    color: #848E9C;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.timeframe-btn:hover {
+    background: #181A20;
+    color: #EAECEF;
+}
+
+.timeframe-btn.active {
+    background: #FCD535;
+    color: #181A20;
+}
+
+/* Indicator Toggles */
+.indicator-toggles {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.indicator-toggle-btn {
+    background: #2B3139;
+    border: 1px solid #2B3139;
+    color: #848E9C;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.indicator-toggle-btn:hover {
+    border-color: #FCD535;
+    color: #EAECEF;
+}
+
+.indicator-toggle-btn.active {
+    background: #FCD535;
+    border-color: #FCD535;
+    color: #181A20;
+}
+
+/* Refresh Button */
+#chart-refresh-btn {
+    background: #2B3139;
+    border: 1px solid #2B3139;
+    color: #EAECEF;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#chart-refresh-btn:hover {
+    background: #FCD535;
+    border-color: #FCD535;
+    color: #181A20;
+}
+
+/* Chart Container */
+.chart-main-container {
+    background: #181A20;
+    padding: 1rem;
+}
+
+.price-chart-wrapper {
+    background: #1E2329;
+    border: 1px solid #2B3139;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+#price-chart-container {
+    width: 100%;
+    height: 600px;
+    position: relative;
+}
+
+/* Chart Loading Indicator */
+#chart-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(24, 26, 32, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+#chart-loading .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #2B3139;
+    border-top-color: #FCD535;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Indicator Panels */
+.indicator-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.indicator-panel {
+    background: #1E2329;
+    border: 1px solid #2B3139;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.indicator-panel-header {
+    background: #2B3139;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2B3139;
+}
+
+.indicator-panel-title {
+    color: #EAECEF;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.indicator-panel-close {
+    background: transparent;
+    border: none;
+    color: #848E9C;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.indicator-panel-close:hover {
+    background: #181A20;
+    color: #F6465D;
+}
+
+.indicator-panel-content {
+    padding: 1rem;
+    height: 200px;
+}
+
+/* Empty State */
+.chart-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #848E9C;
+}
+
+.chart-empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.chart-empty-state-text {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.chart-empty-state-subtext {
+    font-size: 0.875rem;
+    color: #5E6673;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chart-controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .chart-control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #chart-symbol-selector {
+        width: 100%;
+    }
+
+    .timeframe-buttons {
+        justify-content: space-between;
+    }
+
+    .timeframe-btn {
+        flex: 1;
+        padding: 0.5rem;
+    }
+
+    .indicator-toggles {
+        justify-content: center;
+    }
+
+    #price-chart-container {
+        height: 400px;
+    }
+
+    .indicator-panel-content {
+        height: 150px;
+    }
+}
+
+/* Chart Info Tooltip */
+.chart-tooltip {
+    position: absolute;
+    background: rgba(30, 35, 41, 0.95);
+    border: 1px solid #2B3139;
+    border-radius: 4px;
+    padding: 0.75rem;
+    color: #EAECEF;
+    font-size: 0.75rem;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+}
+
+.chart-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.chart-tooltip-label {
+    color: #848E9C;
+}
+
+.chart-tooltip-value {
+    color: #EAECEF;
+    font-weight: 600;
+}
+
+/* Chart Legend */
+.chart-legend {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(30, 35, 41, 0.9);
+    border: 1px solid #2B3139;
+    border-radius: 4px;
+    padding: 0.75rem;
+    z-index: 5;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.chart-legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.chart-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.chart-legend-label {
+    color: #EAECEF;
+}
+
+/* Trade Markers Legend */
+.trade-markers-legend {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: #1E2329;
+    border-top: 1px solid #2B3139;
+    font-size: 0.75rem;
+}
+
+.trade-marker-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #848E9C;
+}
+
+.trade-marker-icon {
+    font-size: 1rem;
+}
+
+.trade-marker-buy {
+    color: #0ECB81;
+}
+
+.trade-marker-sell {
+    color: #F6465D;
+}
+
+.trade-marker-exit {
+    color: #FCD535;
+}

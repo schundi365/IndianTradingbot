@@ -268,7 +268,7 @@ PRESET_CONFIGS = {
     },
     "equity_intraday": {
         "name": "Equity Intraday",
-        "description": "Mean reversion strategy for liquid NSE/BSE stocks with 5-minute timeframe. Optimized for high-volume equities with tight spreads. Suitable for capturing intraday price reversions in liquid stocks like RELIANCE, TCS, INFY, HDFC Bank, etc. Conservative risk management with multiple positions for diversification.",
+        "description": "Mean reversion strategy for liquid NSE/BSE stocks with 15-minute timeframe. Optimized for high-volume equities with tight spreads. Suitable for capturing intraday price reversions in liquid stocks like RELIANCE, TCS, INFY, HDFC Bank, etc. Conservative risk management with multiple positions for diversification.",
         "broker": "kite",
         "instruments": [
             {
@@ -313,7 +313,7 @@ PRESET_CONFIGS = {
             }
         ],
         "strategy": "mean_reversion",
-        "timeframe": "5min",
+        "timeframe": "15min",
         "risk_per_trade": 0.5,  # 0.5% risk per trade - very conservative for equities
         "max_positions": 5,  # Max 5 positions for diversification across stocks
         "max_daily_loss": 2.0,  # Stop trading if 2% daily loss reached
@@ -328,7 +328,7 @@ PRESET_CONFIGS = {
         "stop_loss": 0.75,  # 0.75% stop loss (2:1 reward-risk ratio)
         "paper_trading": True,  # Start with paper trading for testing
         "log_level": "INFO",
-        "data_refresh_interval": 30,  # Refresh data every 30 seconds (faster for 5min timeframe)
+        "data_refresh_interval": 60,  # Refresh data every 60 seconds
         "enable_notifications": True,
         # Additional equity-specific parameters
         "min_volume": 500000,  # Minimum daily volume for liquidity (5 lakh shares)

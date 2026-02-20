@@ -217,3 +217,8 @@ window.dom = dom;
 window.debounce = debounce;
 window.throttle = throttle;
 window.loading = loading;
+
+// Add showNotification as an alias for backwards compatibility
+window.showNotification = function(message, type = 'info', duration = 3000) {
+    notifications.show(message, type, duration);
+};

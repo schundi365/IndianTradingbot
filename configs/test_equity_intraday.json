@@ -5,7 +5,7 @@
   "bollinger_std": 2.0,
   "broker": "kite",
   "data_refresh_interval": 30,
-  "description": "Mean reversion strategy for liquid NSE/BSE stocks with 5-minute timeframe. Optimized for high-volume equities with tight spreads. Suitable for capturing intraday price reversions in liquid stocks like RELIANCE, TCS, INFY, HDFC Bank, etc. Conservative risk management with multiple positions for diversification.",
+  "description": "Mean reversion strategy for liquid NSE/BSE stocks with 15-minute timeframe. Optimized for high-volume equities with tight spreads. Suitable for capturing intraday price reversions in liquid stocks like RELIANCE, TCS, INFY, HDFC Bank, etc. Conservative risk management with multiple positions for diversification.",
   "enable_notifications": true,
   "indicator_period": 20,
   "instruments": [
@@ -75,7 +75,7 @@
   "stop_loss": 0.75,
   "strategy": "mean_reversion",
   "take_profit": 1.5,
-  "timeframe": "5min",
+  "timeframe": "15min",
   "trading_hours": {
     "end": "15:00",
     "start": "09:30"

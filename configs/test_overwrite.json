@@ -1,5 +1,6 @@
 {
   "broker": "alice_blue",
   "strategy": "momentum",
+  "timeframe": "15min",
   "instruments": []
 }

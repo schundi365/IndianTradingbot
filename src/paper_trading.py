@@ -31,7 +31,7 @@ class PaperTradingEngine:
         self.order_counter = 0
         self.trades = []  # List of completed trades
         
-        logging.info(f"Paper Trading Engine initialized with balance: ₹{initial_balance:,.2f}")
+        logging.info(f"Paper Trading Engine initialized with balance: Rs.{initial_balance:,.2f}")
     
     def generate_order_id(self) -> str:
         """
@@ -87,7 +87,7 @@ class PaperTradingEngine:
             if required_margin > self.balance:
                 logging.warning(
                     f"🧪 PAPER TRADE REJECTED: Insufficient margin. "
-                    f"Required: ₹{required_margin:,.2f}, Available: ₹{self.balance:,.2f}"
+                    f"Required: Rs.{required_margin:,.2f}, Available: Rs.{self.balance:,.2f}"
                 )
                 return None
             
@@ -117,15 +117,15 @@ class PaperTradingEngine:
             logging.info(f"Symbol: {symbol}")
             logging.info(f"Direction: {'BUY' if direction == 1 else 'SELL'}")
             logging.info(f"Quantity: {quantity}")
-            logging.info(f"Entry Price: ₹{execution_price:.2f}")
+            logging.info(f"Entry Price: Rs.{execution_price:.2f}")
             logging.info(f"Order Type: {order_type}")
             logging.info(f"Product Type: {product_type}")
             if stop_loss:
-                logging.info(f"Stop Loss: ₹{stop_loss:.2f}")
+                logging.info(f"Stop Loss: Rs.{stop_loss:.2f}")
             if take_profit:
-                logging.info(f"Take Profit: ₹{take_profit:.2f}")
-            logging.info(f"Margin Used: ₹{required_margin:,.2f}")
-            logging.info(f"Remaining Balance: ₹{self.balance:,.2f}")
+                logging.info(f"Take Profit: Rs.{take_profit:.2f}")
+            logging.info(f"Margin Used: Rs.{required_margin:,.2f}")
+            logging.info(f"Remaining Balance: Rs.{self.balance:,.2f}")
             logging.info("="*80)
             
             return order_id
@@ -231,11 +231,11 @@ class PaperTradingEngine:
         logging.info(f"Symbol: {position['symbol']}")
         logging.info(f"Direction: {'BUY' if position['direction'] == 1 else 'SELL'}")
         logging.info(f"Quantity: {position['quantity']}")
-        logging.info(f"Entry Price: ₹{position['entry_price']:.2f}")
-        logging.info(f"Exit Price: ₹{current_price:.2f}")
-        logging.info(f"P&L: ₹{pnl:,.2f} ({pnl_percent:+.2f}%)")
-        logging.info(f"New Balance: ₹{self.balance:,.2f}")
-        logging.info(f"New Equity: ₹{self.equity:,.2f}")
+        logging.info(f"Entry Price: Rs.{position['entry_price']:.2f}")
+        logging.info(f"Exit Price: Rs.{current_price:.2f}")
+        logging.info(f"P&L: Rs.{pnl:,.2f} ({pnl_percent:+.2f}%)")
+        logging.info(f"New Balance: Rs.{self.balance:,.2f}")
+        logging.info(f"New Equity: Rs.{self.equity:,.2f}")
         logging.info("="*80)
         
         # Remove position

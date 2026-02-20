@@ -53,6 +53,8 @@ def apply_rate_limits(limiter):
     limiter.limit(WRITE_RATE_LIMIT)(close_position)
     limiter.limit(READ_RATE_LIMIT)(get_trades)
     limiter.limit(READ_RATE_LIMIT)(get_bot_config)
+    limiter.limit(READ_RATE_LIMIT)(get_activities)
+    limiter.limit(WRITE_RATE_LIMIT)(clear_activities)
 
 
 @bot_bp.route('/start', methods=['POST'])
@@ -86,6 +88,19 @@ def start_bot():
                 'success': False,
                 'error': 'Broker not connected'
             }), 400
+        
+        # Convert instruments to symbols format expected by bot
+        if 'instruments' in config and 'symbols' not in config:
+            instruments = config['instruments']
+            if isinstance(instruments, list) and len(instruments) > 0:
+                # Extract symbol from each instrument object
+                # Instruments have format: {symbol: "RELIANCE", exchange: "NSE", ...}
+                # Bot expects: ["RELIANCE", "TCS", ...]
+                config['symbols'] = [inst.get('symbol', inst.get('tradingsymbol', '')) for inst in instruments if isinstance(inst, dict)]
+                # Filter out empty strings
+                config['symbols'] = [s for s in config['symbols'] if s]
+            else:
+                config['symbols'] = []
         
         # Get broker adapter
         broker_adapter = bot_bp.broker_manager.get_adapter()
@@ -205,14 +220,40 @@ def get_account_info():
         JSON response with account info
     """
     try:
+        logger.info("=== GET ACCOUNT INFO REQUEST ===")
+        logger.info(f"Bot running: {bot_bp.bot_controller.is_running}")
+        logger.info(f"Broker manager connected: {bot_bp.broker_manager.is_connected()}")
+        
+        # Try to get from bot controller first (if bot is running)
         account_info = bot_bp.bot_controller.get_account_info()
+        logger.info(f"Account info from bot_controller: {account_info}")
+        
+        # If bot not running, get directly from broker manager
+        if not account_info and bot_bp.broker_manager.is_connected():
+            logger.info("Bot not running, trying broker_manager...")
+            adapter = bot_bp.broker_manager.get_adapter()
+            logger.info(f"Got adapter: {adapter is not None}")
+            
+            if adapter:
+                logger.info(f"Adapter type: {type(adapter).__name__}")
+                logger.info(f"Adapter connected: {adapter.is_connected()}")
+                logger.info(f"Has get_account_info: {hasattr(adapter, 'get_account_info')}")
+                
+                if hasattr(adapter, 'get_account_info'):
+                    try:
+                        account_info = adapter.get_account_info()
+                        logger.info(f"Account info from adapter: {account_info}")
+                    except Exception as adapter_error:
+                        logger.warning(f"Error getting account info from adapter: {adapter_error}", exc_info=True)
         
         if account_info:
+            logger.info("Returning account info successfully")
             return jsonify({
                 'success': True,
                 'account': account_info
             }), 200
         else:
+            logger.warning("No account info available")
             return jsonify({
                 'success': False,
                 'error': 'Account information not available'
@@ -235,12 +276,25 @@ def get_positions():
         JSON response with positions
     """
     try:
+        # Try to get from bot controller first (if bot is running)
         positions = bot_bp.bot_controller.get_positions()
+        
+        # If bot not running, get directly from broker manager
+        if not positions and bot_bp.broker_manager.is_connected():
+            adapter = bot_bp.broker_manager.get_adapter()
+            if adapter and hasattr(adapter, 'get_positions'):
+                try:
+                    positions = adapter.get_positions()
+                    if not positions:
+                        positions = []
+                except Exception as adapter_error:
+                    logger.warning(f"Error getting positions from adapter: {adapter_error}")
+                    positions = []
         
         return jsonify({
             'success': True,
-            'positions': positions,
-            'count': len(positions)
+            'positions': positions if positions else [],
+            'count': len(positions) if positions else 0
         }), 200
         
     except Exception as e:
@@ -353,6 +407,67 @@ def get_bot_config():
             
     except Exception as e:
         logger.error(f"Error getting bot config: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@bot_bp.route('/activities', methods=['GET'])
+def get_activities():
+    """
+    Get recent bot activities
+    
+    Query params:
+        limit: Maximum number of activities (default 100)
+        type: Filter by activity type (optional)
+        
+    Returns:
+        JSON response with activities
+    """
+    try:
+        # Get query parameters
+        limit = request.args.get('limit', 100, type=int)
+        activity_type = request.args.get('type', None, type=str)
+        
+        # Limit to reasonable range
+        limit = min(max(limit, 1), 500)
+        
+        # Get activities from bot controller
+        activities = bot_bp.bot_controller.get_activities(limit=limit, activity_type=activity_type)
+        
+        return jsonify({
+            'success': True,
+            'activities': activities,
+            'count': len(activities)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting activities: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@bot_bp.route('/activities/clear', methods=['POST'])
+def clear_activities():
+    """
+    Clear all bot activities
+    
+    Returns:
+        JSON response with clear status
+    """
+    try:
+        bot_bp.bot_controller.clear_activities()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Activities cleared'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error clearing activities: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)

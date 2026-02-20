@@ -188,8 +188,8 @@ const ConfigManager = {
                 this.closeSaveDialog();
                 
                 // Update app state
-                AppState.config.current = config;
-                AppState.config.isDirty = false;
+                appState.setConfig(config);
+                appState.set('config.isDirty', false);
             } else {
                 throw new Error(response.error || 'Failed to save configuration');
             }
@@ -318,8 +318,8 @@ const ConfigManager = {
                 }
                 
                 // Update app state
-                AppState.config.current = response.config;
-                AppState.config.isDirty = false;
+                appState.setConfig(response.config);
+                appState.set('config.isDirty', false);
                 
                 showNotification(`Configuration "${name}" loaded successfully`, 'success');
                 this.closeLoadDialog();

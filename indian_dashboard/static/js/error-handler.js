@@ -150,9 +150,8 @@ class ErrorHandler {
      */
     handleAuthenticationError(errorInfo, context) {
         // Clear session
-        if (window.AppState) {
-            window.AppState.broker.connected = false;
-            window.AppState.broker.user_info = {};
+        if (window.appState) {
+            appState.setBrokerConnected(false);
         }
         
         // Show reconnect option

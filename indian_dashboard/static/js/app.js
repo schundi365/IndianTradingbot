@@ -38,7 +38,7 @@ function loadTabData(tabName) {
             AutoRefresh.stop();
             break;
         case 'configuration':
-            loadPresets();
+            // Presets are now loaded automatically by presets.js module
             // Refresh selected instruments display when switching to configuration tab
             if (typeof ConfigForm !== 'undefined' && ConfigForm.refreshSelectedInstruments) {
                 ConfigForm.refreshSelectedInstruments();
@@ -53,6 +53,16 @@ function loadTabData(tabName) {
             break;
         case 'trades':
             loadTrades();
+            // Stop auto-refresh when leaving monitor tab
+            AutoRefresh.stop();
+            break;
+        case 'analytics':
+            // Analytics tab is handled by analytics.js
+            // Stop auto-refresh when leaving monitor tab
+            AutoRefresh.stop();
+            break;
+        case 'charts':
+            initializeChartsTab();
             // Stop auto-refresh when leaving monitor tab
             AutoRefresh.stop();
             break;
@@ -279,6 +289,9 @@ async function updateBrokerStatus() {
             statusBadge.textContent = `Connected: ${response.status.broker}`;
             statusBadge.className = 'status-badge connected';
             
+            // Update appState with broker connection
+            appState.setBrokerConnected(true, response.status.broker, response.status.user_info);
+            
             // Display comprehensive broker status
             displayBrokerStatus(response.status);
             
@@ -292,6 +305,9 @@ async function updateBrokerStatus() {
         } else {
             statusBadge.textContent = 'Not Connected';
             statusBadge.className = 'status-badge';
+            
+            // Update appState - not connected
+            appState.setBrokerConnected(false);
             
             // Hide test connection button when not connected
             const testBtn = document.getElementById('test-connection-btn');
@@ -1034,43 +1050,7 @@ function updateSelectedInstruments() {
     updateSelectAllCheckbox();
 }
 
-// Configuration tab
-async function loadPresets() {
-    try {
-        const response = await api.getPresets();
-        const selector = document.getElementById('preset-selector');
-        
-        selector.innerHTML = '<option value="">-- Select Preset --</option>';
-        response.presets.forEach(preset => {
-            const option = document.createElement('option');
-            option.value = preset.id;
-            option.textContent = preset.name;
-            selector.appendChild(option);
-        });
-        
-        selector.addEventListener('change', (e) => {
-            if (e.target.value) {
-                loadPreset(e.target.value, response.presets);
-            }
-        });
-    } catch (error) {
-        notifications.error('Failed to load presets: ' + error.message);
-    }
-}
-
-function loadPreset(presetId, presets) {
-    const preset = presets.find(p => p.id === presetId);
-    if (preset) {
-        const form = document.getElementById('config-form');
-        form.querySelector('[name="strategy"]').value = preset.config.strategy;
-        form.querySelector('[name="timeframe"]').value = preset.config.timeframe;
-        form.querySelector('[name="risk_per_trade"]').value = preset.config.risk_per_trade;
-        form.querySelector('[name="max_positions"]').value = preset.config.max_positions;
-        form.querySelector('[name="max_daily_loss"]').value = preset.config.max_daily_loss;
-        
-        notifications.info(`Loaded preset: ${preset.name}`);
-    }
-}
+// Configuration tab - Preset loading is now handled by presets.js module
 
 // Monitor tab
 async function loadMonitorData() {
@@ -1158,6 +1138,35 @@ async function updateBotStatus() {
         
         appState.setBotRunning(response.status.running);
     } catch (error) {
+        // Silently handle 404 errors (bot not running) to avoid console spam
+        if (error.response && error.response.status === 404) {
+            // Set bot as stopped
+            const statusBadge = document.getElementById('bot-status');
+            const statusIndicator = document.getElementById('bot-status-indicator');
+            const statusText = document.getElementById('bot-running-status');
+            const uptimeText = document.getElementById('bot-uptime');
+            const brokerStatusText = document.getElementById('bot-broker-status');
+            const positionsCountText = document.getElementById('bot-positions-count');
+            
+            statusBadge.textContent = 'Stopped';
+            statusBadge.className = 'status-badge stopped';
+            statusIndicator.className = 'bot-status-indicator';
+            statusIndicator.querySelector('.status-text').textContent = 'Stopped';
+            statusText.textContent = 'Stopped';
+            statusText.className = 'status-item-value stopped';
+            uptimeText.textContent = '--';
+            brokerStatusText.textContent = 'Not Connected';
+            brokerStatusText.className = 'status-item-value disconnected';
+            positionsCountText.textContent = '0';
+            
+            dom.show('start-bot-btn');
+            dom.hide('stop-bot-btn');
+            dom.hide('restart-bot-btn');
+            
+            appState.setBotRunning(false);
+            return;
+        }
+        
         console.error('Failed to update bot status:', error);
     }
 }
@@ -1226,6 +1235,18 @@ async function updateAccountInfo() {
             }
         }
     } catch (error) {
+        // Silently handle 404 errors (bot not running) to avoid console spam
+        if (error.response && error.response.status === 404) {
+            resetAccountInfo();
+            const statusMessage = document.getElementById('account-status-message');
+            statusMessage.className = 'account-status-message warning';
+            statusMessage.innerHTML = `
+                <span class="status-icon">⚠️</span>
+                <span class="status-text">Bot not running - Start bot to view account information</span>
+            `;
+            return;
+        }
+        
         console.error('Failed to update account info:', error);
         resetAccountInfo();
         
@@ -1384,8 +1405,176 @@ async function loadTrades() {
     }
 }
 
+// Force cache clearing and style application
+function forceCacheClear() {
+    console.log('🔄 Forcing cache clear and style application...');
+    
+    // FIRST: Inject critical styles directly into head
+    const criticalStyles = document.createElement('style');
+    criticalStyles.id = 'critical-override-styles';
+    criticalStyles.textContent = `
+        /* CRITICAL OVERRIDES - Maximum specificity */
+        .alert-info,
+        div.alert-info,
+        .alert.alert-info,
+        [class*="alert"][class*="info"],
+        .tab-help-panel,
+        .help-banner,
+        .contextual-help-panel,
+        div[class*="help"],
+        div[class*="tips"],
+        div[class*="banner"] {
+            background: #FFF3CD !important;
+            color: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            border-left: 4px solid #FCD535 !important;
+        }
+        
+        .alert-info *,
+        div.alert-info *,
+        .alert.alert-info *,
+        [class*="alert"][class*="info"] *,
+        .tab-help-panel *,
+        .help-banner *,
+        .contextual-help-panel *,
+        div[class*="help"] *,
+        div[class*="tips"] *,
+        div[class*="banner"] * {
+            color: #000000 !important;
+        }
+        
+        /* Instrument tags */
+        .selected-instrument-tag,
+        #selected-instruments .selected-instrument-tag,
+        #config-selected-instruments .selected-instrument-tag,
+        .instrument-chip,
+        .instrument-tag {
+            background: #000000 !important;
+            border: 1px solid #FCD535 !important;
+            color: #FFFFFF !important;
+        }
+        
+        .selected-instrument-tag *,
+        .instrument-chip *,
+        .instrument-tag * {
+            color: #FFFFFF !important;
+        }
+        
+        .selected-instrument-tag .instrument-exchange,
+        .instrument-chip .exchange {
+            color: #FCD535 !important;
+        }
+    `;
+    document.head.appendChild(criticalStyles);
+    console.log('✓ Critical styles injected into head');
+    
+    // Clear service worker cache if exists
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => registration.unregister());
+        });
+    }
+    
+    // Clear cache storage
+    if ('caches' in window) {
+        caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+        });
+    }
+    
+    // Force style application for tips box and instrument tags
+    setTimeout(() => {
+        // Apply styles to alert boxes and help panels
+        const alerts = document.querySelectorAll('.alert-info, [class*="alert"], .tab-help-panel, .help-banner, .contextual-help-panel, div[class*="help"], div[class*="tips"], div[class*="banner"]');
+        alerts.forEach(alert => {
+            alert.style.cssText = 'background: #FFF3CD !important; color: #000000 !important; border: 1px solid #FCD535 !important; border-left: 4px solid #FCD535 !important;';
+            const children = alert.querySelectorAll('*');
+            children.forEach(child => {
+                child.style.color = '#000000 !important';
+            });
+        });
+        
+        // Apply styles to instrument tags
+        const tags = document.querySelectorAll('.selected-instrument-tag, .instrument-chip, .instrument-tag');
+        tags.forEach(tag => {
+            tag.style.cssText = 'background: #000000 !important; border: 1px solid #FCD535 !important; color: #FFFFFF !important;';
+            const children = tag.querySelectorAll('*');
+            children.forEach(child => {
+                child.style.color = '#FFFFFF !important';
+            });
+        });
+        
+        console.log('✓ Styles forcefully applied to', alerts.length, 'alert elements and', tags.length, 'tag elements');
+    }, 500);
+    
+    // Set up mutation observer to apply styles to dynamically added elements
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                    // Check for alert boxes and help panels
+                    if (node.classList && (
+                        node.classList.contains('alert-info') || 
+                        node.className.includes('alert') ||
+                        node.classList.contains('tab-help-panel') ||
+                        node.classList.contains('help-banner') ||
+                        node.classList.contains('contextual-help-panel') ||
+                        node.className.includes('help') ||
+                        node.className.includes('tips') ||
+                        node.className.includes('banner')
+                    )) {
+                        node.style.cssText = 'background: #FFF3CD !important; color: #000000 !important; border: 1px solid #FCD535 !important; border-left: 4px solid #FCD535 !important;';
+                        const children = node.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.color = '#000000 !important';
+                        });
+                    }
+                    
+                    // Check for instrument tags
+                    if (node.classList && (node.classList.contains('selected-instrument-tag') || node.classList.contains('instrument-chip') || node.classList.contains('instrument-tag'))) {
+                        node.style.cssText = 'background: #000000 !important; border: 1px solid #FCD535 !important; color: #FFFFFF !important;';
+                        const children = node.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.color = '#FFFFFF !important';
+                        });
+                    }
+                    
+                    // Check children for alert boxes, help panels and tags
+                    const childAlerts = node.querySelectorAll('.alert-info, [class*="alert"], .tab-help-panel, .help-banner, .contextual-help-panel, div[class*="help"], div[class*="tips"], div[class*="banner"]');
+                    childAlerts.forEach(alert => {
+                        alert.style.cssText = 'background: #FFF3CD !important; color: #000000 !important; border: 1px solid #FCD535 !important; border-left: 4px solid #FCD535 !important;';
+                        const children = alert.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.color = '#000000 !important';
+                        });
+                    });
+                    
+                    const childTags = node.querySelectorAll('.selected-instrument-tag, .instrument-chip, .instrument-tag');
+                    childTags.forEach(tag => {
+                        tag.style.cssText = 'background: #000000 !important; border: 1px solid #FCD535 !important; color: #FFFFFF !important;';
+                        const children = tag.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.color = '#FFFFFF !important';
+                        });
+                    });
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('✓ Mutation observer set up for dynamic elements');
+}
+
 // Event handlers
 document.addEventListener('DOMContentLoaded', () => {
+    // Force cache clear and style application FIRST
+    forceCacheClear();
+    
     initTabs();
     loadBrokers();
     
@@ -1534,10 +1723,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Monitor tab events
     document.getElementById('start-bot-btn').addEventListener('click', async () => {
-        const config = appState.get('config.current');
-        if (!config || !config.instruments || config.instruments.length === 0) {
-            notifications.error('Please configure the bot and select instruments first');
+        // Get current config or build it from form
+        let config = appState.get('config.current');
+        
+        // If no saved config, get it from the form
+        if (!config && typeof ConfigForm !== 'undefined') {
+            config = ConfigForm.getFormData();
+        }
+        
+        // Check if we have a config
+        if (!config) {
+            notifications.error('Please configure the bot first');
             return;
+        }
+        
+        // Check instruments - either from config or from selected instruments
+        const configInstruments = config.instruments || [];
+        const selectedInstruments = appState.get('instruments.selected') || [];
+        
+        if (configInstruments.length === 0 && selectedInstruments.length === 0) {
+            notifications.error('Please select instruments first');
+            return;
+        }
+        
+        // If config doesn't have instruments but we have selected instruments, add them
+        if (configInstruments.length === 0 && selectedInstruments.length > 0) {
+            config.instruments = selectedInstruments;
         }
         
         // Check if broker is connected
@@ -1741,5 +1952,54 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Start auto-refresh when page loads
-AutoRefresh.start();
+// Start auto-refresh only if Monitor tab is active on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'monitor-tab') {
+        AutoRefresh.start();
+    }
+});
+
+// Charts Tab Initialization
+let priceChart = null;
+let chartControls = null;
+
+function initializeChartsTab() {
+    // Initialize only once
+    if (priceChart && chartControls) {
+        // Update symbol list in case instruments changed
+        chartControls.updateSymbolList();
+        return;
+    }
+
+    // Check if TradingView Lightweight Charts is loaded
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('TradingView Lightweight Charts library not loaded');
+        showNotification('Chart library not loaded. Please refresh the page.', 'error');
+        return;
+    }
+
+    // Check if instruments are selected
+    const instruments = appState.get('selectedInstruments') || [];
+    if (!instruments || instruments.length === 0) {
+        const emptyState = document.querySelector('#price-chart-container .chart-empty-state');
+        if (emptyState) {
+            emptyState.innerHTML = `
+                <div class="chart-empty-state-icon">📊</div>
+                <div class="chart-empty-state-text">No instruments selected</div>
+                <div class="chart-empty-state-subtext">Go to Instruments tab to select symbols</div>
+            `;
+        }
+        return;
+    }
+
+    // Initialize price chart
+    priceChart = new PriceChart('price-chart-container');
+    priceChart.init();
+
+    // Initialize chart controls
+    chartControls = new ChartControls(priceChart);
+    chartControls.init();
+
+    console.log('Charts tab initialized');
+}

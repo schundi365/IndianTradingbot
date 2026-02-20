@@ -327,8 +327,8 @@ const ExportImport = {
             }
 
             // Update app state
-            AppState.config.current = configData;
-            AppState.config.isDirty = true;
+            appState.setConfig(configData);
+            appState.set('config.isDirty', true);
 
             showNotification('Configuration imported successfully', 'success');
             this.closeImportDialog();

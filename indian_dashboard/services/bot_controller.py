@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.indian_trading_bot import IndianTradingBot
 from src.broker_adapter import BrokerAdapter
+from .activity_logger import ActivityLogger
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class BotController:
         self.config = None
         self.broker_adapter = None
         self.stop_requested = False
+        self.activity_logger = ActivityLogger()
     
     def start(self, config: Dict, broker_adapter: BrokerAdapter) -> tuple[bool, str]:
         """
@@ -58,6 +60,13 @@ class BotController:
             # Create bot instance
             self.bot = IndianTradingBot(config, broker_adapter)
             
+            # Pass activity logger to bot
+            if hasattr(self.bot, 'set_activity_logger'):
+                self.bot.set_activity_logger(self.activity_logger)
+            
+            # Log bot startup configuration
+            self.activity_logger.log_bot_start(config)
+            
             # Connect bot
             if not self.bot.connect():
                 return False, "Failed to connect bot to broker"
@@ -73,6 +82,14 @@ class BotController:
             
             self.is_running = True
             self.start_time = datetime.now()
+            
+            # Log successful start
+            symbols = config.get('symbols', [])
+            self.activity_logger.log_analysis(
+                symbol=None,
+                message=f"Bot started successfully - Monitoring {len(symbols)} instruments",
+                data={'symbols': symbols}
+            )
             
             logger.info("Trading bot started successfully")
             return True, "Bot started successfully"
@@ -105,6 +122,13 @@ class BotController:
                 return False, "Bot is not running"
             
             logger.info("Stopping trading bot...")
+            
+            # Log bot stop
+            self.activity_logger.log_analysis(
+                symbol=None,
+                message="Trading bot stopping...",
+                data={}
+            )
             
             # Request stop
             self.stop_requested = True
@@ -317,3 +341,20 @@ class BotController:
             True if running, False otherwise
         """
         return self.is_running
+    
+    def get_activities(self, limit: int = 100, activity_type: str = None) -> List[Dict]:
+        """
+        Get recent bot activities
+        
+        Args:
+            limit: Maximum number of activities to return
+            activity_type: Filter by activity type (optional)
+            
+        Returns:
+            List of activity dictionaries
+        """
+        return self.activity_logger.get_recent(limit=limit, activity_type=activity_type)
+    
+    def clear_activities(self):
+        """Clear all bot activities"""
+        self.activity_logger.clear()

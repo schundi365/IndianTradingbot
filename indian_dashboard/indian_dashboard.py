@@ -22,6 +22,8 @@ from services.broker_manager import BrokerManager
 from services.instrument_service import InstrumentService
 from services.bot_controller import BotController
 from services.credential_manager import CredentialManager
+from services.analytics_service import AnalyticsService
+from services.chart_data_service import ChartDataService
 
 # Import session manager
 from session_manager import SessionManager
@@ -32,6 +34,8 @@ from api.instruments import init_instruments_api
 from api.config import init_config_api
 from api.bot import init_bot_api
 from api.session import init_session_api
+from api.analytics import init_analytics_api
+from api.charts import init_charts_api
 
 # Import error handler
 from error_handler import init_error_handlers, log_request, log_response
@@ -46,6 +50,11 @@ app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HT
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=DASHBOARD_CONFIG.get('session_timeout', 3600))
+
+# Disable template caching for development
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+app.jinja_env.auto_reload = True
 
 # Enable CORS for development
 CORS(app)
@@ -79,6 +88,8 @@ credential_manager = CredentialManager(
     DASHBOARD_CONFIG['credentials_dir'],
     DASHBOARD_CONFIG.get('encryption_key')
 )
+analytics_service = AnalyticsService()
+chart_data_service = ChartDataService(broker_manager)
 
 # Store services in app config for access in routes
 app.config['BROKER_MANAGER'] = broker_manager
@@ -86,6 +97,8 @@ app.config['INSTRUMENT_SERVICE'] = instrument_service
 app.config['BOT_CONTROLLER'] = bot_controller
 app.config['CREDENTIAL_MANAGER'] = credential_manager
 app.config['SESSION_MANAGER'] = session_manager
+app.config['ANALYTICS_SERVICE'] = analytics_service
+app.config['CHART_DATA_SERVICE'] = chart_data_service
 
 # Initialize and register API blueprints
 broker_bp = init_broker_api(broker_manager, credential_manager)
@@ -93,12 +106,16 @@ instruments_bp = init_instruments_api(broker_manager, instrument_service)
 config_bp = init_config_api(DASHBOARD_CONFIG['config_dir'], PRESET_CONFIGS)
 bot_bp = init_bot_api(bot_controller, broker_manager)
 session_bp = init_session_api(session_manager)
+analytics_bp = init_analytics_api(bot_controller, analytics_service)
+charts_bp = init_charts_api(bot_controller, chart_data_service)
 
 app.register_blueprint(broker_bp)
 app.register_blueprint(instruments_bp)
 app.register_blueprint(config_bp)
 app.register_blueprint(bot_bp)
 app.register_blueprint(session_bp)
+app.register_blueprint(analytics_bp)
+app.register_blueprint(charts_bp)
 
 # Initialize global error handlers
 init_error_handlers(app)
@@ -113,12 +130,16 @@ from api.instruments import apply_rate_limits as apply_instruments_rate_limits
 from api.config import apply_rate_limits as apply_config_rate_limits
 from api.bot import apply_rate_limits as apply_bot_rate_limits
 from api.session import apply_rate_limits as apply_session_rate_limits
+from api.analytics import apply_rate_limits as apply_analytics_rate_limits
+from api.charts import apply_rate_limits as apply_charts_rate_limits
 
 apply_broker_rate_limits(limiter)
 apply_instruments_rate_limits(limiter)
 apply_config_rate_limits(limiter)
 apply_bot_rate_limits(limiter)
 apply_session_rate_limits(limiter, session_bp)
+apply_analytics_rate_limits(limiter)
+apply_charts_rate_limits(limiter)
 
 # Add request/response logging
 @app.before_request
@@ -132,7 +153,13 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    """Log response after processing"""
+    """Log response after processing and add cache control headers"""
+    # Add cache control headers for static files in development
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    
     return log_response(response)
 
 

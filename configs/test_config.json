@@ -3,7 +3,7 @@
   "description": "Test configuration",
   "broker": "kite",
   "strategy": "trend_following",
-  "timeframe": "5minute",
+  "timeframe": "15min",
   "risk_per_trade": 1.0,
   "max_positions": 3,
   "instruments": [
