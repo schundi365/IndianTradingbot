@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Parameters Test</title>
+    <link rel="stylesheet" href="../static/css/dashboard.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .test-result.success {
+            background-color: #d1fae5;
+            border: 1px solid var(--success-color);
+        }
+        .test-result.error {
+            background-color: #fee2e2;
+            border: 1px solid var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>Strategy Parameters Test</h1>
+    
+    <div class="test-section">
+        <h2>Strategy Parameters Section</h2>
+        
+        <div class="config-section active" data-config-section="strategy">
+            <h3 class="section-title">Strategy Parameters</h3>
+            
+            <div class="form-group">
+                <label for="config-indicator-period">Indicator Period</label>
+                <input type="number" id="config-indicator-period" name="indicator_period" class="form-control" min="5" max="200" value="20">
+                <small class="form-help">Number of periods for indicator calculation</small>
+            </div>
+
+            <div class="form-group">
+                <label for="config-position-sizing">Position Sizing Method</label>
+                <select id="config-position-sizing" name="position_sizing" class="form-control">
+                    <option value="fixed" selected>Fixed Amount</option>
+                    <option value="percentage">Percentage of Capital</option>
+                    <option value="risk_based">Risk-Based</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="config-base-position-size">Base Position Size (₹)</label>
+                <input type="number" id="config-base-position-size" name="base_position_size" class="form-control" min="1000" step="1000" value="10000">
+                <small class="form-help">Fixed amount to invest per trade</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="config-take-profit">Take Profit (%)</label>
+                    <input type="number" id="config-take-profit" name="take_profit" class="form-control" min="0.5" max="20" step="0.5" value="2.0">
+                </div>
+                <div class="form-group">
+                    <label for="config-stop-loss">Stop Loss (%)</label>
+                    <input type="number" id="config-stop-loss" name="stop_loss" class="form-control" min="0.5" max="10" step="0.5" value="1.0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        
+        <button id="test-get-params" class="btn btn-primary">Get Parameters</button>
+        <button id="test-set-params" class="btn btn-secondary">Set Test Parameters</button>
+        <button id="test-validate" class="btn btn-warning">Validate All</button>
+        <button id="test-position-sizing" class="btn btn-success">Test Position Sizing Toggle</button>
+        
+        <div id="test-output" class="test-result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Validation Tests</h2>
+        
+        <button id="test-invalid-period" class="btn btn-danger">Test Invalid Period (300)</button>
+        <button id="test-invalid-sl-tp" class="btn btn-danger">Test SL > TP</button>
+        <button id="test-invalid-position-size" class="btn btn-danger">Test Small Position (₹500)</button>
+        
+        <div id="validation-output" class="test-result" style="display: none;"></div>
+    </div>
+
+    <script src="../static/js/utils.js"></script>
+    <script src="../static/js/strategy-parameters.js"></script>
+    <script>
+        // Test utilities
+        function showOutput(elementId, message, isSuccess = true) {
+            const output = document.getElementById(elementId);
+            output.style.display = 'block';
+            output.className = 'test-result ' + (isSuccess ? 'success' : 'error');
+            output.textContent = message;
+        }
+
+        // Test: Get Parameters
+        document.getElementById('test-get-params').addEventListener('click', () => {
+            const params = StrategyParameters.getParameters();
+            showOutput('test-output', JSON.stringify(params, null, 2), true);
+        });
+
+        // Test: Set Parameters
+        document.getElementById('test-set-params').addEventListener('click', () => {
+            const testParams = {
+                indicator_period: 50,
+                position_sizing: 'percentage',
+                base_position_size: 25000,
+                take_profit: 3.5,
+                stop_loss: 1.5
+            };
+            StrategyParameters.setParameters(testParams);
+            showOutput('test-output', 'Parameters set successfully!\n' + JSON.stringify(testParams, null, 2), true);
+        });
+
+        // Test: Validate All
+        document.getElementById('test-validate').addEventListener('click', () => {
+            const validation = StrategyParameters.validateAll();
+            const message = validation.valid 
+                ? 'All parameters are valid!' 
+                : 'Validation errors:\n' + validation.errors.join('\n');
+            showOutput('test-output', message, validation.valid);
+        });
+
+        // Test: Position Sizing Toggle
+        document.getElementById('test-position-sizing').addEventListener('click', () => {
+            const select = document.getElementById('config-position-sizing');
+            const methods = ['fixed', 'percentage', 'risk_based'];
+            const currentIndex = methods.indexOf(select.value);
+            const nextIndex = (currentIndex + 1) % methods.length;
+            select.value = methods[nextIndex];
+            select.dispatchEvent(new Event('change'));
+            
+            const label = document.querySelector('label[for="config-base-position-size"]');
+            showOutput('test-output', 
+                `Position sizing changed to: ${methods[nextIndex]}\nLabel updated to: ${label.textContent}`, 
+                true);
+        });
+
+        // Test: Invalid Period
+        document.getElementById('test-invalid-period').addEventListener('click', () => {
+            const field = document.getElementById('config-indicator-period');
+            field.value = 300;
+            field.dispatchEvent(new Event('blur'));
+            
+            setTimeout(() => {
+                const hasError = field.classList.contains('invalid');
+                const errorMsg = field.parentElement.querySelector('.form-error')?.textContent || 'No error shown';
+                showOutput('validation-output', 
+                    `Field marked as invalid: ${hasError}\nError message: ${errorMsg}`, 
+                    hasError);
+            }, 100);
+        });
+
+        // Test: SL > TP
+        document.getElementById('test-invalid-sl-tp').addEventListener('click', () => {
+            const tpField = document.getElementById('config-take-profit');
+            const slField = document.getElementById('config-stop-loss');
+            
+            tpField.value = 1.0;
+            slField.value = 2.0;
+            slField.dispatchEvent(new Event('blur'));
+            
+            setTimeout(() => {
+                const hasError = slField.classList.contains('invalid');
+                const errorMsg = slField.parentElement.querySelector('.form-error')?.textContent || 'No error shown';
+                showOutput('validation-output', 
+                    `Field marked as invalid: ${hasError}\nError message: ${errorMsg}`, 
+                    hasError);
+            }, 100);
+        });
+
+        // Test: Small Position Size
+        document.getElementById('test-invalid-position-size').addEventListener('click', () => {
+            const field = document.getElementById('config-base-position-size');
+            field.value = 500;
+            field.dispatchEvent(new Event('blur'));
+            
+            setTimeout(() => {
+                const hasError = field.classList.contains('invalid');
+                const errorMsg = field.parentElement.querySelector('.form-error')?.textContent || 'No error shown';
+                showOutput('validation-output', 
+                    `Field marked as invalid: ${hasError}\nError message: ${errorMsg}`, 
+                    hasError);
+            }, 100);
+        });
+
+        // Initialize message
+        console.log('Strategy Parameters Test Page Loaded');
+        console.log('StrategyParameters module:', typeof StrategyParameters !== 'undefined' ? 'Loaded' : 'Not loaded');
+    </script>
+</body>
+</html>

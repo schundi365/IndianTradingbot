@@ -28,6 +28,18 @@ EMOJI_MAP = {
     '⏱️': '[TIME]',
     '🔗': '[LINK]',
     '🔄': '[REFRESH]',
+    '═': '=',
+    '║': '|',
+    '╔': '+',
+    '╗': '+',
+    '╚': '+',
+    '╝': '+',
+    '🚀': '[START]',
+    '📉': '[DOWN]',
+    '📈': '[UP]',
+    '💰': '[PROFIT]',
+    '💸': '[LOSS]',
+    '🔒': '[LOCKED]',
 }
 
 
@@ -86,16 +98,25 @@ class SafeFormatter(logging.Formatter):
 
 def configure_safe_logging():
     """
-    Configure logging to use SafeFormatter for all handlers
-    Call this at the start of your application
+    Configure logging to use SafeFormatter for all handlers in all loggers
+    Call this at the start of your application and after initializing key components
     """
-    root_logger = logging.getLogger()
+    # Configure root logger
+    _apply_safe_formatter(logging.getLogger())
     
-    for handler in root_logger.handlers:
-        if isinstance(handler.formatter, logging.Formatter):
+    # Configure all other loggers
+    for logger_name in logging.Logger.manager.loggerDict:
+        logger = logging.getLogger(logger_name)
+        _apply_safe_formatter(logger)
+
+
+def _apply_safe_formatter(logger):
+    """Internal helper to apply SafeFormatter to a logger's handlers"""
+    for handler in logger.handlers:
+        if not isinstance(handler.formatter, SafeFormatter):
             # Get the current format string
-            fmt = handler.formatter._fmt if hasattr(handler.formatter, '_fmt') else None
-            datefmt = handler.formatter.datefmt if hasattr(handler.formatter, 'datefmt') else None
+            fmt = handler.formatter._fmt if (handler.formatter and hasattr(handler.formatter, '_fmt')) else '%(asctime)s - %(levelname)s - %(message)s'
+            datefmt = handler.formatter.datefmt if (handler.formatter and hasattr(handler.formatter, 'datefmt')) else None
             
             # Replace with SafeFormatter
             handler.setFormatter(SafeFormatter(fmt, datefmt))

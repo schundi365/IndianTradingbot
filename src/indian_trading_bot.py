@@ -60,19 +60,22 @@ except ImportError:
     TREND_DETECTION_AVAILABLE = False
     logging.warning("Trend Detection Engine not available")
 
-# Setup logging with UTF-8 encoding for console output
-# Create stream handler with UTF-8 encoding for Windows console
+# Reconfigure stdout for UTF-8 as early as possible for Windows compatibility
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+elif hasattr(sys.stdout, 'buffer'):
+    try:
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
+    except Exception:
+        pass
+
+# Setup logging with UTF-8 encoding
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setLevel(logging.INFO)
-
-# Set UTF-8 encoding for the stream
-if hasattr(sys.stdout, 'reconfigure'):
-    # Python 3.7+ - reconfigure stdout to use UTF-8
-    sys.stdout.reconfigure(encoding='utf-8')
-elif hasattr(sys.stdout, 'buffer'):
-    # Fallback for older Python - wrap the buffer with UTF-8 encoding
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,10 +83,11 @@ logging.basicConfig(
     handlers=[
         logging.FileHandler(LOG_FILE, encoding='utf-8'),
         stream_handler
-    ]
+    ],
+    force=True  # Ensure we override any default handlers added by earlier logs
 )
 
-# Configure safe logging to strip emojis for Windows console
+# Configure safe logging to strip emojis for Windows consoles that don't support UTF-8
 configure_safe_logging()
 
 
@@ -146,6 +150,7 @@ class IndianTradingBot:
         
         # Analysis parameters
         self.analysis_bars = config.get('analysis_bars', 200)
+        self.max_positions = config.get('max_positions', 5)
         
         # Paper trading mode (Requirement 15.1)
         self.paper_trading = config.get('paper_trading', False)
@@ -157,6 +162,9 @@ class IndianTradingBot:
         
         # Initialize same components as MT5 bot
         self._init_components()
+        
+        # Ensure logging is safe after all components (and their loggers) are initialized
+        configure_safe_logging()
         
         # Position tracking
         self.positions = {}
@@ -809,18 +817,46 @@ class IndianTradingBot:
                 
                 # Check if overbought (too high)
                 if rsi > rsi_overbought:
+                    rejection_reason = f"RSI {rsi:.2f} is too overbought (>{rsi_overbought})"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
-                    logging.info(f"     RSI {rsi:.2f} is too overbought (>{rsi_overbought})")
+                    logging.info(f"     {rejection_reason}")
                     logging.info(f"     Market may be overextended - skipping trade")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "RSI", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'rsi': float(latest['rsi']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 
                 # NEW: Check for minimum bullish strength (momentum confirmation)
                 if rsi < 50:
+                    rejection_reason = f"RSI {rsi:.2f} is too weak for BUY (<50)"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
-                    logging.info(f"     RSI {rsi:.2f} is too weak for BUY (<50)")
+                    logging.info(f"     {rejection_reason}")
                     logging.info(f"     Not enough bullish momentum - skipping trade")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "RSI", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'rsi': float(latest['rsi']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 
                 # RSI is in the sweet spot: 50-70 (or whatever overbought is set to)
@@ -831,18 +867,46 @@ class IndianTradingBot:
                 
                 # Check if oversold (too low)
                 if rsi < rsi_oversold:
+                    rejection_reason = f"RSI {rsi:.2f} is too oversold (<{rsi_oversold})"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
-                    logging.info(f"     RSI {rsi:.2f} is too oversold (<{rsi_oversold})")
+                    logging.info(f"     {rejection_reason}")
                     logging.info(f"     Market may be overextended - skipping trade")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "RSI", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'rsi': float(latest['rsi']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 
                 # NEW: Check for maximum bearish strength (momentum confirmation)
                 if rsi > 50:
+                    rejection_reason = f"RSI {rsi:.2f} is too strong for SELL (>50)"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
-                    logging.info(f"     RSI {rsi:.2f} is too strong for SELL (>50)")
+                    logging.info(f"     {rejection_reason}")
                     logging.info(f"     Not enough bearish momentum - skipping trade")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "RSI", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'rsi': float(latest['rsi']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 
                 # RSI is in the sweet spot: 30-50 (or whatever oversold is set to)
@@ -875,6 +939,7 @@ class IndianTradingBot:
             if signal == 1:  # BUY
                 logging.info(f"  Checking: Histogram {histogram:.6f} > {MACD_THRESHOLD:.6f}?")
                 if histogram <= MACD_THRESHOLD:
+                    rejection_reason = f"Histogram {histogram:.6f} is negative or too weak (≤{MACD_THRESHOLD:.6f})"
                     logging.info(f"  ❌ MACD FILTER REJECTED!")
                     if histogram <= 0:
                         logging.info(f"     Histogram {histogram:.6f} is negative - contradicts BUY signal")
@@ -882,6 +947,19 @@ class IndianTradingBot:
                         logging.info(f"     Histogram {histogram:.6f} is too weak (≤{MACD_THRESHOLD:.6f})")
                         logging.info(f"     MACD momentum insufficient for reliable entry")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "MACD", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'macd_histogram': float(latest['macd_histogram']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 else:
                     logging.info(f"  ✅ MACD FILTER PASSED!")
@@ -890,6 +968,7 @@ class IndianTradingBot:
             elif signal == -1:  # SELL
                 logging.info(f"  Checking: Histogram {histogram:.6f} < -{MACD_THRESHOLD:.6f}?")
                 if histogram >= -MACD_THRESHOLD:
+                    rejection_reason = f"Histogram {histogram:.6f} is positive or too weak (≥-{MACD_THRESHOLD:.6f})"
                     logging.info(f"  ❌ MACD FILTER REJECTED!")
                     if histogram >= 0:
                         logging.info(f"     Histogram {histogram:.6f} is positive - contradicts SELL signal")
@@ -897,6 +976,19 @@ class IndianTradingBot:
                         logging.info(f"     Histogram {histogram:.6f} is too weak (≥-{MACD_THRESHOLD:.6f})")
                         logging.info(f"     MACD momentum insufficient for reliable entry")
                     logging.info("="*80)
+                    
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={"filter": "MACD", "reason": rejection_reason, "signal": signal_reason},
+                        price=float(latest['close']),
+                        indicators={
+                            'macd_histogram': float(latest['macd_histogram']),
+                            'fast_ma': float(latest['fast_ma']),
+                            'slow_ma': float(latest['slow_ma'])
+                        }
+                    )
                     return 0
                 else:
                     logging.info(f"  ✅ MACD FILTER PASSED!")
@@ -961,11 +1053,25 @@ class IndianTradingBot:
                             logging.info(f"     ADX {adx:.2f} confirms trend strength")
                         else:
                             di_diff = minus_di - plus_di
+                            rejection_reason = f"Trend direction contradicts BUY signal: -DI {minus_di:.2f} > +DI {plus_di:.2f}"
                             logging.info(f"  ❌ ADX FILTER REJECTED!")
                             logging.info(f"     Trend direction contradicts BUY signal")
                             logging.info(f"     -DI {minus_di:.2f} > +DI {plus_di:.2f} (Bearish by {di_diff:.2f})")
                             logging.info(f"     Strong bearish trend detected - cannot BUY")
                             logging.info("="*80)
+                            
+                            self.decision_logger.log_signal(
+                                symbol=symbol,
+                                signal_type="SIGNAL_REJECTED",
+                                direction=0,
+                                reasoning={"filter": "ADX", "reason": rejection_reason, "signal": signal_reason},
+                                price=float(latest['close']),
+                                indicators={
+                                    'adx': float(latest['adx']),
+                                    'plus_di': float(latest['plus_di']),
+                                    'minus_di': float(latest['minus_di'])
+                                }
+                            )
                             return 0
                     elif signal == -1:  # SELL
                         if minus_di > plus_di:
@@ -976,11 +1082,25 @@ class IndianTradingBot:
                             logging.info(f"     ADX {adx:.2f} confirms trend strength")
                         else:
                             di_diff = plus_di - minus_di
+                            rejection_reason = f"Trend direction contradicts SELL signal: +DI {plus_di:.2f} > -DI {minus_di:.2f}"
                             logging.info(f"  ❌ ADX FILTER REJECTED!")
                             logging.info(f"     Trend direction contradicts SELL signal")
                             logging.info(f"     +DI {plus_di:.2f} > -DI {minus_di:.2f} (Bullish by {di_diff:.2f})")
                             logging.info(f"     Strong bullish trend detected - cannot SELL")
                             logging.info("="*80)
+                            
+                            self.decision_logger.log_signal(
+                                symbol=symbol,
+                                signal_type="SIGNAL_REJECTED",
+                                direction=0,
+                                reasoning={"filter": "ADX", "reason": rejection_reason, "signal": signal_reason},
+                                price=float(latest['close']),
+                                indicators={
+                                    'adx': float(latest['adx']),
+                                    'plus_di': float(latest['plus_di']),
+                                    'minus_di': float(latest['minus_di'])
+                                }
+                            )
                             return 0
                 else:
                     logging.info(f"  ⚠️  Weak trend (ADX {adx:.2f} ≤ {ADX_THRESHOLD})")
@@ -1089,11 +1209,13 @@ class IndianTradingBot:
                         logging.info(f"     ✅ TREND CONFIRMATION - Minimum requirements met")
                         
                 else:
+                    rejection_reason = f"Trend confidence {trend_confidence:.3f} < {self.trend_detection_engine.min_confidence:.3f}"
                     logging.info(f"  ❌ TREND DETECTION REJECTED!")
                     logging.info(f"     Trend analysis does not support {signal_type_str.upper()} signal")
                     logging.info(f"     Trend confidence: {trend_confidence:.3f} (min required: {self.trend_detection_engine.min_confidence:.3f})")
                     
                     # Log why the trend detection failed
+                    conflicting_sources = []
                     if trend_analysis.signals:
                         conflicting_signals = [s for s in trend_analysis.signals 
                                              if (signal == 1 and 'bearish' in s.signal_type) or 
@@ -1102,10 +1224,28 @@ class IndianTradingBot:
                             logging.info(f"     Conflicting trend signals detected:")
                             for cs in conflicting_signals:
                                 logging.info(f"       - {cs.source}: {cs.signal_type} (confidence: {cs.confidence:.3f})")
+                                conflicting_sources.append(cs.source)
                     
                     if trend_analysis.timeframe_alignment and trend_analysis.timeframe_alignment.confirmation_level == 'contradictory':
                         logging.info(f"     Higher timeframe contradicts signal")
+                        conflicting_sources.append("Higher Timeframe")
                     
+                    self.decision_logger.log_signal(
+                        symbol=symbol,
+                        signal_type="SIGNAL_REJECTED",
+                        direction=0,
+                        reasoning={
+                            "filter": "Trend Detection", 
+                            "reason": rejection_reason, 
+                            "signal": signal_reason,
+                            "conflicts": conflicting_sources
+                        },
+                        price=float(latest['close']),
+                        indicators={
+                            'trend_confidence': trend_confidence,
+                            'analysis_confidence': trend_analysis.confidence
+                        }
+                    )
                     logging.info("="*80)
                     return 0
                     
@@ -1140,12 +1280,22 @@ class IndianTradingBot:
             logging.info(f"  Golden Hours: {golden_hours}")
             
             if current_hour in dead_hours:
+                rejection_reason = f"Hour {current_hour}:xx is a DEAD hour"
                 logging.info(f"  ❌ HOUR FILTER REJECTED!")
-                logging.info(f"     Hour {current_hour}:xx is a DEAD hour")
+                logging.info(f"     {rejection_reason}")
                 logging.info(f"     Historical data shows consistent losses at this hour")
                 logging.info(f"     Signal suppressed to protect capital")
                 logging.info(f"     Golden hours for trading: {golden_hours}")
                 logging.info("="*80)
+                
+                self.decision_logger.log_signal(
+                    symbol=symbol,
+                    signal_type="SIGNAL_REJECTED",
+                    direction=0,
+                    reasoning={"filter": "Hour Filter", "reason": rejection_reason, "signal": signal_reason},
+                    price=float(latest['close']),
+                    indicators={'hour_utc': float(current_hour)}
+                )
                 return 0
             elif current_hour in golden_hours:
                 logging.info(f"  ✅ HOUR FILTER PASSED!")
@@ -1542,7 +1692,30 @@ class IndianTradingBot:
 
             if not order_id:
                 logging.error(f"Split position {i+1} failed to open")
+                # Log placement failure for this split
+                self.decision_logger.log_order_placement(
+                    symbol=symbol,
+                    direction=direction,
+                    quantity=qty,
+                    order_type="MARKET",
+                    stop_loss=stop_loss,
+                    take_profit=tp,
+                    success=False,
+                    error_message=f"Split position {i+1} failed to open"
+                )
                 continue
+            
+            # Log successful placement for this split
+            self.decision_logger.log_order_placement(
+                symbol=symbol,
+                direction=direction,
+                quantity=qty,
+                order_type="MARKET",
+                stop_loss=stop_loss,
+                take_profit=tp,
+                order_id=order_id,
+                success=True
+            )
 
             logging.info(f"  Position {i+1}: {qty} @ {entry_price:.2f}, TP: {tp:.2f} (Order ID: {order_id})")
 

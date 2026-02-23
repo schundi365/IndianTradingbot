@@ -50,7 +50,8 @@ class TradingDecisionLogger:
     
     def _setup_file_handler(self, log_file: str):
         """Setup separate file handler for trading decisions"""
-        file_handler = logging.FileHandler(log_file)
+        # Set encoding to utf-8 for better character support
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(logging.INFO)
         formatter = logging.Formatter(
             '%(asctime)s | %(levelname)s | %(message)s',
@@ -58,6 +59,10 @@ class TradingDecisionLogger:
         )
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
+        
+        # Apply SafeFormatter to this handler as well
+        from src.logging_utils import SafeFormatter
+        file_handler.setFormatter(SafeFormatter(formatter._fmt, formatter.datefmt))
     
     def log_signal(
         self,

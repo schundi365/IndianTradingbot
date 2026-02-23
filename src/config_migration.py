@@ -201,77 +201,100 @@ class ConfigMigration:
                 unique_symbols.append(symbol)
         
         return unique_symbols
-
     
     def _preserve_parameters(
         self,
         mt5_config: Dict[str, Any],
         indian_config: Dict[str, Any]
     ) -> None:
-        """Preserve all indicator and risk parameters from MT5 config"""
-        # List of all parameters to preserve
-        params_to_preserve = [
-            # Risk management
+        """
+        Preserve all indicator and risk parameters from MT5 config
+        
+        Args:
+            mt5_config: Source MT5 configuration
+            indian_config: Target Indian configuration
+        """
+        # Risk management parameters
+        risk_params = [
             'risk_percent', 'reward_ratio', 'max_daily_loss_percent',
             'max_drawdown_percent', 'max_daily_loss', 'max_daily_trades',
             'max_trades_per_symbol', 'max_trades_total', 'max_lot_per_order',
-            'max_positions', 'max_trades_per_day',
-            # Indicators
+            'max_positions', 'max_trades_per_day'
+        ]
+        
+        # Indicator parameters
+        indicator_params = [
             'fast_ma_period', 'slow_ma_period', 'atr_period', 'atr_multiplier',
             'macd_fast', 'macd_slow', 'macd_signal', 'macd_min_histogram',
             'rsi_period', 'rsi_overbought', 'rsi_oversold',
             'adx_period', 'adx_threshold', 'adx_min_strength',
             'trend_ma_period', 'ema_fast_period', 'ema_slow_period',
-            'aroon_period', 'aroon_threshold',
-            # Trading
+            'aroon_period', 'aroon_threshold'
+        ]
+        
+        # Trading parameters
+        trading_params = [
             'magic_number', 'timeframe', 'lot_size',
             'use_split_orders', 'num_positions', 'tp_levels',
             'partial_close_percent', 'trail_activation', 'trail_distance',
             'enable_trailing_stop', 'enable_trailing_tp', 'trailing_tp_ratio',
             'enable_time_based_exit', 'max_hold_minutes',
-            'enable_breakeven_stop', 'breakeven_atr_threshold',
-            # Features
+            'enable_breakeven_stop', 'breakeven_atr_threshold'
+        ]
+        
+        # Feature flags
+        feature_params = [
             'use_adaptive_risk', 'ml_enabled', 'use_volume_filter',
             'use_trend_detection', 'use_rsi', 'use_macd', 'use_adx',
             'use_trend_filter', 'use_scalping_mode', 'use_dynamic_tp',
             'use_dynamic_sl', 'prevent_worse_entries', 'enable_early_signals',
             'enable_mtf_confirmation', 'pattern_enabled', 'sentiment_enabled',
-            'use_pip_based_sl', 'use_pip_based_tp',
-            # Volume
+            'use_pip_based_sl', 'use_pip_based_tp'
+        ]
+        
+        # Volume parameters
+        volume_params = [
             'min_volume_ratio', 'volume_ma_period', 'min_volume_ma',
             'obv_period', 'obv_period_short', 'obv_period_long',
             'normal_volume_ma', 'high_volume_ma', 'very_high_volume_ma',
-            'volume_ma_min_period', 'volume_spike_threshold',
-            # ML
+            'volume_ma_min_period', 'volume_spike_threshold'
+        ]
+        
+        # ML parameters
+        ml_params = [
             'ml_min_confidence', 'ml_require_agreement', 'ml_model_path',
             'ml_training_data_path', 'ml_auto_retrain', 'ml_retrain_frequency',
             'ml_min_training_samples', 'technical_weight', 'ml_weight',
             'sentiment_weight', 'pattern_weight', 'ml_min_agreement',
-            'ml_retrain_frequency_days',
-            # Pattern/Sentiment
+            'ml_retrain_frequency_days'
+        ]
+        
+        # Pattern and sentiment parameters
+        pattern_params = [
             'pattern_min_confidence', 'pattern_lookback', 'pattern_lookback_bars',
             'sentiment_cache_duration', 'sentiment_min_confidence',
-            'sentiment_cache_duration_hours', 'news_data_path',
-            # Trend detection
+            'sentiment_cache_duration_hours', 'news_data_path'
+        ]
+        
+        # Trend detection parameters
+        trend_params = [
             'trend_detection_sensitivity', 'min_trend_confidence',
             'min_swing_strength', 'structure_break_threshold',
             'min_divergence_strength', 'max_trendlines',
             'min_trendline_touches', 'trendline_angle_min',
             'trendline_angle_max', 'mtf_weight', 'mtf_alignment_threshold',
             'mtf_contradiction_penalty', 'divergence_lookback',
-            'divergence_threshold',
-            # Other
+            'divergence_threshold'
+        ]
+        
+        # Other parameters
+        other_params = [
             'analysis_bars', 'update_interval', 'logging_level',
             'max_analysis_time_ms', 'min_trade_confidence',
             'roc_threshold', 'sl_pips', 'tp_pips'
         ]
         
-        # Copy all parameters
-        for param in params_to_preserve:
-            if param in mt5_config:
-                indian_config[param] = mt5_config[param]
-        
-        # Trading hours
+        # Trading hours (if enabled in MT5)
         if mt5_config.get('enable_trading_hours', False):
             indian_config['enable_trading_hours'] = True
             indian_config['trading_start_hour'] = mt5_config.get('trading_start_hour', 9)
@@ -283,25 +306,37 @@ class ConfigMigration:
             indian_config['dead_hours'] = mt5_config.get('dead_hours', [])
             indian_config['golden_hours'] = mt5_config.get('golden_hours', [])
         
-        # Scalp TP caps
+        # Scalp TP caps (needs symbol remapping)
         if 'scalp_tp_caps' in mt5_config:
             indian_config['scalp_tp_caps'] = self._migrate_scalp_tp_caps(
                 mt5_config['scalp_tp_caps']
             )
         
-        # Version info
+        # Copy all parameters
+        all_params = (
+            risk_params + indicator_params + trading_params + feature_params +
+            volume_params + ml_params + pattern_params + trend_params + other_params
+        )
+        
+        for param in all_params:
+            if param in mt5_config:
+                indian_config[param] = mt5_config[param]
+        
+        # Add version info
         indian_config['version'] = mt5_config.get('version', '1.0.0')
         indian_config['last_updated'] = datetime.now().isoformat()
     
     def _migrate_scalp_tp_caps(self, mt5_caps: Dict[str, float]) -> Dict[str, float]:
         """Migrate scalp TP caps with symbol mapping"""
         indian_caps = {}
+        
         for symbol, cap in mt5_caps.items():
             if symbol == "DEFAULT":
                 indian_caps["DEFAULT"] = cap
             elif symbol in self.SYMBOL_MAPPING:
                 indian_symbol = self.SYMBOL_MAPPING[symbol]
                 indian_caps[indian_symbol] = cap
+        
         return indian_caps
     
     def _log_migration_summary(
@@ -323,15 +358,37 @@ class ConfigMigration:
         self.logger.info("=" * 60)
     
     def convert_timeframe_to_broker_format(self, timeframe_minutes: int) -> str:
-        """Convert timeframe in minutes to broker-specific format"""
+        """
+        Convert timeframe in minutes to broker-specific format
+        
+        Args:
+            timeframe_minutes: Timeframe in minutes
+            
+        Returns:
+            Broker-specific timeframe string
+        """
         return self.TIMEFRAME_MAPPING.get(timeframe_minutes, f"{timeframe_minutes}minute")
     
     def get_symbol_mapping(self, mt5_symbol: str) -> Optional[str]:
-        """Get Indian market equivalent for MT5 symbol"""
+        """
+        Get Indian market equivalent for MT5 symbol
+        
+        Args:
+            mt5_symbol: MT5 symbol
+            
+        Returns:
+            Indian market symbol or None if no mapping exists
+        """
         return self.SYMBOL_MAPPING.get(mt5_symbol)
     
     def add_custom_mapping(self, mt5_symbol: str, indian_symbol: str) -> None:
-        """Add custom symbol mapping"""
+        """
+        Add custom symbol mapping
+        
+        Args:
+            mt5_symbol: MT5 symbol
+            indian_symbol: Indian market symbol
+        """
         self.SYMBOL_MAPPING[mt5_symbol] = indian_symbol
         self.logger.info(f"Added custom mapping: {mt5_symbol} -> {indian_symbol}")
 

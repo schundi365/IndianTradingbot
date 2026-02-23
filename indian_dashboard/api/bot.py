@@ -4,6 +4,8 @@ Bot Control API endpoints
 
 from flask import Blueprint, request, jsonify
 import logging
+import sys
+from pathlib import Path
 from validators import (
     validate_json_request,
     validate_query_params,
@@ -15,6 +17,9 @@ from rate_limiter import (
     WRITE_RATE_LIMIT,
     STATUS_RATE_LIMIT
 )
+
+# Add parent src directory to path for adapter imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +87,37 @@ def start_bot():
                 'error': 'Configuration must be an object'
             }), 400
         
-        # Check if broker is connected
+        # Auto-connect paper trading adapter if not connected and config is paper mode
         if not bot_bp.broker_manager.is_connected():
-            return jsonify({
-                'success': False,
-                'error': 'Broker not connected'
-            }), 400
+            is_paper = config.get('paper_trading', True) or config.get('broker', 'paper').lower() == 'paper'
+            if is_paper:
+                logger.info("No broker connected — auto-connecting PaperTradingAdapter for paper trading mode")
+                try:
+                    from paper_trading_adapter import PaperTradingAdapter
+                    adapter = PaperTradingAdapter(config)
+                    if adapter.connect():
+                        bot_bp.broker_manager.current_broker = adapter
+                        bot_bp.broker_manager.current_broker_type = 'paper'
+                        from datetime import datetime
+                        bot_bp.broker_manager.connection_time = datetime.now()
+                        bot_bp.broker_manager.user_info = {'broker': 'paper', 'user_name': 'Paper Trader'}
+                        logger.info("PaperTradingAdapter auto-connected successfully")
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': 'Failed to auto-connect paper trading adapter'
+                        }), 500
+                except Exception as adapter_err:
+                    logger.error(f"Failed to auto-connect PaperTradingAdapter: {adapter_err}", exc_info=True)
+                    return jsonify({
+                        'success': False,
+                        'error': f'Failed to initialize paper trading: {str(adapter_err)}'
+                    }), 500
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Broker not connected. Please connect a broker first.'
+                }), 400
         
         # Convert instruments to symbols format expected by bot
         if 'instruments' in config and 'symbols' not in config:

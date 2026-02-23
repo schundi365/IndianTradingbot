@@ -82,6 +82,7 @@ CREDENTIAL_FORMS = {
             "type": "text",
             "label": "API Key",
             "placeholder": "Enter your Kite API Key",
+            "value": os.getenv("KITE_API_KEY", ""),
             "required": True,
             "minlength": 10,
             "help": "Get your API Key from https://kite.zerodha.com/apps"

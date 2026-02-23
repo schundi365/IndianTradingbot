@@ -10,7 +10,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from indian_dashboard.error_handler import (
+from indian_dashboard.dashboard_error_handler import (
     DashboardError,
     ValidationError,
     AuthenticationError,
@@ -187,7 +187,7 @@ class TestErrorHandlerIntegration:
     def test_404_error_handler(self):
         """Test 404 error handler"""
         from flask import Flask
-        from indian_dashboard.error_handler import init_error_handlers
+        from indian_dashboard.dashboard_error_handler import init_error_handlers
         
         app = Flask(__name__)
         init_error_handlers(app)
@@ -202,7 +202,7 @@ class TestErrorHandlerIntegration:
     def test_500_error_handler(self):
         """Test 500 error handler"""
         from flask import Flask
-        from indian_dashboard.error_handler import init_error_handlers
+        from indian_dashboard.dashboard_error_handler import init_error_handlers
         
         app = Flask(__name__)
         init_error_handlers(app)

@@ -38,7 +38,7 @@ from api.analytics import init_analytics_api
 from api.charts import init_charts_api
 
 # Import error handler
-from error_handler import init_error_handlers, log_request, log_response
+from dashboard_error_handler import init_error_handlers, log_request, log_response
 
 # Import rate limiter
 from rate_limiter import init_rate_limiter

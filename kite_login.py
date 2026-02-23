@@ -33,9 +33,15 @@ from pathlib import Path
 from kiteconnect import KiteConnect
 from flask import Flask, request
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # ─── YOUR CREDENTIALS ────────────────────────────────────────────────────────
-API_KEY    = "l2b10dmr6dfo1bqb"      # From https://developers.kite.trade
-API_SECRET = "iayptx4r7931x3v36rkj135p3afk2nr8"   # From https://developers.kite.trade
+# Load from environment variables, or fallback to hardcoded defaults
+API_KEY    = os.getenv("KITE_API_KEY", "l2b10dmr6dfo1bqb")
+API_SECRET = os.getenv("KITE_API_SECRET", "iayptx4r7931x3v36rkj135p3afk2nr8")
 TOKEN_FILE = "kite_token.json"        # Where to save the access token
 # ─────────────────────────────────────────────────────────────────────────────
 
