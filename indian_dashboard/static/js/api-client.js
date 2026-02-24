@@ -14,7 +14,7 @@ class APIClient {
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
-        
+
         const config = {
             headers: {
                 'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ class APIClient {
         try {
             const response = await fetch(url, config);
             const data = await response.json();
-            
+
             if (!response.ok) {
                 // Create error object with response details
                 const error = {
@@ -36,7 +36,7 @@ class APIClient {
                         data: data
                     }
                 };
-                
+
                 // Handle error through error handler
                 if (window.errorHandler) {
                     window.errorHandler.handleAPIError(error, {
@@ -44,10 +44,10 @@ class APIClient {
                         method: options.method || 'GET'
                     });
                 }
-                
+
                 throw error;
             }
-            
+
             return data;
         } catch (error) {
             // Handle network errors
@@ -56,7 +56,7 @@ class APIClient {
                     message: error.message || 'Network error',
                     type: 'network_error'
                 };
-                
+
                 if (window.errorHandler) {
                     window.errorHandler.handleAPIError(networkError, {
                         endpoint,
@@ -67,7 +67,7 @@ class APIClient {
                     });
                 }
             }
-            
+
             throw error;
         }
     }
@@ -107,10 +107,10 @@ class APIClient {
     async initiateOAuth(broker, apiKey, apiSecret) {
         return this.request('/broker/oauth/initiate', {
             method: 'POST',
-            body: JSON.stringify({ 
-                broker, 
-                api_key: apiKey, 
-                api_secret: apiSecret 
+            body: JSON.stringify({
+                broker,
+                api_key: apiKey,
+                api_secret: apiSecret
             })
         });
     }
@@ -222,13 +222,37 @@ class APIClient {
         const params = {};
         if (fromDate) params.from_date = fromDate;
         if (toDate) params.to_date = toDate;
-        
+
         const query = new URLSearchParams(params).toString();
         return this.request(`/bot/trades${query ? '?' + query : ''}`);
     }
 
     async getBotConfig() {
         return this.request('/bot/config');
+    }
+
+    // Logs API
+    async getLogs(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return this.request(`/logs${query ? '?' + query : ''}`);
+    }
+
+    async setLogLevel(level) {
+        return this.request('/logs/level', {
+            method: 'POST',
+            body: JSON.stringify({ level })
+        });
+    }
+
+    async clearLogs() {
+        return this.request('/logs/clear', {
+            method: 'POST'
+        });
+    }
+
+    getDownloadLogsUrl(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return `${this.baseURL}/logs/download${query ? '?' + query : ''}`;
     }
 }
 

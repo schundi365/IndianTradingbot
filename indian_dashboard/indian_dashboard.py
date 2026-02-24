@@ -14,6 +14,10 @@ from datetime import timedelta
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import logging utils
+from src.logging_utils import setup_db_logging
+from src.database_manager import LogDatabaseManager
+
 # Import config
 from config import DASHBOARD_CONFIG, PRESET_CONFIGS
 
@@ -36,6 +40,7 @@ from api.bot import init_bot_api
 from api.session import init_session_api
 from api.analytics import init_analytics_api
 from api.charts import init_charts_api
+from api.logs import init_logs_api
 
 # Import error handler
 from dashboard_error_handler import init_error_handlers, log_request, log_response
@@ -71,6 +76,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Setup database logging
+db_manager = LogDatabaseManager(str(DASHBOARD_CONFIG['log_dir'] / "logs.db"))
+setup_db_logging(str(DASHBOARD_CONFIG['log_dir'] / "logs.db"))
+
 # Initialize session manager
 session_manager = SessionManager(
     app=app,
@@ -92,6 +101,7 @@ analytics_service = AnalyticsService()
 chart_data_service = ChartDataService(broker_manager)
 
 # Store services in app config for access in routes
+app.config['DB_MANAGER'] = db_manager
 app.config['BROKER_MANAGER'] = broker_manager
 app.config['INSTRUMENT_SERVICE'] = instrument_service
 app.config['BOT_CONTROLLER'] = bot_controller
@@ -108,6 +118,7 @@ bot_bp = init_bot_api(bot_controller, broker_manager)
 session_bp = init_session_api(session_manager)
 analytics_bp = init_analytics_api(bot_controller, analytics_service)
 charts_bp = init_charts_api(bot_controller, chart_data_service)
+logs_bp = init_logs_api(db_manager)
 
 app.register_blueprint(broker_bp)
 app.register_blueprint(instruments_bp)
@@ -116,6 +127,7 @@ app.register_blueprint(bot_bp)
 app.register_blueprint(session_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(charts_bp)
+app.register_blueprint(logs_bp)
 
 # Initialize global error handlers
 init_error_handlers(app)
@@ -132,6 +144,7 @@ from api.bot import apply_rate_limits as apply_bot_rate_limits
 from api.session import apply_rate_limits as apply_session_rate_limits
 from api.analytics import apply_rate_limits as apply_analytics_rate_limits
 from api.charts import apply_rate_limits as apply_charts_rate_limits
+from api.logs import apply_rate_limits as apply_logs_rate_limits
 
 apply_broker_rate_limits(limiter)
 apply_instruments_rate_limits(limiter)
@@ -140,6 +153,7 @@ apply_bot_rate_limits(limiter)
 apply_session_rate_limits(limiter, session_bp)
 apply_analytics_rate_limits(limiter)
 apply_charts_rate_limits(limiter)
+apply_logs_rate_limits(limiter)
 
 # Add request/response logging
 @app.before_request

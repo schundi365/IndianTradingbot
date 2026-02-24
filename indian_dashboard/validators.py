@@ -450,20 +450,29 @@ def validate_query_params(param_schema: Dict):
                     if not is_valid:
                         errors.append(f"{param_name}: {error}")
                 
-                elif param_type == 'int':
+                elif param_type in ('int', 'integer'):
+                    # Skip validation for empty strings if not required
+                    if value == '' and not constraints.get('required', False):
+                        continue
+                        
                     try:
                         int_value = int(value)
+                        # Support both 'min_value'/'max_value' and 'min'/'max' keys
                         is_valid, error = validate_integer(
                             int_value,
-                            min_value=constraints.get('min_value'),
-                            max_value=constraints.get('max_value')
+                            min_value=constraints.get('min_value') or constraints.get('min'),
+                            max_value=constraints.get('max_value') or constraints.get('max')
                         )
                         if not is_valid:
                             errors.append(f"{param_name}: {error}")
-                    except ValueError:
+                    except (ValueError, TypeError):
                         errors.append(f"{param_name}: Must be an integer")
                 
                 elif param_type == 'enum':
+                    # Skip validation for empty strings if not required
+                    if value == '' and not constraints.get('required', False):
+                        continue
+                        
                     allowed = constraints.get('allowed_values', [])
                     is_valid, error = validate_enum(value, allowed)
                     if not is_valid:

@@ -34,7 +34,7 @@ class PaperTradingAdapter(BrokerAdapter):
                 - default_exchange: Default exchange (default: 'NSE')
         """
         self.config = config
-        self.initial_balance = config.get('initial_balance', 100000.0)
+        self.initial_balance = config.get('paper_trading_initial_balance', 100000.0)
         self.default_exchange = config.get('default_exchange', 'NSE')
         
         self.engine = None
@@ -404,6 +404,18 @@ class PaperTradingAdapter(BrokerAdapter):
         self.logger.warning(f"Instrument not found: {symbol}")
         return None
     
+    def get_orders(self) -> List[Dict]:
+        """
+        Get all simulated orders.
+        
+        Returns:
+            List[Dict]: List of standardized order dictionaries
+        """
+        if not self.is_connected():
+            return []
+        
+        return self.engine.get_orders()
+
     def convert_timeframe(self, mt5_timeframe: int) -> str:
         """
         Convert MT5 timeframe constant to string format.

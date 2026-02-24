@@ -16,6 +16,7 @@ from validators import (
     validate_list,
     validate_risk_percentage,
     validate_integer,
+    validate_number,
     validate_strategy,
     validate_timeframe,
     validate_broker_type
@@ -436,5 +437,59 @@ def validate_configuration(config: dict) -> list:
         is_valid, error = validate_risk_percentage(config['max_daily_loss'])
         if not is_valid:
             errors.append(f"max_daily_loss: {error}")
+            
+    # Technical Indicator Validations
+    if 'loop_interval' in config:
+        is_valid, error = validate_integer(config['loop_interval'], min_value=1, max_value=300)
+        if not is_valid:
+            errors.append(f"loop_interval: {error}")
+            
+    if 'rsi_period' in config:
+        is_valid, error = validate_integer(config['rsi_period'], min_value=2, max_value=100)
+        if not is_valid:
+            errors.append(f"rsi_period: {error}")
+            
+    if 'rsi_overbought' in config:
+        is_valid, error = validate_number(config['rsi_overbought'], min_value=50, max_value=99)
+        if not is_valid:
+            errors.append(f"rsi_overbought: {error}")
+            
+    if 'rsi_oversold' in config:
+        is_valid, error = validate_number(config['rsi_oversold'], min_value=1, max_value=50)
+        if not is_valid:
+            errors.append(f"rsi_oversold: {error}")
+            
+    if 'adx_period' in config:
+        is_valid, error = validate_integer(config['adx_period'], min_value=2, max_value=100)
+        if not is_valid:
+            errors.append(f"adx_period: {error}")
+            
+    if 'adx_min_strength' in config:
+        is_valid, error = validate_number(config['adx_min_strength'], min_value=0, max_value=100)
+        if not is_valid:
+            errors.append(f"adx_min_strength: {error}")
+            
+    if 'min_trend_confidence' in config:
+        is_valid, error = validate_number(config['min_trend_confidence'], min_value=0, max_value=1)
+        if not is_valid:
+            errors.append(f"min_trend_confidence: {error}")
+            
+    if 'trend_detection_sensitivity' in config:
+        is_valid, error = validate_integer(config['trend_detection_sensitivity'], min_value=1, max_value=10)
+        if not is_valid:
+            errors.append(f"trend_detection_sensitivity: {error}")
+            
+    if 'macd_min_histogram' in config:
+        is_valid, error = validate_number(config['macd_min_histogram'], min_value=0, max_value=0.1)
+        if not is_valid:
+            errors.append(f"macd_min_histogram: {error}")
     
+    if 'paper_trading_initial_balance' in config:
+        is_valid, error = validate_number(config['paper_trading_initial_balance'], min_value=10000, max_value=100000000)
+        if not is_valid:
+            errors.append(f"paper_trading_initial_balance: {error}")
+    
+    if errors:
+        logger.error(f"Validation errors found: {errors}")
+        
     return errors

@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEM Trading Bot - ₹</title>
-    
+
     <!-- CRITICAL: Strategy Recommendations Script - Load FIRST -->
     <script>
-    window.STRATEGY_REC_DEBUG = true;
-    console.log('%c=== STRATEGY RECOMMENDATIONS SCRIPT LOADING (HEAD) ===', 'background: #FCD535; color: #000; font-size: 16px; font-weight: bold; padding: 5px;');
+        window.STRATEGY_REC_DEBUG = true;
+        console.log('%c=== STRATEGY RECOMMENDATIONS SCRIPT LOADING (HEAD) ===', 'background: #FCD535; color: #000; font-size: 16px; font-weight: bold; padding: 5px;');
     </script>
-    
+
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/error-handler.css">
     <link rel="stylesheet" href="/static/css/loading-states.css">
@@ -20,8 +21,9 @@
     <link rel="stylesheet" href="/static/css/activity-log.css">
     <link rel="stylesheet" href="/static/css/analytics.css">
     <link rel="stylesheet" href="/static/css/charts.css">
+    <link rel="stylesheet" href="/static/css/logs.css">
     <link rel="stylesheet" href="/static/css/gem-theme.css">
-    
+
     <!-- Inline critical styles for tips box and instrument tags to override cache -->
     <style>
         /* Tips/Alert Box - BLACK text on existing yellow background */
@@ -34,14 +36,14 @@
             border: 1px solid #FCD535 !important;
             border-left: 4px solid #FCD535 !important;
         }
-        
+
         .alert-info *,
         div.alert-info *,
         .alert.alert-info *,
         [class*="alert"][class*="info"] * {
             color: #000000 !important;
         }
-        
+
         /* Selected Instrument Tags - BLACK background with WHITE text */
         .selected-instrument-tag,
         #selected-instruments .selected-instrument-tag,
@@ -52,20 +54,20 @@
             border: 1px solid #FCD535 !important;
             color: #FFFFFF !important;
         }
-        
+
         .selected-instrument-tag *,
         .instrument-chip *,
         .instrument-tag * {
             color: #FFFFFF !important;
         }
-        
+
         .selected-instrument-tag .instrument-symbol,
         .selected-instrument-tag .instrument-info .instrument-symbol,
         .instrument-chip .symbol {
             color: #FFFFFF !important;
             font-weight: 600 !important;
         }
-        
+
         .selected-instrument-tag .instrument-exchange,
         .selected-instrument-tag .instrument-info .instrument-exchange,
         .instrument-chip .exchange {
@@ -74,6 +76,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header class="dashboard-header">
@@ -100,6 +103,7 @@
             <button class="tab-button" data-tab="trades">Trades</button>
             <button class="tab-button" data-tab="analytics">Analytics</button>
             <button class="tab-button" data-tab="charts">Charts</button>
+            <button class="tab-button" data-tab="logs">Logs</button>
         </div>
     </nav>
 
@@ -109,15 +113,16 @@
             <!-- Broker Tab -->
             <div id="broker-tab" class="tab-content active">
                 <h2>Broker Connection</h2>
-                
+
                 <div class="card">
                     <h3>Select Broker</h3>
                     <div id="broker-list" class="broker-grid">
                         <!-- Broker cards will be loaded here -->
                     </div>
-                    
+
                     <div id="change-broker-section" class="change-broker-section" style="display: none;">
-                        <button type="button" id="change-broker-btn" class="btn btn-change-broker">Change Broker</button>
+                        <button type="button" id="change-broker-btn" class="btn btn-change-broker">Change
+                            Broker</button>
                     </div>
                 </div>
 
@@ -137,7 +142,8 @@
                         <!-- Connection info will be displayed here -->
                     </div>
                     <div class="form-actions">
-                        <button type="button" id="test-connection-btn" class="btn btn-secondary">Test Connection</button>
+                        <button type="button" id="test-connection-btn" class="btn btn-secondary">Test
+                            Connection</button>
                         <button type="button" id="disconnect-btn" class="btn btn-danger">Disconnect</button>
                     </div>
                 </div>
@@ -146,10 +152,11 @@
             <!-- Instruments Tab -->
             <div id="instruments-tab" class="tab-content">
                 <h2>Select Instruments</h2>
-                
+
                 <div class="card">
                     <div class="instruments-toolbar">
-                        <input type="text" id="instrument-search" placeholder="Search instruments..." class="search-input">
+                        <input type="text" id="instrument-search" placeholder="Search instruments..."
+                            class="search-input">
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <button id="refresh-instruments-btn" class="btn btn-secondary">
                                 <span class="btn-icon">🔄</span> Refresh
@@ -162,16 +169,16 @@
                         <label><input type="checkbox" name="exchange" value="NSE"> NSE</label>
                         <label><input type="checkbox" name="exchange" value="BSE"> BSE</label>
                         <label><input type="checkbox" name="exchange" value="NFO"> NFO</label>
-                        
+
                         <label>Type:</label>
                         <label><input type="checkbox" name="type" value="EQ"> Equity</label>
                         <label><input type="checkbox" name="type" value="FUT"> Futures</label>
                         <label><input type="checkbox" name="type" value="CE"> Call</label>
                         <label><input type="checkbox" name="type" value="PE"> Put</label>
-                        
+
                         <button id="clear-filters-btn" class="btn btn-sm btn-secondary">Clear Filters</button>
                     </div>
-                    
+
                     <div id="active-filters" class="active-filters" style="display: none;">
                         <!-- Active filters will be displayed here -->
                     </div>
@@ -187,9 +194,12 @@
                                     <th><input type="checkbox" id="select-all"></th>
                                     <th class="sortable" data-sort="symbol">Symbol <span class="sort-icon"></span></th>
                                     <th class="sortable" data-sort="name">Name <span class="sort-icon"></span></th>
-                                    <th class="sortable" data-sort="exchange">Exchange <span class="sort-icon"></span></th>
-                                    <th class="sortable" data-sort="instrument_type">Type <span class="sort-icon"></span></th>
-                                    <th class="sortable" data-sort="last_price">Price <span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="exchange">Exchange <span class="sort-icon"></span>
+                                    </th>
+                                    <th class="sortable" data-sort="instrument_type">Type <span
+                                            class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="last_price">Price <span class="sort-icon"></span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="instruments-tbody">
@@ -206,21 +216,25 @@
                 </div>
 
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <h3 style="margin: 0;">Selected Instruments (<span id="selected-count">0</span>)</h3>
-                        <button id="clear-all-selections-btn" class="btn btn-sm btn-secondary" style="display: none;">Clear All</button>
+                        <button id="clear-all-selections-btn" class="btn btn-sm btn-secondary"
+                            style="display: none;">Clear All</button>
                     </div>
                     <div id="selected-instruments">
-                        <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected</p>
+                        <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No instruments selected
+                        </p>
                     </div>
-                    <button id="continue-to-config-btn" class="btn btn-primary" disabled>Continue to Configuration</button>
+                    <button id="continue-to-config-btn" class="btn btn-primary" disabled>Continue to
+                        Configuration</button>
                 </div>
             </div>
 
             <!-- Configuration Tab -->
             <div id="configuration-tab" class="tab-content">
                 <h2>Bot Configuration</h2>
-                
+
                 <!-- Configuration Actions Bar -->
                 <div class="card config-actions-bar">
                     <div class="config-actions-left">
@@ -260,6 +274,9 @@
                         <button class="config-tab-button" data-config-tab="risk">
                             <span class="tab-icon">🛡️</span> Risk
                         </button>
+                        <button class="config-tab-button" data-config-tab="indicators">
+                            <span class="tab-icon">📈</span> Indicators
+                        </button>
                         <button class="config-tab-button" data-config-tab="advanced">
                             <span class="tab-icon">🔧</span> Advanced
                         </button>
@@ -270,7 +287,7 @@
                         <!-- Basic Settings Section -->
                         <div class="config-section active" data-config-section="basic">
                             <h3 class="section-title">Basic Settings</h3>
-                            
+
                             <div class="form-group">
                                 <label>Selected Instruments</label>
                                 <div id="config-selected-instruments" class="selected-instruments-display">
@@ -304,11 +321,13 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="config-trading-start">Trading Start Time</label>
-                                    <input type="time" id="config-trading-start" name="trading_start" class="form-control" value="09:15">
+                                    <input type="time" id="config-trading-start" name="trading_start"
+                                        class="form-control" value="09:15">
                                 </div>
                                 <div class="form-group">
                                     <label for="config-trading-end">Trading End Time</label>
-                                    <input type="time" id="config-trading-end" name="trading_end" class="form-control" value="15:30">
+                                    <input type="time" id="config-trading-end" name="trading_end" class="form-control"
+                                        value="15:30">
                                 </div>
                             </div>
                         </div>
@@ -316,10 +335,11 @@
                         <!-- Strategy Parameters Section -->
                         <div class="config-section" id="strategy-parameters-section" data-config-section="strategy">
                             <h3 class="section-title">Strategy Parameters</h3>
-                            
+
                             <div class="form-group">
                                 <label for="config-indicator-period">Indicator Period</label>
-                                <input type="number" id="config-indicator-period" name="indicator_period" class="form-control" min="5" max="200" value="20">
+                                <input type="number" id="config-indicator-period" name="indicator_period"
+                                    class="form-control" min="5" max="200" value="20">
                                 <small class="form-help">Number of periods for indicator calculation</small>
                             </div>
 
@@ -334,17 +354,20 @@
 
                             <div class="form-group">
                                 <label for="config-base-position-size">Base Position Size (₹)</label>
-                                <input type="number" id="config-base-position-size" name="base_position_size" class="form-control" min="1000" step="1000" value="10000">
+                                <input type="number" id="config-base-position-size" name="base_position_size"
+                                    class="form-control" min="1000" step="1000" value="10000">
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="config-take-profit">Take Profit (%)</label>
-                                    <input type="number" id="config-take-profit" name="take_profit" class="form-control" min="0.5" max="20" step="0.5" value="2.0">
+                                    <input type="number" id="config-take-profit" name="take_profit" class="form-control"
+                                        min="0.5" max="20" step="0.5" value="2.0">
                                 </div>
                                 <div class="form-group">
                                     <label for="config-stop-loss">Stop Loss (%)</label>
-                                    <input type="number" id="config-stop-loss" name="stop_loss" class="form-control" min="0.5" max="10" step="0.5" value="1.0">
+                                    <input type="number" id="config-stop-loss" name="stop_loss" class="form-control"
+                                        min="0.5" max="10" step="0.5" value="1.0">
                                 </div>
                             </div>
                         </div>
@@ -352,27 +375,34 @@
                         <!-- Risk Management Section -->
                         <div class="config-section" data-config-section="risk">
                             <h3 class="section-title">Risk Management</h3>
-                            
+
                             <div class="form-group">
                                 <label for="config-risk-per-trade">Risk Per Trade (%)</label>
                                 <div class="slider-input-group">
-                                    <input type="range" id="config-risk-per-trade-slider" class="form-slider" min="0.1" max="10" step="0.1" value="1.0">
-                                    <input type="number" id="config-risk-per-trade" name="risk_per_trade" class="form-control slider-number-input" min="0.1" max="10" step="0.1" value="1.0">
+                                    <input type="range" id="config-risk-per-trade-slider" class="form-slider" min="0.1"
+                                        max="10" step="0.1" value="1.0">
+                                    <input type="number" id="config-risk-per-trade" name="risk_per_trade"
+                                        class="form-control slider-number-input" min="0.1" max="10" step="0.1"
+                                        value="1.0">
                                 </div>
                                 <small class="form-help">Maximum risk per trade as percentage of capital</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="config-max-positions">Max Concurrent Positions</label>
-                                <input type="number" id="config-max-positions" name="max_positions" class="form-control" min="1" max="20" value="3">
+                                <input type="number" id="config-max-positions" name="max_positions" class="form-control"
+                                    min="1" max="20" value="3">
                                 <small class="form-help">Maximum number of positions open at the same time</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="config-max-daily-loss">Max Daily Loss (%)</label>
                                 <div class="slider-input-group">
-                                    <input type="range" id="config-max-daily-loss-slider" class="form-slider" min="0.5" max="20" step="0.5" value="3.0">
-                                    <input type="number" id="config-max-daily-loss" name="max_daily_loss" class="form-control slider-number-input" min="0.5" max="20" step="0.5" value="3.0">
+                                    <input type="range" id="config-max-daily-loss-slider" class="form-slider" min="0.5"
+                                        max="20" step="0.5" value="3.0">
+                                    <input type="number" id="config-max-daily-loss" name="max_daily_loss"
+                                        class="form-control slider-number-input" min="0.5" max="20" step="0.5"
+                                        value="3.0">
                                 </div>
                                 <small class="form-help">Bot will stop trading if daily loss exceeds this limit</small>
                             </div>
@@ -409,16 +439,111 @@
                             </div>
                         </div>
 
+                        <!-- Technical Indicators Section -->
+                        <div class="config-section" data-config-section="indicators">
+                            <h3 class="section-title">Technical Indicators & Loop</h3>
+
+                            <div class="form-group">
+                                <label for="config-loop-interval">Trading Loop Interval (seconds)</label>
+                                <input type="number" id="config-loop-interval" name="loop_interval" class="form-control"
+                                    min="1" max="300" value="5">
+                                <small class="form-help">Seconds to wait between trading cycles (1 = Real-time)</small>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">RSI (Relative Strength Index)</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-rsi-period">RSI Period</label>
+                                    <input type="number" id="config-rsi-period" name="rsi_period" class="form-control"
+                                        min="2" max="50" value="14">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-rsi-overbought">Overbought</label>
+                                    <input type="number" id="config-rsi-overbought" name="rsi_overbought"
+                                        class="form-control" min="50" max="95" value="70">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-rsi-oversold">Oversold</label>
+                                    <input type="number" id="config-rsi-oversold" name="rsi_oversold"
+                                        class="form-control" min="5" max="50" value="30">
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">MACD & Momentum</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-macd-min-histogram">Min MACD Histogram</label>
+                                    <input type="number" id="config-macd-min-histogram" name="macd_min_histogram"
+                                        class="form-control" step="0.0001" value="0.0005">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-roc-threshold">ROC Threshold (%)</label>
+                                    <input type="number" id="config-roc-threshold" name="roc_threshold"
+                                        class="form-control" step="0.01" value="0.15">
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">Trend Detection Engine</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-min-trend-confidence">Min Trend Confidence</label>
+                                    <input type="number" id="config-min-trend-confidence" name="min_trend_confidence"
+                                        class="form-control" min="0" max="1" step="0.05" value="0.6">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-trend-sensitivity">Trend Sensitivity (1-10)</label>
+                                    <input type="number" id="config-trend-sensitivity"
+                                        name="trend_detection_sensitivity" class="form-control" min="1" max="10"
+                                        value="5">
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">ADX (Trend Strength)</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-adx-period">ADX Period</label>
+                                    <input type="number" id="config-adx-period" name="adx_period" class="form-control"
+                                        min="2" max="50" value="14">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-adx-min-strength">Min ADX Strength</label>
+                                    <input type="number" id="config-adx-min-strength" name="adx_min_strength"
+                                        class="form-control" min="0" max="100" value="25">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Advanced Settings Section -->
                         <div class="config-section" data-config-section="advanced">
                             <h3 class="section-title">Advanced Settings</h3>
-                            
+
                             <div class="form-group">
                                 <label>
                                     <input type="checkbox" id="config-paper-trading" name="paper_trading">
                                     Enable Paper Trading
                                 </label>
                                 <small class="form-help">Test strategies without real money</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="config-paper-trading-initial-balance">Paper Trading Initial Balance
+                                    (₹)</label>
+                                <input type="number" id="config-paper-trading-initial-balance"
+                                    name="paper_trading_initial_balance" class="form-control" min="10000"
+                                    max="100000000" step="10000" value="5000000">
+                                <small class="form-help">Simulated starting capital (default: ₹50,00,000)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="config-allow-after-hours" name="allow_after_hours">
+                                    Allow After-Hours Trading
+                                </label>
+                                <small class="form-help">Enable trading/testing even when market is closed (IST)</small>
                             </div>
 
                             <div class="form-group">
@@ -433,7 +558,8 @@
 
                             <div class="form-group">
                                 <label for="config-data-refresh-interval">Data Refresh Interval (seconds)</label>
-                                <input type="number" id="config-data-refresh-interval" name="data_refresh_interval" class="form-control" min="1" max="300" value="60">
+                                <input type="number" id="config-data-refresh-interval" name="data_refresh_interval"
+                                    class="form-control" min="1" max="300" value="60">
                             </div>
 
                             <div class="form-group">
@@ -452,13 +578,14 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <h2 style="margin: 0;">Bot Monitor</h2>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span id="last-updated-display" class="last-updated-text" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                        <span id="last-updated-display" class="last-updated-text"
+                            style="color: var(--text-muted); font-size: 0.9rem;"></span>
                         <button id="manual-refresh-btn" class="btn btn-secondary">
                             <span class="btn-icon">🔄</span> Refresh
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Bot Status Card -->
                 <div class="card bot-status-card">
                     <div class="bot-status-header">
@@ -468,7 +595,7 @@
                             <span class="status-text">Stopped</span>
                         </div>
                     </div>
-                    
+
                     <div class="bot-status-grid">
                         <div class="bot-status-item">
                             <div class="status-item-icon">🤖</div>
@@ -477,7 +604,7 @@
                                 <div class="status-item-value" id="bot-running-status">Stopped</div>
                             </div>
                         </div>
-                        
+
                         <div class="bot-status-item">
                             <div class="status-item-icon">⏱️</div>
                             <div class="status-item-content">
@@ -485,7 +612,7 @@
                                 <div class="status-item-value" id="bot-uptime">--</div>
                             </div>
                         </div>
-                        
+
                         <div class="bot-status-item">
                             <div class="status-item-icon">🔗</div>
                             <div class="status-item-content">
@@ -493,7 +620,7 @@
                                 <div class="status-item-value" id="bot-broker-status">Not Connected</div>
                             </div>
                         </div>
-                        
+
                         <div class="bot-status-item">
                             <div class="status-item-icon">📊</div>
                             <div class="status-item-content">
@@ -502,7 +629,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="bot-control-actions">
                         <button id="start-bot-btn" class="btn btn-success">
                             <span class="btn-icon">▶️</span> Start Bot
@@ -525,7 +652,7 @@
                             <span class="refresh-text">Auto-refresh: 5s</span>
                         </div>
                     </div>
-                    
+
                     <div class="account-info-grid">
                         <div class="account-info-item">
                             <div class="account-item-icon">💰</div>
@@ -534,7 +661,7 @@
                                 <div class="account-item-value" id="account-balance">--</div>
                             </div>
                         </div>
-                        
+
                         <div class="account-info-item">
                             <div class="account-item-icon">📊</div>
                             <div class="account-item-content">
@@ -542,7 +669,7 @@
                                 <div class="account-item-value" id="account-equity">--</div>
                             </div>
                         </div>
-                        
+
                         <div class="account-info-item">
                             <div class="account-item-icon">✅</div>
                             <div class="account-item-content">
@@ -550,7 +677,7 @@
                                 <div class="account-item-value" id="account-margin-available">--</div>
                             </div>
                         </div>
-                        
+
                         <div class="account-info-item">
                             <div class="account-item-icon">⚠️</div>
                             <div class="account-item-content">
@@ -558,7 +685,7 @@
                                 <div class="account-item-value" id="account-margin-used">--</div>
                             </div>
                         </div>
-                        
+
                         <div class="account-info-item account-pnl-item">
                             <div class="account-item-icon">📈</div>
                             <div class="account-item-content">
@@ -567,7 +694,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="account-info-footer">
                         <div class="account-status-message" id="account-status-message">
                             <span class="status-icon">ℹ️</span>
@@ -607,7 +734,7 @@
                             <button class="clear-activities-btn">Clear</button>
                         </div>
                     </div>
-                    
+
                     <div class="activity-filter-bar">
                         <button class="filter-btn" data-type="analysis">📊 Analysis</button>
                         <button class="filter-btn" data-type="signal">⚡ Signals</button>
@@ -616,7 +743,7 @@
                         <button class="filter-btn" data-type="warning">⚠️ Warnings</button>
                         <button class="filter-btn" data-type="error">❌ Errors</button>
                     </div>
-                    
+
                     <div class="activity-log-content">
                         <div class="no-activities">No activities yet. Start the bot to see live updates.</div>
                     </div>
@@ -628,11 +755,13 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">Trade History</h2>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="TradeHistory.exportToCSV()" title="Export to CSV">📊 Export CSV</button>
-                        <button class="btn btn-secondary" onclick="TradeHistory.exportToExcel()" title="Export to Excel">📈 Export Excel</button>
+                        <button class="btn btn-secondary" onclick="TradeHistory.exportToCSV()" title="Export to CSV">📊
+                            Export CSV</button>
+                        <button class="btn btn-secondary" onclick="TradeHistory.exportToExcel()"
+                            title="Export to Excel">📈 Export Excel</button>
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="filters">
                         <label>From:</label>
@@ -679,7 +808,8 @@
                             <tr>
                                 <th class="sortable" data-sort="timestamp">Date <span class="sort-icon"></span></th>
                                 <th class="sortable" data-sort="symbol">Symbol <span class="sort-icon"></span></th>
-                                <th class="sortable" data-sort="transaction_type">Type <span class="sort-icon"></span></th>
+                                <th class="sortable" data-sort="transaction_type">Type <span class="sort-icon"></span>
+                                </th>
                                 <th class="sortable" data-sort="quantity">Qty <span class="sort-icon"></span></th>
                                 <th class="sortable" data-sort="price">Entry <span class="sort-icon"></span></th>
                                 <th class="sortable" data-sort="exit_price">Exit <span class="sort-icon"></span></th>
@@ -690,7 +820,7 @@
                             <!-- Trades will be loaded here -->
                         </tbody>
                     </table>
-                    
+
                     <div class="pagination">
                         <button id="trades-prev-page" class="btn btn-sm">Previous</button>
                         <span id="trades-page-info">Page 1</span>
@@ -701,216 +831,295 @@
 
             <!-- Charts Tab -->
             <div id="charts-tab" class="tab-content">
-        <!-- Chart Controls Bar -->
-        <div class="chart-controls-bar">
-            <!-- Symbol Selector -->
-            <div class="chart-control-group">
-                <label class="chart-control-label">Symbol:</label>
-                <select id="chart-symbol-selector">
-                    <option value="">-- Select Symbol --</option>
-                </select>
-            </div>
+                <!-- Chart Controls Bar -->
+                <div class="chart-controls-bar">
+                    <!-- Symbol Selector -->
+                    <div class="chart-control-group">
+                        <label class="chart-control-label">Symbol:</label>
+                        <select id="chart-symbol-selector">
+                            <option value="">-- Select Symbol --</option>
+                        </select>
+                    </div>
 
-            <!-- Timeframe Selector -->
-            <div class="chart-control-group">
-                <label class="chart-control-label">Timeframe:</label>
-                <div class="timeframe-buttons">
-                    <button class="timeframe-btn" data-timeframe="1min">1m</button>
-                    <button class="timeframe-btn" data-timeframe="5min">5m</button>
-                    <button class="timeframe-btn" data-timeframe="15min">15m</button>
-                    <button class="timeframe-btn" data-timeframe="30min">30m</button>
-                    <button class="timeframe-btn" data-timeframe="1hour">1h</button>
-                    <button class="timeframe-btn" data-timeframe="1day">1D</button>
+                    <!-- Timeframe Selector -->
+                    <div class="chart-control-group">
+                        <label class="chart-control-label">Timeframe:</label>
+                        <div class="timeframe-buttons">
+                            <button class="timeframe-btn" data-timeframe="1min">1m</button>
+                            <button class="timeframe-btn" data-timeframe="5min">5m</button>
+                            <button class="timeframe-btn" data-timeframe="15min">15m</button>
+                            <button class="timeframe-btn" data-timeframe="30min">30m</button>
+                            <button class="timeframe-btn" data-timeframe="1hour">1h</button>
+                            <button class="timeframe-btn" data-timeframe="1day">1D</button>
+                        </div>
+                    </div>
+
+                    <!-- Indicator Toggles -->
+                    <div class="chart-control-group">
+                        <label class="chart-control-label">Indicators:</label>
+                        <div id="indicator-toggles" class="indicator-toggles">
+                            <!-- Indicator buttons will be added here by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <button id="chart-refresh-btn">
+                        <span>🔄</span>
+                        <span>Refresh</span>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Indicator Toggles -->
-            <div class="chart-control-group">
-                <label class="chart-control-label">Indicators:</label>
-                <div id="indicator-toggles" class="indicator-toggles">
-                    <!-- Indicator buttons will be added here by JavaScript -->
-                </div>
-            </div>
+                <!-- Main Chart Container -->
+                <div class="chart-main-container">
+                    <!-- Price Chart -->
+                    <div class="price-chart-wrapper">
+                        <div id="price-chart-container">
+                            <!-- Chart will be rendered here -->
+                            <div class="chart-empty-state">
+                                <div class="chart-empty-state-icon">📊</div>
+                                <div class="chart-empty-state-text">Select a symbol to view chart</div>
+                                <div class="chart-empty-state-subtext">Choose from your selected instruments above</div>
+                            </div>
+                        </div>
 
-            <!-- Refresh Button -->
-            <button id="chart-refresh-btn">
-                <span>🔄</span>
-                <span>Refresh</span>
-            </button>
-        </div>
+                        <!-- Loading Indicator -->
+                        <div id="chart-loading">
+                            <div class="spinner"></div>
+                        </div>
 
-        <!-- Main Chart Container -->
-        <div class="chart-main-container">
-            <!-- Price Chart -->
-            <div class="price-chart-wrapper">
-                <div id="price-chart-container">
-                    <!-- Chart will be rendered here -->
-                    <div class="chart-empty-state">
-                        <div class="chart-empty-state-icon">📊</div>
-                        <div class="chart-empty-state-text">Select a symbol to view chart</div>
-                        <div class="chart-empty-state-subtext">Choose from your selected instruments above</div>
+                        <!-- Trade Markers Legend -->
+                        <div class="trade-markers-legend">
+                            <div class="trade-marker-item">
+                                <span class="trade-marker-icon trade-marker-buy">▲</span>
+                                <span>Buy Entry</span>
+                            </div>
+                            <div class="trade-marker-item">
+                                <span class="trade-marker-icon trade-marker-sell">▼</span>
+                                <span>Sell Entry</span>
+                            </div>
+                            <div class="trade-marker-item">
+                                <span class="trade-marker-icon trade-marker-exit">●</span>
+                                <span>Exit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Indicator Panels (MACD, RSI, ATR) -->
+                    <div id="indicator-panels" class="indicator-panels">
+                        <!-- Indicator panels will be added here dynamically -->
                     </div>
                 </div>
-                
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="tab-content">
                 <!-- Loading Indicator -->
-                <div id="chart-loading">
+                <div id="analytics-loading" class="analytics-loading">
                     <div class="spinner"></div>
                 </div>
 
-                <!-- Trade Markers Legend -->
-                <div class="trade-markers-legend">
-                    <div class="trade-marker-item">
-                        <span class="trade-marker-icon trade-marker-buy">▲</span>
-                        <span>Buy Entry</span>
+                <!-- Date Range Controls -->
+                <div class="analytics-controls">
+                    <label>From:</label>
+                    <input type="date" id="analytics-from-date">
+
+                    <label>To:</label>
+                    <input type="date" id="analytics-to-date">
+
+                    <button id="analytics-apply-date" class="primary">Apply</button>
+                    <button id="analytics-reset-date">Reset</button>
+                </div>
+
+                <div class="quick-filters">
+                    <button id="analytics-filter-today">Today</button>
+                    <button id="analytics-filter-week">Last 7 Days</button>
+                    <button id="analytics-filter-month">Last 30 Days</button>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="performance-metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Trades</div>
+                        <div class="metric-value" id="metric-total-trades">0</div>
                     </div>
-                    <div class="trade-marker-item">
-                        <span class="trade-marker-icon trade-marker-sell">▼</span>
-                        <span>Sell Entry</span>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Win Rate</div>
+                        <div class="metric-value" id="metric-win-rate">0%</div>
                     </div>
-                    <div class="trade-marker-item">
-                        <span class="trade-marker-icon trade-marker-exit">●</span>
-                        <span>Exit</span>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Total P&L</div>
+                        <div class="metric-value" id="metric-total-pnl">₹0.00</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Avg Trade</div>
+                        <div class="metric-value" id="metric-avg-trade">₹0.00</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Profit Factor</div>
+                        <div class="metric-value" id="metric-profit-factor">0.00</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Largest Win</div>
+                        <div class="metric-value" id="metric-largest-win">₹0.00</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Largest Loss</div>
+                        <div class="metric-value" id="metric-largest-loss">₹0.00</div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <!-- Profit by Symbol Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Profit by Symbol</div>
+                                <div class="chart-subtitle">P&L breakdown by trading symbol</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="profit-by-symbol-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Win/Loss by Symbol Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Win/Loss by Symbol</div>
+                                <div class="chart-subtitle">Winning and losing trades per symbol</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="win-loss-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Daily Profit Chart -->
+                    <div class="chart-card full-width">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Daily Profit Trend</div>
+                                <div class="chart-subtitle">Cumulative P&L over time</div>
+                            </div>
+                        </div>
+                        <div class="chart-container tall">
+                            <canvas id="daily-profit-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Hourly Performance Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Hourly Performance</div>
+                                <div class="chart-subtitle">P&L by hour of day</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="hourly-performance-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Trade Distribution Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Trade Distribution</div>
+                                <div class="chart-subtitle">Trade count by symbol</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trade-distribution-chart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Indicator Panels (MACD, RSI, ATR) -->
-            <div id="indicator-panels" class="indicator-panels">
-                <!-- Indicator panels will be added here dynamically -->
-            </div>
-        </div>
-    </div>
+            <!-- Logs Tab -->
+            <div id="logs-tab" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;">System Logs</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button id="logs-refresh-btn" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span> Refresh
+                        </button>
+                        <button id="logs-download-btn" class="btn btn-primary">
+                            <span class="btn-icon">📥</span> Download CSV
+                        </button>
+                        <button id="logs-clear-btn" class="btn btn-danger">
+                            <span class="btn-icon">🗑️</span> Clear Logs
+                        </button>
+                    </div>
+                </div>
 
-    <!-- Analytics Tab -->
-    <div id="analytics-tab" class="tab-content">
-        <!-- Loading Indicator -->
-        <div id="analytics-loading" class="analytics-loading">
-            <div class="spinner"></div>
-        </div>
-        
-        <!-- Date Range Controls -->
-        <div class="analytics-controls">
-            <label>From:</label>
-            <input type="date" id="analytics-from-date">
-            
-            <label>To:</label>
-            <input type="date" id="analytics-to-date">
-            
-            <button id="analytics-apply-date" class="primary">Apply</button>
-            <button id="analytics-reset-date">Reset</button>
-            
-            <div class="quick-filters">
-                <button id="analytics-filter-today">Today</button>
-                <button id="analytics-filter-week">Last 7 Days</button>
-                <button id="analytics-filter-month">Last 30 Days</button>
-            </div>
-        </div>
-        
-        <!-- Performance Metrics -->
-        <div class="performance-metrics">
-            <div class="metric-card">
-                <div class="metric-label">Total Trades</div>
-                <div class="metric-value" id="metric-total-trades">0</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value" id="metric-win-rate">0%</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Total P&L</div>
-                <div class="metric-value" id="metric-total-pnl">₹0.00</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Avg Trade</div>
-                <div class="metric-value" id="metric-avg-trade">₹0.00</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Profit Factor</div>
-                <div class="metric-value" id="metric-profit-factor">0.00</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Largest Win</div>
-                <div class="metric-value" id="metric-largest-win">₹0.00</div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-label">Largest Loss</div>
-                <div class="metric-value" id="metric-largest-loss">₹0.00</div>
-            </div>
-        </div>
-        
-        <!-- Charts Grid -->
-        <div class="charts-grid">
-            <!-- Profit by Symbol Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div>
-                        <div class="chart-title">Profit by Symbol</div>
-                        <div class="chart-subtitle">P&L breakdown by trading symbol</div>
+                <!-- Logs Control Bar -->
+                <div class="card logs-control-bar">
+                    <div class="logs-control-group">
+                        <label for="log-level-filter">Display Level:</label>
+                        <select id="log-level-filter" class="form-control">
+                            <option value="">All Levels</option>
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO" selected>INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                            <option value="CRITICAL">CRITICAL</option>
+                        </select>
+                    </div>
+
+                    <div class="logs-control-group">
+                        <label for="log-search">Search:</label>
+                        <input type="text" id="log-search" class="form-control"
+                            placeholder="Search message or logger...">
+                    </div>
+
+                    <div class="logs-control-group">
+                        <label for="log-global-level">Bot Logging Level:</label>
+                        <select id="log-global-level" class="form-control">
+                            <option value="DEBUG">DEBUG (Detailed)</option>
+                            <option value="INFO" selected>INFO (Standard)</option>
+                            <option value="WARNING">WARNING (Only Alerts)</option>
+                            <option value="ERROR">ERROR (Only Failures)</option>
+                        </select>
+                        <button id="apply-global-level-btn" class="btn btn-sm btn-secondary">Apply</button>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="profit-by-symbol-chart"></canvas>
-                </div>
-            </div>
-            
-            <!-- Win/Loss by Symbol Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div>
-                        <div class="chart-title">Win/Loss by Symbol</div>
-                        <div class="chart-subtitle">Winning and losing trades per symbol</div>
+
+                <!-- Logs Table -->
+                <div class="card logs-table-container">
+                    <div id="logs-loading" class="loading-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Fetching logs...</p>
+                    </div>
+                    <table id="logs-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">Timestamp</th>
+                                <th style="width: 100px;">Level</th>
+                                <th style="width: 150px;">Logger</th>
+                                <th>Message</th>
+                                <th style="width: 100px;">Symbol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <!-- Logs will be loaded here -->
+                        </tbody>
+                    </table>
+
+                    <div class="pagination">
+                        <button id="logs-prev-page" class="btn btn-sm">Previous</button>
+                        <span id="logs-page-info">Page 1 of 1 (0 logs)</span>
+                        <button id="logs-next-page" class="btn btn-sm">Next</button>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="win-loss-chart"></canvas>
-                </div>
             </div>
-            
-            <!-- Daily Profit Chart -->
-            <div class="chart-card full-width">
-                <div class="chart-header">
-                    <div>
-                        <div class="chart-title">Daily Profit Trend</div>
-                        <div class="chart-subtitle">Cumulative P&L over time</div>
-                    </div>
-                </div>
-                <div class="chart-container tall">
-                    <canvas id="daily-profit-chart"></canvas>
-                </div>
-            </div>
-            
-            <!-- Hourly Performance Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div>
-                        <div class="chart-title">Hourly Performance</div>
-                        <div class="chart-subtitle">P&L by hour of day</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="hourly-performance-chart"></canvas>
-                </div>
-            </div>
-            
-            <!-- Trade Distribution Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div>
-                        <div class="chart-title">Trade Distribution</div>
-                        <div class="chart-subtitle">Trade count by symbol</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="trade-distribution-chart"></canvas>
-                </div>
-            </div>
-        </div>
         </div>
     </main>
 
@@ -953,12 +1162,14 @@
     <!-- Charts -->
     <script src="/static/js/price-chart.js"></script>
     <script src="/static/js/chart-controls.js"></script>
+    <script src="/static/js/logs.js"></script>
     <script src="/static/js/app.js"></script>
     <!-- UI/UX Enhancements -->
     <script src="/static/js/ui-enhancements.js"></script>
     <!-- Helpful Features -->
     <script src="/static/js/helpful-features.js"></script>
-    
+
 
 </body>
+
 </html>

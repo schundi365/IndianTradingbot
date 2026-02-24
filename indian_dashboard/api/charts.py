@@ -43,7 +43,7 @@ def apply_rate_limits(limiter):
 @charts_bp.route('/price-data/<symbol>', methods=['GET'])
 @validate_query_params({
     'timeframe': {'type': 'string', 'max_length': 10},
-    'bars': {'type': 'integer', 'min': 1, 'max': 1000},
+    'bars': {'type': 'int', 'min_value': 1, 'max_value': 1000},
     'indicators': {'type': 'string', 'max_length': 200}
 })
 def get_price_data(symbol):
@@ -111,12 +111,12 @@ def get_price_data(symbol):
 @charts_bp.route('/indicator-data/<symbol>/<indicator>', methods=['GET'])
 @validate_query_params({
     'timeframe': {'type': 'string', 'max_length': 10},
-    'bars': {'type': 'integer', 'min': 1, 'max': 1000},
-    'period': {'type': 'integer', 'min': 1, 'max': 200},
-    'fast': {'type': 'integer', 'min': 1, 'max': 100},
-    'slow': {'type': 'integer', 'min': 1, 'max': 100},
-    'signal': {'type': 'integer', 'min': 1, 'max': 100},
-    'std_dev': {'type': 'integer', 'min': 1, 'max': 5}
+    'bars': {'type': 'int', 'min_value': 1, 'max_value': 1000},
+    'period': {'type': 'int', 'min_value': 1, 'max_value': 200},
+    'fast': {'type': 'int', 'min_value': 1, 'max_value': 100},
+    'slow': {'type': 'int', 'min_value': 1, 'max_value': 100},
+    'signal': {'type': 'int', 'min_value': 1, 'max_value': 100},
+    'std_dev': {'type': 'int', 'min_value': 1, 'max_value': 5}
 })
 def get_indicator_data(symbol, indicator):
     """
