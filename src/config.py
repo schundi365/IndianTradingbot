@@ -298,6 +298,7 @@ USE_SCALPING_MODE = False
 # ==============================================================================
 UPDATE_INTERVAL = 60            # Check every 60 seconds
 LOG_LEVEL = 'INFO'
+ENABLE_EMOJI_LOGGING = True     # Preserves emojis in logs (disable if console shows errors)
 SAVE_TRADE_HISTORY = True
 ANALYSIS_BARS = 200             # Number of bars to fetch for analysis
 
@@ -470,6 +471,7 @@ def get_config():
         'sr_tolerance': SR_TOLERANCE,
         'update_interval': UPDATE_INTERVAL,
         'log_level': LOG_LEVEL,
+        'enable_emoji_logging': ENABLE_EMOJI_LOGGING,
         'save_trade_history': SAVE_TRADE_HISTORY,
         'analysis_bars': ANALYSIS_BARS,
         'enable_telegram': ENABLE_TELEGRAM,

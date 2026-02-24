@@ -1,2 +1,3 @@
 python run_indian_bot.py
 python indian_dashboard/run_dashboard.py
+.\restart_dashboard.ps1

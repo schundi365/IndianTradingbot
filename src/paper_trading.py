@@ -376,3 +376,53 @@ class PaperTradingEngine:
             'largest_loss': min((t['pnl'] for t in losing_trades), default=0.0),
             'return_percent': ((self.equity - self.initial_balance) / self.initial_balance) * 100
         }
+    def get_orders(self) -> List[Dict]:
+        """
+        Get all simulated orders.
+        
+        Returns:
+            List of order dictionaries
+        """
+        result = []
+        # Add pending orders
+        for order_id, order in self.orders.items():
+            result.append({
+                'order_id': order['order_id'],
+                'symbol': order['symbol'],
+                'status': order['status'],
+                'direction': 'BUY' if order['direction'] == 1 else 'SELL',
+                'quantity': order['quantity'],
+                'filled_quantity': 0,
+                'average_price': 0,
+                'order_timestamp': order['created_time'].strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        # Add executed orders from positions
+        for pos in self.positions.values():
+            result.append({
+                'order_id': pos['order_id'],
+                'symbol': pos['symbol'],
+                'status': 'COMPLETE',
+                'direction': 'BUY' if pos['direction'] == 1 else 'SELL',
+                'quantity': pos['quantity'],
+                'filled_quantity': pos['quantity'],
+                'average_price': pos['entry_price'],
+                'order_timestamp': pos['entry_time'].strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        # Add completed trades (exit orders)
+        for trade in self.trades:
+            # We don't have order_ids for exits in trades list currently, 
+            # but we can return them as completed orders
+            result.append({
+                'order_id': f"EXIT_{trade['entry_time'].strftime('%H%M%S')}",
+                'symbol': trade['symbol'],
+                'status': 'COMPLETE',
+                'direction': 'SELL' if trade['direction'] == 1 else 'BUY',
+                'quantity': trade['quantity'],
+                'filled_quantity': trade['quantity'],
+                'average_price': trade['exit_price'],
+                'order_timestamp': trade['exit_time'].strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        return result

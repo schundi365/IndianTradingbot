@@ -1,0 +1,55 @@
+
+--- LOGS FROM data/logs.db ---
+Table 'logs' not found.
+
+--- LOGS FROM logs/logs.db ---
+[2026-02-24T10:09:19.816265] INFO    | werkzeug             | 2026-02-24 10:09:19 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:19] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:16.817641] INFO    | werkzeug             | 2026-02-24 10:09:16 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:16] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:13.847303] INFO    | werkzeug             | 2026-02-24 10:09:13 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:13] "GET /api/session/info HTTP/1.1" 200 -
+[2026-02-24T10:09:13.818668] INFO    | werkzeug             | 2026-02-24 10:09:13 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:13] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:10.824964] INFO    | werkzeug             | 2026-02-24 10:09:10 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:10] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.814735] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/trade-distribution?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.799940] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/hourly-performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.784897] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/daily-profit?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.769204] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/win-loss-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.753182] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/profit-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:09.724682] INFO    | werkzeug             | 2026-02-24 10:09:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:09] "GET /api/analytics/performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:09:07.817637] INFO    | werkzeug             | 2026-02-24 10:09:07 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:07] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:04.812230] INFO    | werkzeug             | 2026-02-24 10:09:04 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:04] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:09:03.162887] INFO    | werkzeug             | 2026-02-24 10:09:03 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:03] "GET /api/logs?limit=100&offset=0&level=&search= HTTP/1.1" 200 -
+[2026-02-24T10:09:01.808720] INFO    | werkzeug             | 2026-02-24 10:09:01 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:09:01] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:59.863773] INFO    | root                 | 2026-02-24 10:08:59 | root | INFO | Market closed (Current time: 15:38:59 IST)
+[2026-02-24T10:08:58.911315] INFO    | werkzeug             | 2026-02-24 10:08:58 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:58] "GET /api/logs?limit=100&offset=0&level=&search= HTTP/1.1" 200 -
+[2026-02-24T10:08:58.872451] INFO    | werkzeug             | 2026-02-24 10:08:58 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:58] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:55.809209] INFO    | werkzeug             | 2026-02-24 10:08:55 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:55] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:52.817586] INFO    | werkzeug             | 2026-02-24 10:08:52 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:52] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:49.824892] INFO    | werkzeug             | 2026-02-24 10:08:49 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:49] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:46.809068] INFO    | werkzeug             | 2026-02-24 10:08:46 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:46] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:43.842024] INFO    | werkzeug             | 2026-02-24 10:08:43 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:43] "GET /api/session/info HTTP/1.1" 200 -
+[2026-02-24T10:08:43.820374] INFO    | werkzeug             | 2026-02-24 10:08:43 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:43] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:40.814719] INFO    | werkzeug             | 2026-02-24 10:08:40 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:40] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.808428] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/trade-distribution?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.794102] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/hourly-performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.780150] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/daily-profit?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.762677] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/win-loss-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.743927] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/profit-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:39.720389] INFO    | werkzeug             | 2026-02-24 10:08:39 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:39] "GET /api/analytics/performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:37.808744] INFO    | werkzeug             | 2026-02-24 10:08:37 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:37] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:34.822612] INFO    | werkzeug             | 2026-02-24 10:08:34 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:34] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:31.815088] INFO    | werkzeug             | 2026-02-24 10:08:31 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:31] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:28.819695] INFO    | werkzeug             | 2026-02-24 10:08:28 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:28] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:25.816090] INFO    | werkzeug             | 2026-02-24 10:08:25 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:25] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:22.817799] INFO    | werkzeug             | 2026-02-24 10:08:22 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:22] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:19.816510] INFO    | werkzeug             | 2026-02-24 10:08:19 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:19] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:16.810558] INFO    | werkzeug             | 2026-02-24 10:08:16 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:16] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:13.838091] INFO    | werkzeug             | 2026-02-24 10:08:13 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:13] "GET /api/session/info HTTP/1.1" 200 -
+[2026-02-24T10:08:13.808418] INFO    | werkzeug             | 2026-02-24 10:08:13 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:13] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:10.809772] INFO    | werkzeug             | 2026-02-24 10:08:10 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:10] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.785372] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/profit-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.772367] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/trade-distribution?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.758795] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/hourly-performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.745370] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/daily-profit?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.731549] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/win-loss-by-symbol?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:09.714523] INFO    | werkzeug             | 2026-02-24 10:08:09 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:09] "GET /api/analytics/performance?from_date=2026-02-17&to_date=2026-02-24 HTTP/1.1" 200 -
+[2026-02-24T10:08:07.811531] INFO    | werkzeug             | 2026-02-24 10:08:07 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:07] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -
+[2026-02-24T10:08:04.819202] INFO    | werkzeug             | 2026-02-24 10:08:04 | werkzeug | INFO | 127.0.0.1 - - [24/Feb/2026 10:08:04] "GET /api/bot/activities?limit=100 HTTP/1.1" 200 -

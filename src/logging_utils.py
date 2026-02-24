@@ -5,6 +5,8 @@ Strips Unicode emojis that cause encoding errors on Windows cp1252
 
 import re
 import logging
+import os
+from pathlib import Path
 
 
 # Emoji to ASCII mapping for common trading bot emojis
@@ -43,6 +45,9 @@ EMOJI_MAP = {
 }
 
 
+# Global flag to disable safe logging if the environment supports UTF-8
+DISABLE_SAFE_LOGGING = False
+
 def strip_emojis(text):
     """
     Replace emojis with ASCII equivalents for Windows console compatibility
@@ -53,6 +58,9 @@ def strip_emojis(text):
     Returns:
         String with emojis replaced by ASCII equivalents
     """
+    if DISABLE_SAFE_LOGGING:
+        return text
+        
     if not isinstance(text, str):
         return text
     
@@ -113,6 +121,11 @@ def configure_safe_logging():
 def _apply_safe_formatter(logger):
     """Internal helper to apply SafeFormatter to a logger's handlers"""
     for handler in logger.handlers:
+        # Don't apply safe formatter to DatabaseHandler as it handles UTF-8 correctly
+        from src.db_logging_handler import DatabaseHandler
+        if isinstance(handler, DatabaseHandler):
+            continue
+            
         if not isinstance(handler.formatter, SafeFormatter):
             # Get the current format string
             fmt = handler.formatter._fmt if (handler.formatter and hasattr(handler.formatter, '_fmt')) else '%(asctime)s - %(levelname)s - %(message)s'
@@ -120,3 +133,34 @@ def _apply_safe_formatter(logger):
             
             # Replace with SafeFormatter
             handler.setFormatter(SafeFormatter(fmt, datefmt))
+
+
+def setup_db_logging(db_path: str = "data/logs.db"):
+    """
+    Setup database logging handler and attach it to the root logger.
+    
+    Args:
+        db_path: Path to the SQLite database
+    """
+    from src.db_logging_handler import DatabaseHandler
+    
+    root_logger = logging.getLogger()
+    
+    # Check if already attached
+    for handler in root_logger.handlers:
+        if isinstance(handler, DatabaseHandler):
+            return handler
+            
+    # Create and add handler
+    db_handler = DatabaseHandler(db_path)
+    db_handler.setLevel(logging.DEBUG)  # Capture everything; filtering happens in dashboard
+    
+    # Use standard formatter for DB (no emoji stripping)
+    formatter = logging.Formatter(
+        '%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    db_handler.setFormatter(formatter)
+    
+    root_logger.addHandler(db_handler)
+    return db_handler

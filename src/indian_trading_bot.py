@@ -128,6 +128,24 @@ class IndianTradingBot:
         self.macd_slow = config.get('macd_slow', 26)
         self.macd_signal = config.get('macd_signal', 9)
         
+        # Additional indicator parameters
+        self.rsi_period = config.get('rsi_period', 14)
+        self.rsi_overbought = config.get('rsi_overbought', 70)
+        self.rsi_oversold = config.get('rsi_oversold', 30)
+        self.roc_period = config.get('roc_period', 3)
+        self.macd_min_histogram = config.get('macd_min_histogram', 0.0005)
+        self.ema_micro_fast = config.get('ema_micro_fast', 6)
+        self.ema_micro_slow = config.get('ema_micro_slow', 12)
+        
+        # ADX and Trend Detection parameters
+        self.adx_period = config.get('adx_period', 14)
+        self.adx_min_strength = config.get('adx_min_strength', 25)
+        self.min_trend_confidence = config.get('min_trend_confidence', 0.6)
+        self.trend_detection_sensitivity = config.get('trend_detection_sensitivity', 5)
+        
+        # Loop interval
+        self.loop_interval = config.get('loop_interval', 60)
+        
         # Trailing parameters (same as MT5)
         self.trail_activation = config.get('trail_activation', 1.5)
         self.trail_distance = config.get('trail_distance', 1.0)
@@ -164,6 +182,11 @@ class IndianTradingBot:
         self._init_components()
         
         # Ensure logging is safe after all components (and their loggers) are initialized
+        if self.config.get('enable_emoji_logging', True):
+            import src.logging_utils as logging_utils
+            logging_utils.DISABLE_SAFE_LOGGING = True
+            logging.info("Emoji logging enabled - Preserving emojis in logs")
+            
         configure_safe_logging()
         
         # Position tracking
@@ -398,6 +421,10 @@ class IndianTradingBot:
     
     def is_market_open(self) -> bool:
         """Check if Indian market is open"""
+        # Allow bypass for testing/paper trading
+        if self.config.get('allow_after_hours', False):
+            return True
+            
         ist = pytz.timezone('Asia/Kolkata')
         now = datetime.now(ist)
         
@@ -458,11 +485,14 @@ class IndianTradingBot:
         df['slow_ma'] = df['close'].ewm(span=self.slow_ma_period, adjust=False).mean()
         
         # Early signal detection EMAs
-        df['ema6'] = df['close'].ewm(span=6, adjust=False).mean()
-        df['ema12'] = df['close'].ewm(span=12, adjust=False).mean()
+        self.ema_micro_fast = self.config.get('ema_micro_fast', 6)
+        self.ema_micro_slow = self.config.get('ema_micro_slow', 12)
+        df['ema6'] = df['close'].ewm(span=self.ema_micro_fast, adjust=False).mean()
+        df['ema12'] = df['close'].ewm(span=self.ema_micro_slow, adjust=False).mean()
         
-        # Price momentum: rate-of-change over 3 bars
-        df['roc3'] = df['close'].pct_change(3) * 100
+        # Price momentum: rate-of-change over N bars
+        self.roc_period = self.config.get('roc_period', 3)
+        df['roc3'] = df['close'].pct_change(self.roc_period) * 100
         
         # ATR (Average True Range) for volatility-based stops
         df['high_low'] = df['high'] - df['low']
@@ -472,11 +502,12 @@ class IndianTradingBot:
         df['atr'] = df['tr'].rolling(window=self.atr_period).mean()
         
         # RSI (Relative Strength Index)
+        # self.rsi_period is already set in __init__
         delta = df['close'].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
-        avg_gain = gain.rolling(window=14).mean()
-        avg_loss = loss.rolling(window=14).mean()
+        avg_gain = gain.rolling(window=self.rsi_period).mean()
+        avg_loss = loss.rolling(window=self.rsi_period).mean()
         rs = avg_gain / avg_loss
         df['rsi'] = 100 - (100 / (1 + rs))
         
@@ -529,7 +560,7 @@ class IndianTradingBot:
         logging.info(f"MA Position:       Fast {'ABOVE' if latest['fast_ma'] > latest['slow_ma'] else 'BELOW'} Slow")
         logging.info(f"Price vs Fast MA:  {latest['close'] - latest['fast_ma']:+.5f} ({'above' if latest['close'] > latest['fast_ma'] else 'below'})")
         logging.info(f"Price vs Slow MA:  {latest['close'] - latest['slow_ma']:+.5f} ({'above' if latest['close'] > latest['slow_ma'] else 'below'})")
-        logging.info("-"*80)
+        logging.info("-" * 80)
         
         # ENHANCED SIGNAL GENERATION - Multiple Signal Types
         signal = 0
@@ -567,6 +598,7 @@ class IndianTradingBot:
                     signal_reason = "EMA6/12 Micro-Bearish Crossover"
                 else:
                     logging.info(f"  ❌ No micro-crossover (EMA6={ema6_now:.5f}, EMA12={ema12_now:.5f})")
+            logging.info("-" * 80)
         
         # METHOD 0B: ROC MOMENTUM PRE-SIGNAL (fires when momentum surges before MA crosses)
         if signal == 0 and 'roc3' in df.columns:
@@ -605,15 +637,11 @@ class IndianTradingBot:
         if latest['ma_cross'] == 1:
             logging.info(f"  ✅ BULLISH CROSSOVER DETECTED!")
             logging.info(f"     Fast MA crossed ABOVE Slow MA")
-            logging.info(f"     Previous: Fast {previous['fast_ma']:.5f} <= Slow {previous['slow_ma']:.5f}")
-            logging.info(f"     Current:  Fast {latest['fast_ma']:.5f} > Slow {latest['slow_ma']:.5f}")
             signal = 1
             signal_reason = "MA Bullish Crossover"
         elif latest['ma_cross'] == -1:
             logging.info(f"  ✅ BEARISH CROSSOVER DETECTED!")
             logging.info(f"     Fast MA crossed BELOW Slow MA")
-            logging.info(f"     Previous: Fast {previous['fast_ma']:.5f} >= Slow {previous['slow_ma']:.5f}")
-            logging.info(f"     Current:  Fast {latest['fast_ma']:.5f} < Slow {latest['slow_ma']:.5f}")
             signal = -1
             signal_reason = "MA Bearish Crossover"
         else:
@@ -797,9 +825,9 @@ class IndianTradingBot:
         
         # Log signal detected
         signal_type = "BUY" if signal == 1 else "SELL"
-        logging.info("-"*80)
+        logging.info("-" * 80)
         logging.info(f"🎯 {signal_type} SIGNAL DETECTED - Now checking filters...")
-        logging.info("-"*80)
+        logging.info("-" * 80)
         
         # Apply RSI filter (most popular enhancement)
         logging.info("🔍 RSI FILTER CHECK:")
@@ -861,13 +889,13 @@ class IndianTradingBot:
                 
                 # RSI is in the sweet spot: 50-70 (or whatever overbought is set to)
                 logging.info(f"  ✅ RSI FILTER PASSED!")
-                logging.info(f"     RSI {rsi:.2f} shows good bullish momentum (50-{rsi_overbought})")
+                logging.info(f"     RSI {rsi:.2f} shows good bullish momentum (50-{self.rsi_overbought})")
             elif signal == -1:  # SELL
                 logging.info(f"  Checking SELL: RSI range {rsi_oversold}-50")
                 
                 # Check if oversold (too low)
-                if rsi < rsi_oversold:
-                    rejection_reason = f"RSI {rsi:.2f} is too oversold (<{rsi_oversold})"
+                if rsi < self.rsi_oversold:
+                    rejection_reason = f"RSI {rsi:.2f} is too oversold (<{self.rsi_oversold})"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
                     logging.info(f"     {rejection_reason}")
                     logging.info(f"     Market may be overextended - skipping trade")
@@ -911,7 +939,7 @@ class IndianTradingBot:
                 
                 # RSI is in the sweet spot: 30-50 (or whatever oversold is set to)
                 logging.info(f"  ✅ RSI FILTER PASSED!")
-                logging.info(f"     RSI {rsi:.2f} shows good bearish momentum ({rsi_oversold}-50)")
+                logging.info(f"     RSI {rsi:.2f} shows good bearish momentum ({self.rsi_oversold}-50)")
         else:
             logging.info(f"  ⚠️  RSI data not available - skipping RSI filter")
         
@@ -928,7 +956,7 @@ class IndianTradingBot:
             macd_signal = latest['macd_signal']
             
             # Enhanced MACD with meaningful threshold
-            MACD_THRESHOLD = self.config.get('macd_min_histogram', 0.0005)
+            MACD_THRESHOLD = self.macd_min_histogram
             
             logging.info(f"  MACD Line:         {macd:.6f}")
             logging.info(f"  MACD Signal Line:  {macd_signal:.6f}")
@@ -1016,7 +1044,7 @@ class IndianTradingBot:
                                   np.maximum(df['low'].shift() - df['low'], 0), 0)
                 
                 # Smooth the values
-                adx_period = self.config.get('adx_period', 14)
+                adx_period = self.adx_period
                 tr_smooth = pd.Series(tr).rolling(window=adx_period).mean()
                 plus_dm_smooth = pd.Series(plus_dm).rolling(window=adx_period).mean()
                 minus_dm_smooth = pd.Series(minus_dm).rolling(window=adx_period).mean()
@@ -1034,7 +1062,7 @@ class IndianTradingBot:
                 plus_di = latest.get('plus_di', 0) if 'plus_di' in df.columns else 0 if 'plus_di' in df.columns else 0
                 minus_di = latest.get('minus_di', 0) if 'minus_di' in df.columns else 0 if 'minus_di' in df.columns else 0
                 
-                ADX_THRESHOLD = self.config.get('adx_min_strength', 25)
+                ADX_THRESHOLD = self.adx_min_strength
                 
                 logging.info(f"  ADX (Trend Strength): {adx:.2f}")
                 logging.info(f"  +DI (Bullish Force):  {plus_di:.2f}")
@@ -1109,10 +1137,9 @@ class IndianTradingBot:
             else:
                 logging.info(f"  ⚠️  ADX data not available - skipping ADX filter")
         else:
-            logging.info(f"  ⚠️  ADX filter disabled in configuration")
+            logging.info(f"  ⚠️  Advanced trend detection disabled")
         
-        # All filters passed
-        logging.info("-"*80)
+        logging.info("-" * 80)
         
         # Log the signal with reasoning (Requirement 12.5)
         reasoning = {
@@ -1895,23 +1922,38 @@ class IndianTradingBot:
             symbol (str): Trading symbol to analyze
         """
         # Log analysis start with header
+        logging.info("╔" + "="*78 + "╗")
+        logging.info(f"║ ANALYZING                                 {symbol:<38} ║")
+        logging.info("╚" + "="*78 + "╝")
+
         if self.activity_logger:
             self.activity_logger.log_symbol_analysis_start(symbol)
             
             # Log position check
             positions = self.broker.get_positions(symbol)
             current_positions = len(positions) if positions else 0
+            
+            logging.info(f"📊 Position Check: {current_positions}/{self.max_positions} positions for {symbol}")
+            
             self.activity_logger.log_position_check(
                 symbol=symbol,
                 current=current_positions,
                 max_allowed=self.max_positions
             )
+        else:
+            # Fallback if activity logger is not set
+            positions = self.broker.get_positions(symbol)
+            current_positions = len(positions) if positions else 0
+            logging.info(f"📊 Position Check: {current_positions}/{self.max_positions} positions for {symbol}")
         
         # Check if market is open
         if not self.is_market_open():
             return
         
         # Get historical data
+        logging.info(f"📈 Fetching historical data for {symbol} (Timeframe: {self.timeframe})...")
+        logging.info(f"    Requesting {self.analysis_bars} bars for analysis")
+        
         if self.activity_logger:
             self.activity_logger.log_analysis(
                 symbol=symbol,
@@ -1930,6 +1972,8 @@ class IndianTradingBot:
             return
         
         # Log data fetch success
+        logging.info(f"✅ Retrieved {len(df)} bars of data (requested: {self.analysis_bars})")
+        
         if self.activity_logger:
             self.activity_logger.log_data_fetch(
                 symbol=symbol,
@@ -1938,6 +1982,8 @@ class IndianTradingBot:
             )
         
         # Calculate indicators
+        logging.info(f"📊 Calculating technical indicators...")
+        
         if self.activity_logger:
             self.activity_logger.log_analysis(
                 symbol=symbol,
@@ -1946,6 +1992,8 @@ class IndianTradingBot:
             )
         
         df = self.calculate_indicators(df)
+        logging.info(f"✅ Indicators calculated successfully")
+        logging.info("")
         
         # Log key indicators
         if self.activity_logger and len(df) > 0:
@@ -2018,7 +2066,7 @@ class IndianTradingBot:
                 'Take Profit': f"Rs.{take_profit:.2f}",
                 'Quantity': quantity,
                 'Risk Amount': f"Rs.{risk_amount:.2f}",
-                'Risk %': f"{self.risk_per_trade}%"
+                'Risk %': f"{self.risk_percent}%"
             }
             self.activity_logger.log_risk_calculation(symbol, risk_data)
         
@@ -2585,6 +2633,22 @@ class IndianTradingBot:
         
         try:
             while True:
+                # Connection check and reconnection
+                if not self.broker.is_connected():
+                    logging.warning("⚠️  MT5 connection lost, attempting to reconnect...")
+                    reconnect_success = False
+                    for i in range(5):  # Try 5 times
+                        time.sleep(1)  # Progressive delay
+                        if self.connect():
+                            logging.info("✅ MT5 reconnected successfully")
+                            reconnect_success = True
+                            break
+                        logging.warning(f"   Reconnection attempt {i+1} failed...")
+                    
+                    if not reconnect_success:
+                        logging.error("❌ Reconnection failed, stopping bot")
+                        break
+
                 # Check if market is open
                 if not self.is_market_open():
                     ist = pytz.timezone('Asia/Kolkata')
@@ -2597,6 +2661,20 @@ class IndianTradingBot:
                     
                     time.sleep(60)
                     continue
+                
+                # Log if bypassing market hours
+                if self.config.get('allow_after_hours', False):
+                    ist = pytz.timezone('Asia/Kolkata')
+                    now = datetime.now(ist)
+                    # Check if actual market is closed
+                    actual_start = datetime.strptime(self.trading_hours['start'], '%H:%M').time()
+                    actual_end = datetime.strptime(self.trading_hours['end'], '%H:%M').time()
+                    current_time = now.time()
+                    
+                    is_actual_open = (now.weekday() < 5 and actual_start <= current_time <= actual_end)
+                    
+                    if not is_actual_open:
+                        logging.info(f"🧪 AFTER-HOURS TRADING ENABLED (Current time: {now.strftime('%H:%M:%S IST')})")
                 
                 # Run strategy for each symbol
                 for symbol in self.symbols:
@@ -2616,7 +2694,9 @@ class IndianTradingBot:
                     logging.error(traceback.format_exc())
                 
                 # Wait before next iteration
-                time.sleep(60)  # Check every minute
+                interval = self.loop_interval
+                if interval < 1: interval = 1 # Minimum 1 second
+                time.sleep(interval)
                 
         except KeyboardInterrupt:
             logging.info("Bot stopped by user")

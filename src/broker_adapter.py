@@ -291,6 +291,33 @@ class BrokerAdapter(ABC):
         pass
     
     @abstractmethod
+    def get_orders(self) -> List[Dict]:
+        """
+        Get all orders for the current day.
+        
+        This method retrieves a list of all orders placed through the broker
+        during the current trading session.
+        
+        Returns:
+            List[Dict]: List of order dictionaries, each containing:
+                - order_id (str): Unique identifier for the order
+                - symbol (str): Instrument symbol
+                - status (str): Order status (e.g., "COMPLETE", "CANCELLED", "REJECTED")
+                - direction (str): "BUY" or "SELL"
+                - quantity (int): Number of units
+                - filled_quantity (int): Number of units executed
+                - average_price (float): Average execution price
+                - order_timestamp (datetime): When the order was placed
+            
+        Example:
+            >>> orders = adapter.get_orders()
+            >>> for order in orders:
+            ...     print(f"Order {order['order_id']}: {order['status']}")
+        """
+        pass
+
+
+    @abstractmethod
     def convert_timeframe(self, mt5_timeframe: int) -> str:
         """
         Convert MT5 timeframe constant to broker-specific format.

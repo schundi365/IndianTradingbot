@@ -714,6 +714,44 @@ class KiteAdapter(BrokerAdapter):
             self.error_handler.log_error(e, {'operation': 'get_instrument_info', 'symbol': symbol})
             return None
     
+    def get_orders(self) -> List[Dict]:
+        """
+        Get all orders for the current day from Kite Connect.
+        
+        Validates: Requirement 2.5, 12.1
+        
+        Returns:
+            List[Dict]: List of standardized order dictionaries
+        """
+        try:
+            orders = self.kite.orders()
+            result = []
+            
+            for order in orders:
+                # Ensure order_timestamp is a string for dashboard filtering
+                timestamp = order.get('order_timestamp')
+                if isinstance(timestamp, datetime):
+                    timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    timestamp_str = str(timestamp) if timestamp else ""
+                
+                result.append({
+                    'order_id': order.get('order_id'),
+                    'symbol': order.get('tradingsymbol'),
+                    'status': order.get('status'),
+                    'direction': order.get('transaction_type'),
+                    'quantity': order.get('quantity'),
+                    'filled_quantity': order.get('filled_quantity'),
+                    'average_price': order.get('average_price'),
+                    'order_timestamp': timestamp_str
+                })
+            
+            return result
+            
+        except Exception as e:
+            self.error_handler.log_error(e, {'operation': 'get_orders'})
+            return []
+
     def convert_timeframe(self, mt5_timeframe: int) -> str:
         """
         Convert MT5 timeframe constant to Kite Connect format.
