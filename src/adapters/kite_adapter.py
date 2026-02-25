@@ -17,8 +17,8 @@ import logging
 import pandas as pd
 
 from kiteconnect import KiteConnect
-from src.broker_adapter import BrokerAdapter
-from src.error_handler import (
+from src.adapters.broker_adapter import BrokerAdapter
+from src.utils.error_handler import (
     ErrorHandler,
     AuthenticationError,
     ConnectionError,

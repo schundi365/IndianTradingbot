@@ -24,37 +24,37 @@ else:
 LOG_FILE = BASE_DIR / 'indian_trading_bot.log'
 
 # Import logging utilities for Windows console compatibility
-from src.logging_utils import configure_safe_logging
+from src.utils.logging_utils import configure_safe_logging
 
 # Import broker adapter and validator
-from src.broker_adapter import BrokerAdapter
-from src.instrument_validator import InstrumentValidator
-from src.trading_decision_logger import TradingDecisionLogger
+from src.adapters.broker_adapter import BrokerAdapter
+from src.utils.instrument_validator import InstrumentValidator
+from src.core.trading_decision_logger import TradingDecisionLogger
 
 # Import optional components (same as MT5 bot)
 try:
-    from src.adaptive_risk_manager import AdaptiveRiskManager
+    from src.managers.adaptive_risk_manager import AdaptiveRiskManager
     ADAPTIVE_RISK_AVAILABLE = True
 except ImportError:
     ADAPTIVE_RISK_AVAILABLE = False
     logging.warning("Adaptive risk management not available")
 
 try:
-    from src.ml_integration import MLIntegration
+    from src.ml.ml_integration import MLIntegration
     ML_INTEGRATION_AVAILABLE = True
 except ImportError:
     ML_INTEGRATION_AVAILABLE = False
     logging.warning("ML integration not available")
 
 try:
-    from src.volume_analyzer import VolumeAnalyzer
+    from src.analyzers.volume_analyzer import VolumeAnalyzer
     VOLUME_ANALYZER_AVAILABLE = True
 except ImportError:
     VOLUME_ANALYZER_AVAILABLE = False
     logging.warning("Volume Analyzer not available")
 
 try:
-    from src.trend_detection_engine import TrendDetectionEngine
+    from src.analyzers.trend_detection_engine import TrendDetectionEngine
     TREND_DETECTION_AVAILABLE = True
 except ImportError:
     TREND_DETECTION_AVAILABLE = False
@@ -174,7 +174,7 @@ class IndianTradingBot:
         self.paper_trading = config.get('paper_trading', False)
         self.paper_trading_engine = None
         if self.paper_trading:
-            from src.paper_trading import PaperTradingEngine
+            from src.core.paper_trading import PaperTradingEngine
             initial_balance = config.get('paper_trading_initial_balance', 100000.0)
             self.paper_trading_engine = PaperTradingEngine(initial_balance)
         
@@ -183,7 +183,7 @@ class IndianTradingBot:
         
         # Ensure logging is safe after all components (and their loggers) are initialized
         if self.config.get('enable_emoji_logging', True):
-            import src.logging_utils as logging_utils
+            import src.utils.logging_utils as logging_utils
             logging_utils.DISABLE_SAFE_LOGGING = True
             logging.info("Emoji logging enabled - Preserving emojis in logs")
             

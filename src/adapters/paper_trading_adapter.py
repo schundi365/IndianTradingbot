@@ -12,8 +12,8 @@ from datetime import datetime
 import logging
 import pandas as pd
 
-from src.broker_adapter import BrokerAdapter
-from src.paper_trading import PaperTradingEngine
+from src.adapters.broker_adapter import BrokerAdapter
+from src.core.paper_trading import PaperTradingEngine
 
 
 class PaperTradingAdapter(BrokerAdapter):
@@ -24,7 +24,7 @@ class PaperTradingAdapter(BrokerAdapter):
     useful for testing strategies and learning without risking real capital.
     """
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, real_data_adapter=None):
         """
         Initialize Paper Trading adapter with configuration.
         
@@ -32,6 +32,9 @@ class PaperTradingAdapter(BrokerAdapter):
             config (Dict): Configuration dictionary containing:
                 - initial_balance: Starting balance (default: 100000.0)
                 - default_exchange: Default exchange (default: 'NSE')
+            real_data_adapter: Optional KiteAdapter instance to fetch real historical
+                data instead of generating random simulated bars. Falls back to
+                simulation automatically if this adapter is None or disconnected.
         """
         self.config = config
         self.initial_balance = config.get('paper_trading_initial_balance', 100000.0)
@@ -40,6 +43,9 @@ class PaperTradingAdapter(BrokerAdapter):
         self.engine = None
         self.connected = False
         self.logger = logging.getLogger(__name__)
+        
+        # Optional real data adapter (e.g. KiteAdapter) for realistic simulation
+        self.real_data_adapter = real_data_adapter
         
         # Initialize current_prices before creating mock instruments
         self.current_prices = {}  # symbol -> current price
@@ -168,11 +174,60 @@ class PaperTradingAdapter(BrokerAdapter):
         bars: int
     ) -> Optional[pd.DataFrame]:
         """
-        Generate simulated historical OHLCV data.
+        Fetch real historical OHLCV data from Kite if a real_data_adapter is
+        provided and connected; otherwise fall back to simulated random-walk data.
         
         Args:
             symbol (str): Instrument symbol
             timeframe (str): Timeframe (e.g., "minute", "5minute", "30minute", "day")
+            bars (int): Number of bars to fetch/generate
+        
+        Returns:
+            Optional[pd.DataFrame]: DataFrame with OHLCV data
+        """
+        # --- Try real Kite data first ---
+        if self.real_data_adapter is not None:
+            try:
+                if self.real_data_adapter.is_connected():
+                    df = self.real_data_adapter.get_historical_data(symbol, timeframe, bars)
+                    if df is not None and len(df) > 0:
+                        self.current_prices[symbol] = df.iloc[-1]['close']
+                        self.logger.info(
+                            f"Paper trading using REAL Kite data for {symbol} "
+                            f"({len(df)} bars)"
+                        )
+                        return df
+                    else:
+                        self.logger.warning(
+                            f"Real data returned empty for {symbol}, "
+                            "falling back to simulation"
+                        )
+                else:
+                    self.logger.warning(
+                        "Real data adapter disconnected, falling back to simulation"
+                    )
+            except Exception as e:
+                self.logger.warning(
+                    f"Real data fetch failed for {symbol} ({e}), "
+                    "falling back to simulation"
+                )
+        
+        # --- Fall back to simulated data ---
+        return self._generate_simulated_data(symbol, timeframe, bars)
+    
+    def _generate_simulated_data(
+        self,
+        symbol: str,
+        timeframe: str,
+        bars: int
+    ) -> Optional[pd.DataFrame]:
+        """
+        Generate simulated historical OHLCV data using a random walk.
+        Used as a fallback when real Kite data is unavailable.
+        
+        Args:
+            symbol (str): Instrument symbol
+            timeframe (str): Timeframe string
             bars (int): Number of bars to generate
         
         Returns:

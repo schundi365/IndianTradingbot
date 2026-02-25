@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import logging
 
 # Import data models from trend detection engine
-from src.trend_detection_engine import StructureBreakResult, BreakType
+from src.analyzers.trend_detection_engine import StructureBreakResult, BreakType
 
 logger = logging.getLogger(__name__)
 

@@ -61,7 +61,7 @@ class TradingDecisionLogger:
         self.logger.addHandler(file_handler)
         
         # Apply SafeFormatter to this handler as well
-        from src.logging_utils import SafeFormatter
+        from src.utils.logging_utils import SafeFormatter
         file_handler.setFormatter(SafeFormatter(formatter._fmt, formatter.datefmt))
     
     def log_signal(

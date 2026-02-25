@@ -122,7 +122,7 @@ def _apply_safe_formatter(logger):
     """Internal helper to apply SafeFormatter to a logger's handlers"""
     for handler in logger.handlers:
         # Don't apply safe formatter to DatabaseHandler as it handles UTF-8 correctly
-        from src.db_logging_handler import DatabaseHandler
+        from src.utils.db_logging_handler import DatabaseHandler
         if isinstance(handler, DatabaseHandler):
             continue
             
@@ -142,7 +142,7 @@ def setup_db_logging(db_path: str = "data/logs.db"):
     Args:
         db_path: Path to the SQLite database
     """
-    from src.db_logging_handler import DatabaseHandler
+    from src.utils.db_logging_handler import DatabaseHandler
     
     root_logger = logging.getLogger()
     

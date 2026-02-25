@@ -132,7 +132,7 @@ class DeploymentVerifier:
         print("\n=== Verifying Broker Adapters ===")
         
         # Check if broker adapter files exist
-        adapter_dir = self.root_dir.parent / "src"
+        adapter_dir = self.root_dir.parent / "src" / "adapters"
         
         adapters = [
             "broker_adapter.py",

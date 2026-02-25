@@ -12,9 +12,9 @@ from datetime import datetime
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.broker_adapter import BrokerAdapter
-from src.kite_adapter import KiteAdapter
-from src.paper_trading_adapter import PaperTradingAdapter
+from src.adapters.broker_adapter import BrokerAdapter
+from src.adapters.kite_adapter import KiteAdapter
+from src.adapters.paper_trading_adapter import PaperTradingAdapter
 
 # Import config
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -118,7 +118,36 @@ class BrokerManager:
             
             # Create adapter instance
             logger.info(f"Creating {broker} adapter instance")
-            adapter = adapter_class(config)
+            
+            if broker == 'paper':
+                # For paper trading, secretly wire in a real KiteAdapter so that
+                # get_historical_data() uses real market data (better signal quality).
+                # If Kite auth fails, paper trading still works with simulated data.
+                real_kite = None
+                try:
+                    kite_cfg = dict(config)
+                    # Read Kite credentials from environment / kite_token.json if available
+                    import os
+                    kite_cfg.setdefault('kite_api_key', os.environ.get('KITE_API_KEY', ''))
+                    kite_cfg.setdefault('kite_token_file', 'kite_token.json')
+                    kite_adapter_candidate = KiteAdapter(kite_cfg)
+                    if kite_adapter_candidate.connect():
+                        real_kite = kite_adapter_candidate
+                        logger.info(
+                            "Paper trading: connected to Kite for real historical data"
+                        )
+                    else:
+                        logger.info(
+                            "Paper trading: Kite unavailable — using simulated data"
+                        )
+                except Exception as _kite_err:
+                    logger.info(
+                        f"Paper trading: Kite connection skipped ({_kite_err}) "
+                        "— using simulated data"
+                    )
+                adapter = PaperTradingAdapter(config, real_data_adapter=real_kite)
+            else:
+                adapter = adapter_class(config)
             
             # Connect
             logger.info(f"Connecting to {broker}...")

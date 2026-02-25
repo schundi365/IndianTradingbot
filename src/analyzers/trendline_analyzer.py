@@ -12,7 +12,7 @@ import logging
 import math
 
 # Import data models from trend detection engine
-from src.trend_detection_engine import Trendline, TrendlineBreak
+from src.analyzers.trend_detection_engine import Trendline, TrendlineBreak
 
 logger = logging.getLogger(__name__)
 

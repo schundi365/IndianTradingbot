@@ -13,8 +13,8 @@ from datetime import datetime
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.indian_trading_bot import IndianTradingBot
-from src.broker_adapter import BrokerAdapter
+from src.core.indian_trading_bot import IndianTradingBot
+from src.adapters.broker_adapter import BrokerAdapter
 from .activity_logger import ActivityLogger
 
 logger = logging.getLogger(__name__)

@@ -1552,7 +1552,7 @@ class TrendDetectionEngine:
                     volume_confirmation = False
                     if hasattr(self, 'volume_analyzer'):
                         try:
-                            from src.volume_analyzer import VolumeAnalyzer
+                            from src.analyzers.volume_analyzer import VolumeAnalyzer
                             volume_analyzer = VolumeAnalyzer(self.config)
                             exhaustion = volume_analyzer.detect_exhaustion_volume(df, highest_high)
                             if exhaustion['detected'] and exhaustion['type'] == 'bullish_exhaustion':
@@ -1607,7 +1607,7 @@ class TrendDetectionEngine:
                     volume_confirmation = False
                     if hasattr(self, 'volume_analyzer'):
                         try:
-                            from src.volume_analyzer import VolumeAnalyzer
+                            from src.analyzers.volume_analyzer import VolumeAnalyzer
                             volume_analyzer = VolumeAnalyzer(self.config)
                             exhaustion = volume_analyzer.detect_exhaustion_volume(df, lowest_low)
                             if exhaustion['detected'] and exhaustion['type'] == 'bearish_exhaustion':
@@ -1720,7 +1720,7 @@ class TrendDetectionEngine:
                 volume_analysis = {}
                 
                 try:
-                    from src.volume_analyzer import VolumeAnalyzer
+                    from src.analyzers.volume_analyzer import VolumeAnalyzer
                     volume_analyzer = VolumeAnalyzer(self.config)
                     
                     # Check if volume is increasing as we approach the level
@@ -1920,7 +1920,7 @@ class TrendDetectionEngine:
                     # Check for volume confirmation
                     volume_confirmed = False
                     try:
-                        from src.volume_analyzer import VolumeAnalyzer
+                        from src.analyzers.volume_analyzer import VolumeAnalyzer
                         volume_analyzer = VolumeAnalyzer(self.config)
                         
                         # Check if bounce came with volume
@@ -1971,7 +1971,7 @@ class TrendDetectionEngine:
                     # Check for volume confirmation
                     volume_confirmed = False
                     try:
-                        from src.volume_analyzer import VolumeAnalyzer
+                        from src.analyzers.volume_analyzer import VolumeAnalyzer
                         volume_analyzer = VolumeAnalyzer(self.config)
                         
                         # Check if rejection came with volume
@@ -2543,7 +2543,7 @@ class TrendDetectionEngine:
     def _analyze_volume_safe(self, df: pd.DataFrame, symbol: str) -> Optional[VolumeConfirmation]:
         """Safe volume analysis with error handling"""
         try:
-            from src.volume_analyzer import VolumeAnalyzer
+            from src.analyzers.volume_analyzer import VolumeAnalyzer
             
             # Use simplified volume analysis for speed and reliability
             volume_analyzer = VolumeAnalyzer(self.config)
@@ -3231,7 +3231,22 @@ class TrendDetectionEngine:
         relevant_signals = self.get_trend_signals(df, signal_type, symbol)
         
         if not relevant_signals:
-            return False, 0.0
+            # ---------------------------------------------------------------
+            # No active crossover / structure-break events.
+            # Fall back to computing directional confidence from continuous
+            # EMA and Aroon state so we don't always block trading when the
+            # trend is intact but no recent crossover has occurred.
+            # ---------------------------------------------------------------
+            fallback_confidence = self._compute_directional_confidence(
+                df, signal_type, symbol
+            )
+            self.logger.debug(
+                f"No trend signals for {symbol} ({signal_type}); "
+                f"fallback directional confidence = {fallback_confidence:.3f}"
+            )
+            if fallback_confidence >= self.min_confidence:
+                return True, fallback_confidence
+            return False, fallback_confidence
         
         # Check if confidence meets minimum threshold
         if analysis_result.confidence < self.min_confidence:
@@ -3243,7 +3258,7 @@ class TrendDetectionEngine:
             self.multi_timeframe_analyzer.enable_mtf):
             
             # Convert timeframe alignment to AlignmentResult for confirmation check
-            from src.multi_timeframe_analyzer import AlignmentResult
+            from src.analyzers.multi_timeframe_analyzer import AlignmentResult
             
             # Determine expected signals based on signal type
             expected_signal = 'bullish' if signal_type.lower() == 'buy' else 'bearish'
@@ -3268,6 +3283,78 @@ class TrendDetectionEngine:
                 self.logger.info(f"✅ Multi-timeframe confirmation passed for {signal_type} signal")
         
         return True, analysis_result.confidence
+
+    def _compute_directional_confidence(
+        self, df: pd.DataFrame, signal_type: str, symbol: str = "unknown"
+    ) -> float:
+        """
+        Compute a directional confidence score from continuous EMA and Aroon
+        state (not crossover events). Used as fallback when no crossover-based
+        TrendSignals are detected.
+
+        Returns a value in [0.0, 1.0].
+        """
+        try:
+            is_buy = signal_type.lower() == "buy"
+            score = 0.0
+            components = 0
+
+            # --- EMA alignment ---
+            try:
+                ema_signal = self._analyze_ema_safe(df, symbol)
+                if ema_signal is not None:
+                    ema_type = ema_signal.signal_type.lower()
+                    # "bullish_*" or "bearish_*" (may not contain "cross")
+                    aligned = (is_buy and "bullish" in ema_type) or (
+                        not is_buy and "bearish" in ema_type
+                    )
+                    # separation gives strength: clamp 0-3 % → 0-1
+                    ema_strength = min(1.0, abs(ema_signal.separation) / 3.0)
+                    if aligned:
+                        score += 0.5 * (0.5 + 0.5 * ema_strength)
+                    components += 1
+            except Exception as e:
+                self.logger.debug(f"EMA directional confidence failed: {e}")
+
+            # --- Aroon direction ---
+            try:
+                aroon_signal = self._analyze_aroon_safe(df, symbol)
+                if aroon_signal is not None:
+                    aroon_type = aroon_signal.signal_type.lower()
+                    # Aroon Up > Aroon Down → bullish tendency (and vice-versa)
+                    up_dominant = aroon_signal.aroon_up > aroon_signal.aroon_down
+                    aligned = (is_buy and up_dominant) or (
+                        not is_buy and not up_dominant
+                    )
+                    if aligned:
+                        # aroon oscillator: use trend_strength as proxy
+                        score += 0.3 * (0.5 + 0.5 * min(1.0, aroon_signal.trend_strength))
+                    components += 1
+            except Exception as e:
+                self.logger.debug(f"Aroon directional confidence failed: {e}")
+
+            # --- Simple price-EMA relationship (robust fallback) ---
+            try:
+                if "close" in df.columns and len(df) >= 20:
+                    close = df["close"].iloc[-1]
+                    ema20 = df["close"].ewm(span=20, adjust=False).mean().iloc[-1]
+                    above_ema = close > ema20
+                    aligned = (is_buy and above_ema) or (not is_buy and not above_ema)
+                    if aligned:
+                        score += 0.2
+                    components += 1
+            except Exception as e:
+                self.logger.debug(f"Price-EMA directional confidence failed: {e}")
+
+            # Normalise: if no components ran, return 0
+            if components == 0:
+                return 0.0
+
+            return min(1.0, score)
+
+        except Exception as e:
+            self.logger.debug(f"_compute_directional_confidence error: {e}")
+            return 0.0
     
     def _calculate_trend_confidence(self, signals: List[TrendSignal]) -> float:
         """

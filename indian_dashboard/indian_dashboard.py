@@ -15,8 +15,8 @@ from datetime import timedelta
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import logging utils
-from src.logging_utils import setup_db_logging
-from src.database_manager import LogDatabaseManager
+from src.utils.logging_utils import setup_db_logging
+from src.managers.database_manager import LogDatabaseManager
 
 # Import config
 from config import DASHBOARD_CONFIG, PRESET_CONFIGS

@@ -9,7 +9,7 @@ Validates: Requirement 8.3
 
 import logging
 from typing import Dict, List, Optional, Tuple
-from src.broker_adapter import BrokerAdapter
+from src.adapters.broker_adapter import BrokerAdapter
 
 
 class InstrumentValidator:

@@ -7,9 +7,9 @@ import logging
 from typing import Dict, List, Tuple, Optional
 import numpy as np
 
-from src.ml_signal_generator import MLSignalGenerator
-from src.sentiment_analyzer import SentimentAnalyzer
-from src.pattern_recognition import PatternRecognition
+from src.ml.ml_signal_generator import MLSignalGenerator
+from src.analyzers.sentiment_analyzer import SentimentAnalyzer
+from src.core.pattern_recognition import PatternRecognition
 
 
 class MLIntegration:

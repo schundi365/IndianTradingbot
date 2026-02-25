@@ -7,7 +7,7 @@ import logging
 import threading
 from queue import Queue
 from typing import Optional
-from src.database_manager import LogDatabaseManager
+from src.managers.database_manager import LogDatabaseManager
 
 
 class DatabaseHandler(logging.Handler):

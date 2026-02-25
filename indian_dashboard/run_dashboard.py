@@ -123,8 +123,8 @@ class DashboardStarter:
     def check_broker_adapters(self) -> bool:
         """Check if broker adapter files exist"""
         adapter_files = [
-            self.parent_dir / 'src' / 'kite_adapter.py',
-            self.parent_dir / 'src' / 'paper_trading_adapter.py',
+            self.parent_dir / 'src' / 'adapters' / 'kite_adapter.py',
+            self.parent_dir / 'src' / 'adapters' / 'paper_trading_adapter.py',
         ]
         
         missing = []

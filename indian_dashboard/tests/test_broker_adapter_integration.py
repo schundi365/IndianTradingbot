@@ -18,9 +18,9 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.broker_adapter import BrokerAdapter
-from src.kite_adapter import KiteAdapter
-from src.paper_trading_adapter import PaperTradingAdapter
+from src.adapters.broker_adapter import BrokerAdapter
+from src.adapters.kite_adapter import KiteAdapter
+from src.adapters.paper_trading_adapter import PaperTradingAdapter
 from services.broker_manager import BrokerManager
 
 

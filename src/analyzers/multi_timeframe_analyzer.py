@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import logging
 
 # Import data models from trend detection engine
-from src.trend_detection_engine import TimeframeAlignment, TrendSignal
+from src.analyzers.trend_detection_engine import TimeframeAlignment, TrendSignal
 
 logger = logging.getLogger(__name__)
 
