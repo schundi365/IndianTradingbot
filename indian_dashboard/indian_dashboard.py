@@ -28,6 +28,7 @@ from services.bot_controller import BotController
 from services.credential_manager import CredentialManager
 from services.analytics_service import AnalyticsService
 from services.chart_data_service import ChartDataService
+from services.backtest_service import BacktestService
 
 # Import session manager
 from session_manager import SessionManager
@@ -41,6 +42,7 @@ from api.session import init_session_api
 from api.analytics import init_analytics_api
 from api.charts import init_charts_api
 from api.logs import init_logs_api
+from api.backtest import init_backtest_api
 
 # Import error handler
 from dashboard_error_handler import init_error_handlers, log_request, log_response
@@ -100,6 +102,15 @@ credential_manager = CredentialManager(
 analytics_service = AnalyticsService()
 chart_data_service = ChartDataService(broker_manager)
 
+# Initialize backtest DB and service
+try:
+    from src.managers.backtest_db_manager import BacktestDatabaseManager
+    backtest_db = BacktestDatabaseManager(str(DASHBOARD_CONFIG['log_dir'].parent / 'data' / 'backtests.db'))
+    backtest_service = BacktestService(db_manager=backtest_db, broker_manager=broker_manager)
+except Exception as _bt_err:
+    logger.warning(f'Backtest service init failed: {_bt_err}')
+    backtest_service = None
+
 # Store services in app config for access in routes
 app.config['DB_MANAGER'] = db_manager
 app.config['BROKER_MANAGER'] = broker_manager
@@ -119,6 +130,8 @@ session_bp = init_session_api(session_manager)
 analytics_bp = init_analytics_api(bot_controller, analytics_service)
 charts_bp = init_charts_api(bot_controller, chart_data_service)
 logs_bp = init_logs_api(db_manager)
+if backtest_service:
+    backtest_api_bp = init_backtest_api(backtest_service)
 
 app.register_blueprint(broker_bp)
 app.register_blueprint(instruments_bp)
@@ -128,6 +141,8 @@ app.register_blueprint(session_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(charts_bp)
 app.register_blueprint(logs_bp)
+if backtest_service:
+    app.register_blueprint(backtest_api_bp)
 
 # Initialize global error handlers
 init_error_handlers(app)
