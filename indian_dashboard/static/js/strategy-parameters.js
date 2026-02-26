@@ -34,7 +34,17 @@ const StrategyParameters = {
             'config-trend-sensitivity',
             'config-adx-period',
             'config-adx-min-strength',
-            'config-paper-trading-initial-balance'
+            'config-paper-trading-initial-balance',
+            'config-fast-ma-period',
+            'config-slow-ma-period',
+            'config-atr-period',
+            'config-atr-multiplier',
+            'config-macd-fast',
+            'config-macd-slow',
+            'config-macd-signal',
+            'config-trail-activation',
+            'config-trail-distance',
+            'config-num-positions'
         ];
 
         inputs.forEach(id => {
@@ -60,6 +70,14 @@ const StrategyParameters = {
         if (strategySelect) {
             strategySelect.addEventListener('change', () => {
                 this.updateStrategyParameters();
+            });
+        }
+
+        // Checkbox listeners
+        const splitOrdersCheckbox = document.getElementById('config-use-split-orders');
+        if (splitOrdersCheckbox) {
+            splitOrdersCheckbox.addEventListener('change', () => {
+                // UI feedback if needed
             });
         }
     },
@@ -329,7 +347,18 @@ const StrategyParameters = {
             trend_detection_sensitivity: parseInt(document.getElementById('config-trend-sensitivity')?.value || 5),
             adx_period: parseInt(document.getElementById('config-adx-period')?.value || 14),
             adx_min_strength: parseInt(document.getElementById('config-adx-min-strength')?.value || 25),
-            paper_trading_initial_balance: parseFloat(document.getElementById('config-paper-trading-initial-balance')?.value || 5000000)
+            paper_trading_initial_balance: parseFloat(document.getElementById('config-paper-trading-initial-balance')?.value || 5000000),
+            fast_ma_period: parseInt(document.getElementById('config-fast-ma-period')?.value || 10),
+            slow_ma_period: parseInt(document.getElementById('config-slow-ma-period')?.value || 21),
+            atr_period: parseInt(document.getElementById('config-atr-period')?.value || 14),
+            atr_multiplier: parseFloat(document.getElementById('config-atr-multiplier')?.value || 2.0),
+            macd_fast: parseInt(document.getElementById('config-macd-fast')?.value || 12),
+            macd_slow: parseInt(document.getElementById('config-macd-slow')?.value || 26),
+            macd_signal: parseInt(document.getElementById('config-macd-signal')?.value || 9),
+            trail_activation: parseFloat(document.getElementById('config-trail-activation')?.value || 1.5),
+            trail_distance: parseFloat(document.getElementById('config-trail-distance')?.value || 1.0),
+            use_split_orders: document.getElementById('config-use-split-orders')?.checked ?? true,
+            num_positions: parseInt(document.getElementById('config-num-positions')?.value || 3)
         };
     },
 
@@ -373,7 +402,9 @@ const StrategyParameters = {
             'loop_interval', 'rsi_period', 'rsi_overbought', 'rsi_oversold',
             'macd_min_histogram', 'roc_threshold', 'min_trend_confidence',
             'trend_detection_sensitivity', 'adx_period', 'adx_min_strength',
-            'paper_trading_initial_balance'
+            'paper_trading_initial_balance', 'fast_ma_period', 'slow_ma_period',
+            'atr_period', 'atr_multiplier', 'macd_fast', 'macd_slow', 'macd_signal',
+            'trail_activation', 'trail_distance', 'num_positions'
         ];
 
         indicatorFields.forEach(key => {
@@ -382,6 +413,12 @@ const StrategyParameters = {
                 if (field) field.value = params[key];
             }
         });
+
+        // Use split orders checkbox
+        if (params.use_split_orders !== undefined) {
+            const field = document.getElementById('config-use-split-orders');
+            if (field) field.checked = params.use_split_orders;
+        }
 
         // Recalculate metrics
         this.updateDependentFields();

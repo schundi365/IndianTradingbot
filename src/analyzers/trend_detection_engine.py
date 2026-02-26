@@ -1013,13 +1013,14 @@ class TrendDetectionEngine:
             'total_analyses': 0,
             'successful_analyses': 0,
             'failed_analyses': 0,
+            'analysis_count': 0,  # Legacy support
+            'total_time_ms': 0.0,
             'avg_analysis_time': 0.0,
             'max_analysis_time': 0.0,
+            'component_failures': 0,
             'cache_hits': 0,
             'cache_misses': 0,
-            'memory_cleanups': 0,
-            'component_failures': 0,
-            'config_validation_errors': len(validation_errors)
+            'memory_cleanups': 0
         }
         
         # Initialize caching system with error handling
@@ -2621,11 +2622,11 @@ class TrendDetectionEngine:
         structure_break = analysis_results.get('market_structure')
         aroon_signal = analysis_results.get('aroon')
         ema_signal = analysis_results.get('ema')
-        divergences = analysis_results.get('divergence', [])
-        trendline_breaks = analysis_results.get('trendline', [])
+        divergences = analysis_results.get('divergence') or []
+        trendline_breaks = analysis_results.get('trendline') or []
         timeframe_alignment = analysis_results.get('multi_timeframe')
         volume_confirmation = analysis_results.get('volume')
-        early_warnings = analysis_results.get('early_warnings', [])
+        early_warnings = analysis_results.get('early_warnings') or []
         
         # Generate signals from analysis results
         signals = self._generate_signals_from_results(

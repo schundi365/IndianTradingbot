@@ -122,9 +122,18 @@ const TimeMachine = (() => {
         let extraConfig = {};
         try { extraConfig = JSON.parse(configJSON); } catch { /* ignore bad JSON */ }
 
-        // Merge preset from the selector
-        const preset = document.getElementById('tm-preset')?.value;
-        const config = Object.assign({ strategy: 'trend_following', timeframe: '15min' }, extraConfig);
+        // Gather current dashboard configuration
+        let dashboardConfig = {};
+        if (typeof StrategyParameters !== 'undefined') {
+            const params = StrategyParameters.getParameters();
+            dashboardConfig = Object.assign(dashboardConfig, params);
+        }
+
+        // Merge: Base Defaults < Dashboard UI < Config Override
+        const config = Object.assign({
+            strategy: 'trend_following',
+            timeframe: '15min'
+        }, dashboardConfig, extraConfig);
 
         _setRunning(true);
         _showProgress(5, 'Submitting…');

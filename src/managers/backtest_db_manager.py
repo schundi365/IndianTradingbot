@@ -225,7 +225,7 @@ class BacktestDatabaseManager:
                 for row in rows:
                     d = dict(row)
                     d["symbols"] = json.loads(d["symbols"] or "[]")
-                    result.append(d)
+                    result.append(self._clean_metrics(d))
                 return result
         except Exception as e:
             print(f"[BacktestDB] Error listing runs: {e}")
@@ -257,7 +257,7 @@ class BacktestDatabaseManager:
                 ).fetchall()
                 d["symbol_metrics"] = [dict(m) for m in metrics]
 
-                return d
+                return self._clean_metrics(d)
         except Exception as e:
             print(f"[BacktestDB] Error getting run {run_id}: {e}")
             return None
@@ -300,4 +300,30 @@ class BacktestDatabaseManager:
         run = self.get_run(run_id)
         if not run:
             return None
-        return json.dumps(run, indent=2, default=str)
+            
+        return json.dumps(self._clean_metrics(run), indent=2, default=str)
+
+    def _clean_metrics(self, obj: Any) -> Any:
+        """Recursively replace Infinity/NaN with JSON-safe values."""
+        import math
+        # Handle dicts and lists recursively
+        if isinstance(obj, dict):
+            return {k: self._clean_metrics(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._clean_metrics(x) for x in obj]
+        
+        # Handle numeric values (float, int, numpy types, etc.)
+        try:
+            # We use try/except because some types might throw on isinf/isnan
+            # or might not be compatible with math.isinf
+            if hasattr(obj, '__float__') or isinstance(obj, (int, float)):
+                val = float(obj)
+                if math.isinf(val):
+                    return 99.9 if val > 0 else -99.9
+                if math.isnan(val):
+                    return 0.0
+                return val
+        except (ValueError, TypeError, OverflowError):
+            pass
+            
+        return obj

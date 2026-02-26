@@ -439,6 +439,11 @@ def validate_configuration(config: dict) -> list:
             errors.append(f"max_daily_loss: {error}")
             
     # Technical Indicator Validations
+    if 'indicator_period' in config:
+        is_valid, error = validate_integer(config['indicator_period'], min_value=5, max_value=200)
+        if not is_valid:
+            errors.append(f"indicator_period: {error}")
+            
     if 'loop_interval' in config:
         is_valid, error = validate_integer(config['loop_interval'], min_value=1, max_value=300)
         if not is_valid:
@@ -483,6 +488,11 @@ def validate_configuration(config: dict) -> list:
         is_valid, error = validate_number(config['macd_min_histogram'], min_value=0, max_value=0.1)
         if not is_valid:
             errors.append(f"macd_min_histogram: {error}")
+            
+    if 'roc_threshold' in config:
+        is_valid, error = validate_number(config['roc_threshold'], min_value=0.01, max_value=5.0)
+        if not is_valid:
+            errors.append(f"roc_threshold: {error}")
     
     if 'paper_trading_initial_balance' in config:
         is_valid, error = validate_number(config['paper_trading_initial_balance'], min_value=10000, max_value=100000000)

@@ -369,7 +369,34 @@
                                 <div class="form-group">
                                     <label for="config-stop-loss">Stop Loss (%)</label>
                                     <input type="number" id="config-stop-loss" name="stop_loss" class="form-control"
-                                        min="0.5" max="10" step="0.5" value="1.0">
+                                        min="0.5" max="10" step="0.1" value="1.0">
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">Moving Averages & ATR</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-fast-ma-period">Fast MA Period</label>
+                                    <input type="number" id="config-fast-ma-period" name="fast_ma_period"
+                                        class="form-control" min="2" max="100" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-slow-ma-period">Slow MA Period</label>
+                                    <input type="number" id="config-slow-ma-period" name="slow_ma_period"
+                                        class="form-control" min="5" max="200" value="21">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-atr-period">ATR Period</label>
+                                    <input type="number" id="config-atr-period" name="atr_period" class="form-control"
+                                        min="2" max="50" value="14">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-atr-multiplier">ATR Multiplier</label>
+                                    <input type="number" id="config-atr-multiplier" name="atr_multiplier"
+                                        class="form-control" min="0.1" max="10" step="0.1" value="2.0">
                                 </div>
                             </div>
                         </div>
@@ -395,6 +422,39 @@
                                 <input type="number" id="config-max-positions" name="max_positions" class="form-control"
                                     min="1" max="20" value="3">
                                 <small class="form-help">Maximum number of positions open at the same time</small>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">Trailing Stop Loss</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-trail-activation">Trail Activation (ATR)</label>
+                                    <input type="number" id="config-trail-activation" name="trail_activation"
+                                        class="form-control" min="0.1" max="10" step="0.1" value="1.5">
+                                    <small class="form-help">When to start trailing (in ATR multiples)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-trail-distance">Trail Distance (ATR)</label>
+                                    <input type="number" id="config-trail-distance" name="trail_distance"
+                                        class="form-control" min="0.1" max="10" step="0.1" value="1.0">
+                                    <small class="form-help">Distance to trail behind price</small>
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h4 class="sub-section-title">Split Orders & Partial Profit</h4>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="config-use-split-orders" name="use_split_orders" checked>
+                                    Use Split Orders
+                                </label>
+                                <small class="form-help">Split large orders into multiple positions for partial
+                                    exit</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="config-num-positions">Number of Split Positions</label>
+                                <input type="number" id="config-num-positions" name="num_positions" class="form-control"
+                                    min="1" max="5" value="3">
                             </div>
 
                             <div class="form-group">
@@ -484,6 +544,24 @@
                                     <label for="config-roc-threshold">ROC Threshold (%)</label>
                                     <input type="number" id="config-roc-threshold" name="roc_threshold"
                                         class="form-control" step="0.01" value="0.15">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-macd-fast">MACD Fast</label>
+                                    <input type="number" id="config-macd-fast" name="macd_fast" class="form-control"
+                                        min="2" max="50" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-macd-slow">MACD Slow</label>
+                                    <input type="number" id="config-macd-slow" name="macd_slow" class="form-control"
+                                        min="5" max="100" value="26">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-macd-signal">MACD Signal</label>
+                                    <input type="number" id="config-macd-signal" name="macd_signal" class="form-control"
+                                        min="2" max="20" value="9">
                                 </div>
                             </div>
 

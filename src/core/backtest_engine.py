@@ -424,20 +424,54 @@ class BacktestEngine:
         # Import bot logic classes for indicator calculation
         try:
             from src.core.indian_trading_bot import IndianTradingBot
+            # Create a mock decision logger to avoid crashes
+            class MockDecisionLogger:
+                def log_signal(self, *args, **kwargs): pass
+                def log_trade(self, *args, **kwargs): pass
+            
             _bot = IndianTradingBot.__new__(IndianTradingBot)
             _bot.config = self.config
             _bot.timeframe = int(self._timeframe_to_minutes())
-            _bot.risk_percent = float(self.config.get("risk_per_trade", 1.0))
-            _bot.reward_ratio = float(self.config.get("take_profit", 1.5)) / float(self.config.get("stop_loss", 0.75))
+            
+            # Indicator parameters (sync with IndianTradingBot.__init__)
+            _bot.fast_ma_period = int(self.config.get("fast_ma_period", 10))
+            _bot.slow_ma_period = int(self.config.get("slow_ma_period", 21))
+            _bot.atr_period = int(self.config.get("atr_period", 14))
+            _bot.atr_multiplier = float(self.config.get("atr_multiplier", 2.0))
+            _bot.rsi_period = int(self.config.get("rsi_period", 14))
+            _bot.rsi_overbought = float(self.config.get("rsi_overbought", 70))
+            _bot.rsi_oversold = float(self.config.get("rsi_oversold", 30))
+            _bot.macd_fast = int(self.config.get("macd_fast", 12))
+            _bot.macd_slow = int(self.config.get("macd_slow", 26))
+            _bot.macd_signal = int(self.config.get("macd_signal", 9))
+            _bot.macd_min_histogram = float(self.config.get("macd_min_histogram", 0.0001))
+            _bot.roc_period = int(self.config.get("roc_period", 3))
+            _bot.ema_micro_fast = int(self.config.get("ema_micro_fast", 6))
+            _bot.ema_micro_slow = int(self.config.get("ema_micro_slow", 12))
+            _bot.adx_period = int(self.config.get("adx_period", 14))
+            _bot.adx_min_strength = float(self.config.get("adx_min_strength", 25))
+            
+            # Filter parameters
+            _bot.min_trend_confidence = 0.0  # disable trend filter in backtest for now
+            _bot.roc_threshold = float(self.config.get("roc_threshold", 0.15))
+            
+            # Risk/Trade settings
+            _bot.risk_percent = float(self.config.get("risk_per_trade", self.config.get("risk_percent", 1.0)))
+            
+            # Use rewarding ratio if provided, else calc from TP/SL
+            tp = float(self.config.get("take_profit", 1.5))
+            sl = float(self.config.get("stop_loss", 0.75))
+            _bot.reward_ratio = float(self.config.get("reward_ratio", tp / sl if sl > 0 else 2.0))
+            
             _bot.logger = logger
+            _bot.decision_logger = MockDecisionLogger()
             _bot.trend_detection_engine = None
             _bot.ml_integration = None
             _bot.volume_analyzer = None
             _bot.adaptive_risk_manager = None
-            _bot.decision_logger = None
             _bot.paper_trading = True
             _bot.symbols = [symbol]
-            _bot.min_trend_confidence = 0.0  # disable trend filter in backtest
+            
             indicator_fn = _bot.calculate_indicators
             signal_fn = _bot.check_entry_signal
             use_bot_signals = True
@@ -598,7 +632,7 @@ class BacktestEngine:
         losers = [p for p in pnls if p <= 0]
 
         total_pnl = sum(pnls)
-        profit_factor = abs(sum(winners) / sum(losers)) if losers else float("inf")
+        profit_factor = abs(sum(winners) / sum(losers)) if losers else (99.9 if winners else 0.0)
         win_rate = len(winners) / len(pnls) * 100 if pnls else 0.0
         total_return_pct = total_pnl / capital_per_symbol * 100 if capital_per_symbol else 0.0
 
@@ -646,7 +680,7 @@ class BacktestEngine:
         winners = [p for p in pnls if p > 0]
         losers = [p for p in pnls if p <= 0]
         win_rate = len(winners) / len(pnls) * 100 if pnls else 0.0
-        profit_factor = abs(sum(winners) / sum(losers)) if losers else float("inf")
+        profit_factor = abs(sum(winners) / sum(losers)) if losers else (99.9 if winners else 0.0)
 
         # Sharpe from equity curve
         sharpe = 0.0

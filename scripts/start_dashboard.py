@@ -10,6 +10,15 @@ import platform
 import webbrowser
 import time
 
+# Fix for Unicode characters on Windows
+if sys.platform == "win32":
+    try:
+        import codecs
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except (AttributeError, Exception):
+        pass
+
 def check_python_version():
     """Check if Python version is compatible"""
     version = sys.version_info
@@ -97,8 +106,12 @@ def main():
     
     # Start the dashboard
     try:
-        # Add indian_dashboard to path
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'indian_dashboard'))
+        # Add project root and dashboard directory to path
+        # This is needed for both 'import indian_dashboard' and internal sibling imports
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        dash_dir = os.path.join(root_dir, 'indian_dashboard')
+        sys.path.insert(0, root_dir)
+        sys.path.insert(0, dash_dir)
         
         # Import the dashboard
         from indian_dashboard import app

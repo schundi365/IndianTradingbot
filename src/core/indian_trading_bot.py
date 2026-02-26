@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional, List
 import pytz
+import json
+import os
 
 # Determine base directory
 if getattr(sys, 'frozen', False):
@@ -106,10 +108,19 @@ class IndianTradingBot:
             broker_adapter (BrokerAdapter): Broker adapter instance for market operations
         """
         self.config = config
+        self.config_path = config.get('config_path', 'configs/_current.json')
+        self._last_config_mtime = self._get_config_mtime()
+        
         self.broker = broker_adapter
         
         # Copy all configuration from MT5 bot
-        self.symbols = config['symbols']
+        if 'symbols' in config:
+            self.symbols = config['symbols']
+        elif 'instruments' in config:
+            self.symbols = [inst['symbol'] for inst in config['instruments']]
+        else:
+            self.symbols = []
+            logging.warning("No symbols or instruments found in configuration")
         self.timeframe = config['timeframe']  # In minutes for Indian markets
         self.magic_number = config.get('magic_number', 12345)
         
@@ -140,7 +151,7 @@ class IndianTradingBot:
         # ADX and Trend Detection parameters
         self.adx_period = config.get('adx_period', 14)
         self.adx_min_strength = config.get('adx_min_strength', 25)
-        self.min_trend_confidence = config.get('min_trend_confidence', 0.6)
+        self.min_trend_confidence = config.get('min_trend_confidence', 0.4)
         self.trend_detection_sensitivity = config.get('trend_detection_sensitivity', 5)
         
         # Loop interval
@@ -865,9 +876,9 @@ class IndianTradingBot:
                     )
                     return 0
                 
-                # NEW: Check for minimum bullish strength (momentum confirmation)
-                if rsi < 50:
-                    rejection_reason = f"RSI {rsi:.2f} is too weak for BUY (<50)"
+                # Relaxed from 50 to 45
+                if rsi < 45:
+                    rejection_reason = f"RSI {rsi:.2f} is too weak for BUY (<45)"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
                     logging.info(f"     {rejection_reason}")
                     logging.info(f"     Not enough bullish momentum - skipping trade")
@@ -915,9 +926,9 @@ class IndianTradingBot:
                     )
                     return 0
                 
-                # NEW: Check for maximum bearish strength (momentum confirmation)
-                if rsi > 50:
-                    rejection_reason = f"RSI {rsi:.2f} is too strong for SELL (>50)"
+                # Relaxed from 50 to 55
+                if rsi > 55:
+                    rejection_reason = f"RSI {rsi:.2f} is too strong for SELL (>55)"
                     logging.info(f"  ❌ RSI FILTER REJECTED!")
                     logging.info(f"     {rejection_reason}")
                     logging.info(f"     Not enough bearish momentum - skipping trade")
@@ -955,8 +966,8 @@ class IndianTradingBot:
             macd = latest['macd']
             macd_signal = latest['macd_signal']
             
-            # Enhanced MACD with meaningful threshold
-            MACD_THRESHOLD = self.macd_min_histogram
+            # Lowered from 0.0005 to 0.0001
+            MACD_THRESHOLD = self.config.get('macd_min_histogram', 0.0001)
             
             logging.info(f"  MACD Line:         {macd:.6f}")
             logging.info(f"  MACD Signal Line:  {macd_signal:.6f}")
@@ -2599,20 +2610,117 @@ class IndianTradingBot:
             if pos_id:
                 open_position_ids.add(pos_id)
         
-        # Find positions in tracking that are no longer open
-        positions_to_remove = []
-        for pos_id in self.positions.keys():
+        # Remove positions that are no longer open
+        closed_position_ids = []
+        for pos_id in self.positions:
             if pos_id not in open_position_ids:
-                positions_to_remove.append(pos_id)
+                closed_position_ids.append(pos_id)
         
-        # Remove closed positions from tracking
-        for pos_id in positions_to_remove:
+        for pos_id in closed_position_ids:
+            symbol = self.positions[pos_id].get('symbol', 'unknown')
+            logging.info(f"Removing closed position {pos_id} for {symbol} from tracking")
             del self.positions[pos_id]
-            logging.debug(f"Cleaned up closed position: {pos_id}")
+
+        if len(closed_position_ids) > 0:
+            logging.info(f"Cleaned up {len(closed_position_ids)} closed position(s)")
+
+    def _get_config_mtime(self):
+        """Get the modification time of the configuration file"""
+        try:
+            if os.path.exists(self.config_path):
+                return os.path.getmtime(self.config_path)
+        except Exception as e:
+            logging.error(f"Error getting config mtime: {e}")
+        return 0
+
+    def check_for_config_update(self):
+        """Check if configuration file has been updated"""
+        current_mtime = self._get_config_mtime()
+        if current_mtime > self._last_config_mtime:
+            logging.info(f"🔄 Configuration update detected: {self.config_path}")
+            self._last_config_mtime = current_mtime
+            return True
+        return False
+
+    def reload_config(self):
+        """Reload configuration from file"""
+        try:
+            with open(self.config_path, 'r') as f:
+                new_config = json.load(f)
+            
+            # Helper to get parameter from top level or strategy_parameters
+            def get_param(key, default):
+                return new_config.get(key, new_config.get('strategy_parameters', {}).get(key, default))
+            
+            # Update core parameters
+            self.config = new_config
+            timeframe_str = str(new_config.get('timeframe', '15'))
+            self.timeframe = int(timeframe_str.replace('min', ''))
+            self.strategy = new_config.get('strategy', 'trend_following')
+            self.loop_interval = int(get_param('loop_interval', 60))
+            self.risk_percent = float(new_config.get('risk_per_trade', get_param('risk_percent', 1.0)))
+            self.reward_ratio = float(get_param('take_profit', 2.0)) / float(get_param('stop_loss', 1.0))
+            self.max_positions = int(new_config.get('max_positions', get_param('max_positions', 3)))
+            
+            # Indicator parameters
+            self.fast_ma_period = int(get_param('fast_ma_period', 10))
+            self.slow_ma_period = int(get_param('slow_ma_period', 21))
+            self.atr_period = int(get_param('atr_period', 14))
+            self.atr_multiplier = float(get_param('atr_multiplier', 2.0))
+            
+            self.macd_fast = int(get_param('macd_fast', 12))
+            self.macd_slow = int(get_param('macd_slow', 26))
+            self.macd_signal = int(get_param('macd_signal', 9))
+            
+            self.rsi_period = int(get_param('rsi_period', 14))
+            self.rsi_overbought = float(get_param('rsi_overbought', 70))
+            self.rsi_oversold = float(get_param('rsi_oversold', 30))
+            self.roc_period = int(get_param('roc_period', 3))
+            self.macd_min_histogram = float(get_param('macd_min_histogram', 0.0001))
+            
+            self.adx_period = int(get_param('adx_period', 14))
+            self.adx_min_strength = float(get_param('adx_min_strength', 25))
+            self.min_trend_confidence = float(get_param('min_trend_confidence', 0.4))
+            self.trend_detection_sensitivity = int(get_param('trend_detection_sensitivity', 5))
+            
+            # Trailing parameters
+            self.trail_activation = float(get_param('trail_activation', 1.5))
+            self.trail_distance = float(get_param('trail_distance', 1.0))
+            
+            # Split orders
+            self.use_split_orders = get_param('use_split_orders', True)
+            self.num_positions = int(get_param('num_positions', 3))
+            
+            # Update symbols if instruments changed
+            if 'instruments' in new_config:
+                new_symbols = [inst['symbol'] for inst in new_config['instruments']]
+                if set(new_symbols) != set(self.symbols):
+                    logging.info(f"Instruments updated: {self.symbols} -> {new_symbols}")
+                    self.symbols = new_symbols
+            
+            # Update trading hours
+            self.trading_hours = {
+                'start': new_config.get('trading_start', '09:15'),
+                'end': new_config.get('trading_end', '15:30')
+            }
+            
+            logging.info("✅ Configuration reloaded successfully")
+            
+            # Log reload action
+            self.decision_logger.log_bot_action("RELOAD_CONFIG", {
+                'symbols': self.symbols,
+                'timeframe': self.timeframe,
+                'risk_percent': self.risk_percent,
+                'strategy': self.strategy
+            })
+            
+            return True
+        except Exception as e:
+            logging.error(f"❌ Error reloading configuration: {e}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
         
-        if len(positions_to_remove) > 0:
-            logging.info(f"Cleaned up {len(positions_to_remove)} closed position(s)")
-    
     def run(self):
         """Main bot loop"""
         logging.info("="*80)
@@ -2633,6 +2741,10 @@ class IndianTradingBot:
         
         try:
             while True:
+                # Check for configuration updates
+                if self.check_for_config_update():
+                    self.reload_config()
+                
                 # Connection check and reconnection
                 if not self.broker.is_connected():
                     logging.warning("⚠️  MT5 connection lost, attempting to reconnect...")

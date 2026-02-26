@@ -8,12 +8,13 @@ import os
 import json
 from pathlib import Path
 
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add project root and src directory to path
+root_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(root_dir))
 
-from indian_trading_bot import IndianTradingBot
-from kite_adapter import KiteAdapter
-from paper_trading_adapter import PaperTradingAdapter
+from src.core.indian_trading_bot import IndianTradingBot
+from src.adapters.kite_adapter import KiteAdapter
+from src.adapters.paper_trading_adapter import PaperTradingAdapter
 
 
 def load_config(config_path='configs/_current.json'):

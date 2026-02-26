@@ -82,12 +82,15 @@ class PaperTradingEngine:
         if order_type == "MARKET" and current_price is not None:
             execution_price = current_price
             
-            # Check if we have sufficient margin
-            required_margin = execution_price * quantity
+            # Check if we have sufficient margin (Requirement 15.1)
+            # Use margin multiplier (leverage)
+            margin_multiplier = 0.20 if product_type == "MIS" else 1.0
+            required_margin = execution_price * quantity * margin_multiplier
+            
             if required_margin > self.balance:
                 logging.warning(
                     f"🧪 PAPER TRADE REJECTED: Insufficient margin. "
-                    f"Required: Rs.{required_margin:,.2f}, Available: Rs.{self.balance:,.2f}"
+                    f"Required (with {1/margin_multiplier:.0f}x leverage): Rs.{required_margin:,.2f}, Available: Rs.{self.balance:,.2f}"
                 )
                 return None
             
@@ -101,6 +104,7 @@ class PaperTradingEngine:
                 'current_price': execution_price,
                 'stop_loss': stop_loss,
                 'take_profit': take_profit,
+                'margin_used': required_margin,
                 'order_id': order_id,
                 'entry_time': datetime.now(),
                 'pnl': 0.0,
@@ -206,7 +210,7 @@ class PaperTradingEngine:
         pnl_percent = (pnl / (position['entry_price'] * position['quantity'])) * 100
         
         # Return margin to balance
-        margin_released = position['entry_price'] * position['quantity']
+        margin_released = position.get('margin_used', position['entry_price'] * position['quantity'])
         self.balance += margin_released + pnl
         self.equity = self.balance + sum(p['pnl'] for p in self.positions.values() if p['order_id'] != order_id)
         
